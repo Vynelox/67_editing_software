@@ -7,6 +7,7 @@ import {
   type MediaItem, type TimelineClip, type Track,
   FPS, generateId, secondsToFrames
 } from './types';
+import { HistoryProvider, useHistory } from './state/history';
 
 const DEFAULT_IMAGE_DURATION = 5 * FPS;
 
@@ -54,7 +55,8 @@ function generateThumbnail(file: File, type: MediaItem['type']): Promise<string 
   });
 }
 
-export default function App() {
+function AppContent() {
+  const history = useHistory();
   const [mediaItems, setMediaItems] = useState<Map<string, MediaItem>>(new Map());
   const [clips, setClips] = useState<TimelineClip[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -65,6 +67,43 @@ export default function App() {
   const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const totalFrames = clips.reduce((max, c) => Math.max(max, c.endFrame), 0);
+
+  const snapshot = useCallback(() => ({
+    clips: JSON.parse(JSON.stringify(clips)),
+    mediaItems: Array.from(mediaItems.entries()),
+    selectedIds: [...selectedIds],
+    playhead,
+  }), [clips, mediaItems, selectedIds, playhead]);
+
+  const restore = useCallback((snap: any) => {
+    try {
+      setClips(Array.isArray(snap?.clips) ? snap.clips : []);
+      setMediaItems(new Map(Array.isArray(snap?.mediaItems) ? snap.mediaItems : []));
+      setSelectedIds(Array.isArray(snap?.selectedIds) ? snap.selectedIds : []);
+      setPlayhead(typeof snap?.playhead === 'number' ? snap.playhead : 0);
+    } catch (err) {
+      console.warn('Failed to restore snapshot', err);
+    }
+  }, [setClips, setMediaItems, setSelectedIds, setPlayhead]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      // Undo: Ctrl+Z (no modifiers)
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        history.undo(snapshot(), restore);
+      }
+      // Redo: Ctrl+Shift+Z, Ctrl+Alt+Z, Ctrl+Y
+      if (e.ctrlKey && ((e.shiftKey && e.key.toLowerCase() === 'z') || (e.altKey && e.key.toLowerCase() === 'z') || (e.key.toLowerCase() === 'y' && !e.altKey && !e.shiftKey))) {
+        e.preventDefault();
+        history.redo(snapshot(), restore);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [history, snapshot, restore]);
 
   useEffect(() => {
     if (playing) {
@@ -90,6 +129,7 @@ export default function App() {
   }, []);
 
   const handleAddMedia = useCallback(async (files: FileList) => {
+    history.push(snapshot());
     const newItems = new Map(mediaItems);
     for (const file of Array.from(files)) {
       const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
@@ -108,15 +148,17 @@ export default function App() {
   }, [mediaItems]);
 
   const handleRemoveMedia = useCallback((id: string) => {
+    history.push(snapshot());
     const newItems = new Map(mediaItems);
     const item = newItems.get(id);
     if (item) URL.revokeObjectURL(item.src);
     newItems.delete(id);
     setMediaItems(newItems);
     setClips(prev => prev.filter(c => c.mediaId !== id));
-  }, [mediaItems]);
+  }, [mediaItems, history, snapshot]);
 
   const handleDropMedia = useCallback((mediaId: string, track: number, startFrame: number) => {
+    history.push(snapshot());
     const media = mediaItems.get(mediaId);
     if (!media) return;
     const trackObj = TRACKS[track];
@@ -141,6 +183,7 @@ export default function App() {
   }, []);
 
   const handleNudge = useCallback((ids: string[], delta: number) => {
+    history.push(snapshot());
     setClips(prev => {
       const movers = new Set(ids);
       return prev.map(clip => {
@@ -157,9 +200,10 @@ export default function App() {
         return { ...clip, startFrame: newStart, endFrame: newStart + len };
       });
     });
-  }, []);
+  }, [history, snapshot]);
 
   const handleSplitClip = useCallback((clipId: string, frame: number) => {
+    history.push(snapshot());
     setClips(prev => {
       const clip = prev.find(c => c.id === clipId);
       if (!clip || frame <= clip.startFrame || frame >= clip.endFrame) return prev;
@@ -174,9 +218,10 @@ export default function App() {
       };
       return prev.map(c => c.id === clipId ? part1 : c).concat(part2);
     });
-  }, []);
+  }, [history, snapshot]);
 
   const handleTrimLatter = useCallback((clipId: string, frame: number, ripple: boolean) => {
+    history.push(snapshot());
     setClips(prev => {
       const clip = prev.find(c => c.id === clipId);
       if (!clip || frame <= clip.startFrame) return prev;
@@ -190,9 +235,10 @@ export default function App() {
         return c;
       });
     });
-  }, []);
+  }, [history, snapshot]);
 
   const handleTrimFormer = useCallback((clipId: string, frame: number, ripple: boolean) => {
+    history.push(snapshot());
     setClips(prev => {
       const clip = prev.find(c => c.id === clipId);
       if (!clip || frame >= clip.endFrame) return prev;
@@ -205,9 +251,10 @@ export default function App() {
         return c;
       });
     });
-  }, []);
+  }, [history, snapshot]);
 
   const handleJoin = useCallback((clipAId: string, clipBId: string) => {
+    history.push(snapshot());
     setClips(prev => {
       const a = prev.find(c => c.id === clipAId);
       const b = prev.find(c => c.id === clipBId);
@@ -218,21 +265,23 @@ export default function App() {
       };
       return prev.filter(c => c.id !== clipAId && c.id !== clipBId).concat(merged);
     });
-  }, []);
+  }, [history, snapshot]);
 
   const handleFadeChange = useCallback((clipId: string, side: 'in' | 'out', frames: number) => {
+    history.push(snapshot());
     setClips(prev => prev.map(c => {
       if (c.id !== clipId) return c;
       const maxFade = Math.floor((c.endFrame - c.startFrame) / 2);
       const clamped = Math.min(Math.max(0, frames), maxFade);
       return { ...c, fades: { ...c.fades, [side]: clamped } };
     }));
-  }, []);
+  }, [history, snapshot]);
 
   const handleStepEdge = useCallback((
     clipId: string | null, cutBetween: [string, string] | null,
     direction: number, ripple: boolean
   ) => {
+    history.push(snapshot());
     setClips(prev => {
       if (cutBetween) {
         const [aId, bId] = cutBetween;
@@ -256,11 +305,12 @@ export default function App() {
       }
       return prev;
     });
-  }, []);
+  }, [history, snapshot]);
 
   const handleRollApply = useCallback((clipId: string, newSrcIn: number, newSrcOut: number) => {
+    history.push(snapshot());
     setClips(prev => prev.map(c => c.id === clipId ? { ...c, srcIn: newSrcIn, srcOut: newSrcOut } : c));
-  }, []);
+  }, [history, snapshot]);
 
   const handleExport = useCallback(async () => {
     const videoClips = clips.filter(c => c.type === 'video' && c.track === 0)
@@ -379,5 +429,13 @@ export default function App() {
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <HistoryProvider>
+      <AppContent />
+    </HistoryProvider>
   );
 }
