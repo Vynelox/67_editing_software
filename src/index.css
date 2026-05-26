@@ -189,19 +189,6 @@ html, body, #root {
 .media-item:hover .media-remove { opacity: 1; }
 .media-remove:hover { background: rgba(239,68,68,0.15); }
 
-.collapse-toggle {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  color: var(--text-secondary);
-}
-.collapse-toggle:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border); }
-
 /* Viewer */
 .viewer {
   display: flex;
@@ -325,8 +312,7 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   background: var(--bg-panel);
-  height: 100%; /* fill parent container so anchored layout can control size */
-  min-height: 120px;
+  height: 220px;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
@@ -364,8 +350,6 @@ html, body, #root {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding-top: 32px; /* reserve space for ruler/header */
-  justify-content: center; /* center labels block to match centered tracks */
 }
 
 .tl-label {
@@ -394,24 +378,6 @@ html, body, #root {
   border-bottom: 1px solid var(--border);
 }
 
-.tl-inner {
-  position: relative;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 119px,
-    var(--border) 119px,
-    var(--border) 120px
-  );
-}
-
-.tl-tracks-wrap {
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* center the stack of tracks vertically */
-  height: 100%;
-}
-
 .ruler-tick {
   position: absolute;
   top: 0;
@@ -432,14 +398,16 @@ html, body, #root {
 .tl-track {
   position: relative;
   border-bottom: 1px solid var(--border);
-  background: transparent;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 119px,
+    var(--border) 119px,
+    var(--border) 120px
+  );
   transition: background-color 0.1s;
 }
 .tl-track:hover { background-color: rgba(255,255,255,0.01); }
-
-.tl-clip { display: block; }
-.clip-inner { display: flex; align-items: center; height: 100%; }
-.clip-label { position: static; left: auto; right: auto; font-size: 12px; }
 
 /* Timeline Clips */
 .tl-clip {
@@ -538,13 +506,13 @@ html, body, #root {
 .tl-playhead {
   position: absolute;
   top: 0;
-  z-index: 40; /* below torus menu */
+  z-index: 20;
   pointer-events: none;
 }
 
 .playhead-btn {
   position: absolute;
-  top: -6px; /* lift button above ruler */
+  top: 0;
   left: -8px;
   width: 16px; height: 16px;
   border-radius: 50%;
@@ -554,7 +522,7 @@ html, body, #root {
   pointer-events: all;
   box-shadow: 0 0 0 3px var(--playhead-glow), 0 0 12px var(--playhead-color);
   transition: transform 0.1s, box-shadow 0.1s;
-  z-index: 41; /* ensure button above ruler but below torus */
+  z-index: 21;
 }
 .playhead-btn:hover {
   transform: scale(1.2);
@@ -573,8 +541,8 @@ html, body, #root {
 
 /* Torus Menu */
 .torus-overlay {
-  position: fixed;
-  z-index: 2000;
+  position: absolute;
+  z-index: 100;
   width: 240px;
   height: 240px;
   pointer-events: all;
@@ -740,6 +708,45 @@ html, body, #root {
   transition: background 0.12s, color 0.12s;
 }
 .icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* Settings */
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.settings-input {
+  background: #000;
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 120px;
+}
+.settings-input:focus { border-color: var(--accent-blue); }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
