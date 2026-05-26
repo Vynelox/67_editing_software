@@ -262,9 +262,9 @@ export default function Timeline({
           ))}
         </div>
 
-        <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto', flex: 1 }} onWheel={handleWheel}>
+        <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto', flex: 1, height: '100%' }} onWheel={handleWheel}>
           {/* wheel handler attached via prop below for proper typing */}
-          <div style={{ width: totalWidth, position: 'relative' }}>
+          <div style={{ width: totalWidth, position: 'relative', height: '100%' }}>
             <div className="tl-ruler" style={{ height: HEADER_H, width: totalWidth }}>
               {rulerTicks().map((t, i) => (
                 <div key={i} className="ruler-tick" style={{ left: t.x }}>
@@ -302,23 +302,27 @@ export default function Timeline({
                       key={clip.id}
                       data-clip-id={clip.id}
                       className={`tl-clip ${clipColor(clip.type)}${isSelected ? ' selected' : ''}`}
-                      style={{ left: x, width: w, height: TRACK_H - 8, top: 4 }}
+                      style={{ left: x, width: w, height: TRACK_H, top: 0 }}
                       onMouseDown={e => startClipDrag(e, clip.id)}
                       onClick={e => { e.stopPropagation(); onSelectClip(clip.id, e.shiftKey); }}
                     >
                       {fadeInW > 0 && <div className="fade-overlay fade-in" style={{ width: fadeInW }} />}
                       {fadeOutW > 0 && <div className="fade-overlay fade-out" style={{ width: fadeOutW }} />}
-                      <span className="clip-label">{clip.name}</span>
-                      {clip.type === 'audio' && (() => {
-                        const media = mediaItems.get(clip.mediaId);
-                        if (media) return <Waveform src={media.src} width={w} height={TRACK_H - 24} color="#d1fae5" />;
-                        return null;
-                      })()}
-                      {clip.type === 'video' && (() => {
-                        const media = mediaItems.get(clip.mediaId);
-                        if (media) return <ThumbnailRoll src={media.src} totalWidth={w} height={Math.min(48, TRACK_H - 16)} count={Math.min(8, Math.max(3, Math.floor(w / 80)))} />;
-                        return null;
-                      })()}
+                      <div className="clip-inner" style={{ height: '100%', display: 'flex', alignItems: 'center', padding: '0 22px' }}>
+                        <span className="clip-label">{clip.name}</span>
+                        <div style={{ flex: 1 }}>
+                          {clip.type === 'audio' && (() => {
+                            const media = mediaItems.get(clip.mediaId);
+                            if (media) return <Waveform src={media.src} width={w} height={TRACK_H - 24} color="#d1fae5" />;
+                            return null;
+                          })()}
+                          {clip.type === 'video' && (() => {
+                            const media = mediaItems.get(clip.mediaId);
+                            if (media) return <ThumbnailRoll src={media.src} totalWidth={w} height={Math.min(48, TRACK_H - 16)} count={Math.min(8, Math.max(3, Math.floor(w / 80)))} />;
+                            return null;
+                          })()}
+                        </div>
+                      </div>
                       <div className="fade-handle fade-handle-l" onMouseDown={e => startFadeDrag(e, clip.id, 'in')} />
                       <div className="fade-handle fade-handle-r" onMouseDown={e => startFadeDrag(e, clip.id, 'out')} />
                     </div>
@@ -344,7 +348,7 @@ export default function Timeline({
 
             <div
               className="tl-playhead"
-              style={{ left: playheadX, top: 0, height: HEADER_H + tracks.length * TRACK_H }}
+              style={{ left: playheadX, top: 0, height: '100%' }}
             >
               <button
                 className="playhead-btn"

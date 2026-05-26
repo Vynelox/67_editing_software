@@ -410,6 +410,10 @@ html, body, #root {
 }
 .tl-track:hover { background-color: rgba(255,255,255,0.01); }
 
+.tl-clip { display: block; }
+.clip-inner { display: flex; align-items: center; height: 100%; }
+.clip-label { position: static; left: auto; right: auto; font-size: 12px; }
+
 /* Timeline Clips */
 .tl-clip {
   position: absolute;
