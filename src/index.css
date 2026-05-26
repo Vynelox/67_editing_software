@@ -351,6 +351,8 @@ html, body, #root {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  padding-top: 32px; /* reserve space for ruler/header */
+  justify-content: center; /* center labels block to match centered tracks */
 }
 
 .tl-label {
@@ -379,6 +381,24 @@ html, body, #root {
   border-bottom: 1px solid var(--border);
 }
 
+.tl-inner {
+  position: relative;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 119px,
+    var(--border) 119px,
+    var(--border) 120px
+  );
+}
+
+.tl-tracks-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* center the stack of tracks vertically */
+  height: 100%;
+}
+
 .ruler-tick {
   position: absolute;
   top: 0;
@@ -399,13 +419,7 @@ html, body, #root {
 .tl-track {
   position: relative;
   border-bottom: 1px solid var(--border);
-  background: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 119px,
-    var(--border) 119px,
-    var(--border) 120px
-  );
+  background: transparent;
   transition: background-color 0.1s;
 }
 .tl-track:hover { background-color: rgba(255,255,255,0.01); }
