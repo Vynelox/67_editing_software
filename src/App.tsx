@@ -5,6 +5,7 @@ import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
 import Settings from './components/Settings';
 import Splitter from './components/Splitter';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   type MediaItem, type TimelineClip, type Track,
   FPS, generateId, secondsToFrames
@@ -80,6 +81,11 @@ function AppContent() {
   const [leftWidth, setLeftWidth] = useState<number>(() => {
     try { const v = window.localStorage.getItem('juicecut.layout.leftWidth'); return v ? Number(v) : 260; } catch { return 260; }
   });
+  const [leftCollapsed, setLeftCollapsed] = useState<boolean>(() => {
+    try { const v = window.localStorage.getItem('juicecut.layout.leftCollapsed'); return v === 'true'; } catch { return false; }
+  });
+  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftCollapsed', leftCollapsed ? 'true' : 'false'); } catch {} }, [leftCollapsed]);
+  const [savedTimelineHeight, setSavedTimelineHeight] = useState<number | null>(null);
   const [timelineHeight, setTimelineHeight] = useState<number>(() => {
     try { const v = window.localStorage.getItem('juicecut.layout.timelineHeight'); return v ? Number(v) : 220; } catch { return 220; }
   });
@@ -431,18 +437,43 @@ function AppContent() {
         <button className="icon-btn" onClick={() => setSettingsOpen(true)} title="Settings">⚙</button>
       </header>
       <div className="workspace" style={{ display: 'flex', minHeight: 0 }}>
-        <div style={{ width: leftWidth, minWidth: 120, maxWidth: 800 }}>
-          <MediaPool
-            items={Array.from(mediaItems.values())}
-            selectedMediaId={selectedMediaId}
-            onSelect={setSelectedMediaId}
-            onAdd={handleAddMedia}
-            onRemove={handleRemoveMedia}
-          />
+        <div style={{ width: leftCollapsed ? 36 : leftWidth, minWidth: leftCollapsed ? 36 : 120, maxWidth: 800, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: 6, display: 'flex', justifyContent: 'center' }}>
+            <button
+              className="icon-btn collapse-toggle"
+              title={leftCollapsed ? 'Expand media pool' : 'Collapse media pool'}
+              onClick={() => {
+                // toggle collapse and adjust timeline height: expand timeline when collapsing
+                if (!leftCollapsed) {
+                  setSavedTimelineHeight(timelineHeight);
+                  const newH = Math.min(900, Math.max(120, Math.round(window.innerHeight * 0.4)));
+                  setTimelineHeight(newH);
+                  setLeftCollapsed(true);
+                } else {
+                  if (savedTimelineHeight !== null) setTimelineHeight(savedTimelineHeight);
+                  setSavedTimelineHeight(null);
+                  setLeftCollapsed(false);
+                }
+              }}
+            >
+              {leftCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+            </button>
+          </div>
+          {!leftCollapsed && (
+            <MediaPool
+              items={Array.from(mediaItems.values())}
+              selectedMediaId={selectedMediaId}
+              onSelect={setSelectedMediaId}
+              onAdd={handleAddMedia}
+              onRemove={handleRemoveMedia}
+            />
+          )}
         </div>
-        <Splitter orientation="vertical" onChange={(dx) => {
-          setLeftWidth(w => Math.max(120, Math.min(800, w + dx)));
-        }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+        {!leftCollapsed && (
+          <Splitter orientation="vertical" onChange={(dx) => {
+            setLeftWidth(w => Math.max(120, Math.min(800, w + dx)));
+          }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
           {/* Viewer area - reserve space for timeline via paddingBottom so timeline is anchored to bottom */}
