@@ -312,7 +312,8 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   background: var(--bg-panel);
-  height: 220px;
+  height: 100%; /* fill parent container so anchored layout can control size */
+  min-height: 120px;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;

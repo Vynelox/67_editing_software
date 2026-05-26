@@ -4,6 +4,7 @@ import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
 import Settings from './components/Settings';
+import Splitter from './components/Splitter';
 import {
   type MediaItem, type TimelineClip, type Track,
   FPS, generateId, secondsToFrames
@@ -75,6 +76,16 @@ function AppContent() {
     try { const v = window.localStorage.getItem('juicecut.settings.includeResizeInUndo'); return v === null ? true : v === 'true'; } catch { return true; }
   });
 
+  // layout (persisted) - moved above snapshot to avoid use-before-declare
+  const [leftWidth, setLeftWidth] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.layout.leftWidth'); return v ? Number(v) : 260; } catch { return 260; }
+  });
+  const [timelineHeight, setTimelineHeight] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.layout.timelineHeight'); return v ? Number(v) : 220; } catch { return 220; }
+  });
+  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftWidth', String(leftWidth)); } catch {} }, [leftWidth]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.timelineHeight', String(timelineHeight)); } catch {} }, [timelineHeight]);
+
   const totalFrames = clips.reduce((max, c) => Math.max(max, c.endFrame), 0);
 
   const snapshot = useCallback(() => ({
@@ -82,8 +93,9 @@ function AppContent() {
     mediaItems: Array.from(mediaItems.entries()),
     selectedIds: [...selectedIds],
     playhead,
-    settings: { playheadTop, includeResizeInUndo }
-  }), [clips, mediaItems, selectedIds, playhead, playheadTop, includeResizeInUndo]);
+    settings: { playheadTop, includeResizeInUndo },
+    layout: { leftWidth, timelineHeight }
+  }), [clips, mediaItems, selectedIds, playhead, playheadTop, includeResizeInUndo, leftWidth, timelineHeight]);
 
   const restore = useCallback((snap: any) => {
     try {
@@ -95,14 +107,19 @@ function AppContent() {
         setPlayheadTop(typeof snap.settings.playheadTop === 'number' ? snap.settings.playheadTop : playheadTop);
         setIncludeResizeInUndo(typeof snap.settings.includeResizeInUndo === 'boolean' ? snap.settings.includeResizeInUndo : includeResizeInUndo);
       }
+      if (snap?.layout) {
+        setLeftWidth(typeof snap.layout.leftWidth === 'number' ? snap.layout.leftWidth : leftWidth);
+        setTimelineHeight(typeof snap.layout.timelineHeight === 'number' ? snap.layout.timelineHeight : timelineHeight);
+      }
     } catch (err) {
       console.warn('Failed to restore snapshot', err);
     }
-  }, [setClips, setMediaItems, setSelectedIds, setPlayhead, playheadTop, includeResizeInUndo]);
+  }, [setClips, setMediaItems, setSelectedIds, setPlayhead, playheadTop, includeResizeInUndo, leftWidth, timelineHeight]);
 
   // settings
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // layout (persisted)
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.playheadTop', String(playheadTop)); } catch {}
   }, [playheadTop]);
@@ -413,45 +430,70 @@ function AppContent() {
         <span className="app-sub">Browser Video Editor</span>
         <button className="icon-btn" onClick={() => setSettingsOpen(true)} title="Settings">⚙</button>
       </header>
-      <div className="workspace">
-        <MediaPool
-          items={Array.from(mediaItems.values())}
-          selectedMediaId={selectedMediaId}
-          onSelect={setSelectedMediaId}
-          onAdd={handleAddMedia}
-          onRemove={handleRemoveMedia}
-        />
-        <Viewer
-          clips={clips}
-          mediaItems={mediaItems}
-          playhead={playhead}
-          playing={playing}
-          totalFrames={totalFrames}
-          onPlayPause={() => setPlaying(p => !p)}
-          onSeek={setPlayhead}
-          onExport={handleExport}
-        />
+      <div className="workspace" style={{ display: 'flex', minHeight: 0 }}>
+        <div style={{ width: leftWidth, minWidth: 120, maxWidth: 800 }}>
+          <MediaPool
+            items={Array.from(mediaItems.values())}
+            selectedMediaId={selectedMediaId}
+            onSelect={setSelectedMediaId}
+            onAdd={handleAddMedia}
+            onRemove={handleRemoveMedia}
+          />
+        </div>
+        <Splitter orientation="vertical" onChange={(dx) => {
+          setLeftWidth(w => Math.max(120, Math.min(800, w + dx)));
+        }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
+          {/* Viewer area - reserve space for timeline via paddingBottom so timeline is anchored to bottom */}
+          <div style={{ flex: 1, minHeight: 0, paddingBottom: timelineHeight }}>
+            <Viewer
+              clips={clips}
+              mediaItems={mediaItems}
+              playhead={playhead}
+              playing={playing}
+              totalFrames={totalFrames}
+              onPlayPause={() => setPlaying(p => !p)}
+              onSeek={setPlayhead}
+              onExport={handleExport}
+            />
+          </div>
+
+          {/* Horizontal splitter positioned above the timeline (absolute) */}
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: timelineHeight, display: 'flex', justifyContent: 'stretch', pointerEvents: 'none' }}>
+            <div style={{ pointerEvents: 'all', width: '100%' }}>
+              <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
+                // downward pointer movement should increase timeline height
+                setTimelineHeight(h => Math.max(120, Math.min(900, h - dy)));
+              }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+            </div>
+          </div>
+
+          {/* Timeline anchored to bottom */}
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: timelineHeight, minHeight: 120 }}>
+            <Timeline
+              clips={clips}
+              tracks={TRACKS}
+              mediaItems={mediaItems}
+              playhead={playhead}
+              playheadTop={playheadTop}
+              selectedIds={selectedIds}
+              onSeek={setPlayhead}
+              onDropMedia={handleDropMedia}
+              onSelectClip={handleSelectClip}
+              onSplitClip={handleSplitClip}
+              onTrimLatter={handleTrimLatter}
+              onTrimFormer={handleTrimFormer}
+              onNudge={handleNudge}
+              onJoin={handleJoin}
+              onFadeChange={handleFadeChange}
+              onRoll={setRollClipId}
+              onStepEdge={handleStepEdge}
+              totalFrames={totalFrames}
+            />
+          </div>
+        </div>
       </div>
-      <Timeline
-        clips={clips}
-        tracks={TRACKS}
-          mediaItems={mediaItems}
-        playhead={playhead}
-        playheadTop={playheadTop}
-        selectedIds={selectedIds}
-        onSeek={setPlayhead}
-        onDropMedia={handleDropMedia}
-        onSelectClip={handleSelectClip}
-        onSplitClip={handleSplitClip}
-        onTrimLatter={handleTrimLatter}
-        onTrimFormer={handleTrimFormer}
-        onNudge={handleNudge}
-        onJoin={handleJoin}
-        onFadeChange={handleFadeChange}
-        onRoll={setRollClipId}
-        onStepEdge={handleStepEdge}
-        totalFrames={totalFrames}
-      />
       <Settings
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
