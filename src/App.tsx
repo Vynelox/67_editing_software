@@ -3,14 +3,11 @@ import MediaPool from './components/MediaPool';
 import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
-import Settings from './components/Settings';
-import Splitter from './components/Splitter';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import Settings, { DEFAULT_SETTINGS } from './components/Settings';
 import {
   type MediaItem, type TimelineClip, type Track,
   FPS, generateId, secondsToFrames
 } from './types';
-import { HistoryProvider, useHistory } from './state/history';
 
 const DEFAULT_IMAGE_DURATION = 5 * FPS;
 
@@ -58,8 +55,7 @@ function generateThumbnail(file: File, type: MediaItem['type']): Promise<string 
   });
 }
 
-function AppContent() {
-  const history = useHistory();
+export default function App() {
   const [mediaItems, setMediaItems] = useState<Map<string, MediaItem>>(new Map());
   const [clips, setClips] = useState<TimelineClip[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -67,90 +63,11 @@ function AppContent() {
   const [playhead, setPlayhead] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [rollClipId, setRollClipId] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // settings (persisted)
-  const [playheadTop, setPlayheadTop] = useState<number>(() => {
-    try { const v = window.localStorage.getItem('juicecut.settings.playheadTop'); return v ? Number(v) : -6; } catch { return -6; }
-  });
-  const [includeResizeInUndo, setIncludeResizeInUndo] = useState<boolean>(() => {
-    try { const v = window.localStorage.getItem('juicecut.settings.includeResizeInUndo'); return v === null ? true : v === 'true'; } catch { return true; }
-  });
-
-  // layout (persisted) - moved above snapshot to avoid use-before-declare
-  const [leftWidth, setLeftWidth] = useState<number>(() => {
-    try { const v = window.localStorage.getItem('juicecut.layout.leftWidth'); return v ? Number(v) : 260; } catch { return 260; }
-  });
-  const [leftCollapsed, setLeftCollapsed] = useState<boolean>(() => {
-    try { const v = window.localStorage.getItem('juicecut.layout.leftCollapsed'); return v === 'true'; } catch { return false; }
-  });
-  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftCollapsed', leftCollapsed ? 'true' : 'false'); } catch {} }, [leftCollapsed]);
-  const [savedTimelineHeight, setSavedTimelineHeight] = useState<number | null>(null);
-  const [timelineHeight, setTimelineHeight] = useState<number>(() => {
-    try { const v = window.localStorage.getItem('juicecut.layout.timelineHeight'); return v ? Number(v) : 220; } catch { return 220; }
-  });
-  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftWidth', String(leftWidth)); } catch {} }, [leftWidth]);
-  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.timelineHeight', String(timelineHeight)); } catch {} }, [timelineHeight]);
-
   const totalFrames = clips.reduce((max, c) => Math.max(max, c.endFrame), 0);
-
-  const snapshot = useCallback(() => ({
-    clips: JSON.parse(JSON.stringify(clips)),
-    mediaItems: Array.from(mediaItems.entries()),
-    selectedIds: [...selectedIds],
-    playhead,
-    settings: { playheadTop, includeResizeInUndo },
-    layout: { leftWidth, timelineHeight }
-  }), [clips, mediaItems, selectedIds, playhead, playheadTop, includeResizeInUndo, leftWidth, timelineHeight]);
-
-  const restore = useCallback((snap: any) => {
-    try {
-      setClips(Array.isArray(snap?.clips) ? snap.clips : []);
-      setMediaItems(new Map(Array.isArray(snap?.mediaItems) ? snap.mediaItems : []));
-      setSelectedIds(Array.isArray(snap?.selectedIds) ? snap.selectedIds : []);
-      setPlayhead(typeof snap?.playhead === 'number' ? snap.playhead : 0);
-      if (snap?.settings) {
-        setPlayheadTop(typeof snap.settings.playheadTop === 'number' ? snap.settings.playheadTop : playheadTop);
-        setIncludeResizeInUndo(typeof snap.settings.includeResizeInUndo === 'boolean' ? snap.settings.includeResizeInUndo : includeResizeInUndo);
-      }
-      if (snap?.layout) {
-        setLeftWidth(typeof snap.layout.leftWidth === 'number' ? snap.layout.leftWidth : leftWidth);
-        setTimelineHeight(typeof snap.layout.timelineHeight === 'number' ? snap.layout.timelineHeight : timelineHeight);
-      }
-    } catch (err) {
-      console.warn('Failed to restore snapshot', err);
-    }
-  }, [setClips, setMediaItems, setSelectedIds, setPlayhead, playheadTop, includeResizeInUndo, leftWidth, timelineHeight]);
-
-  // settings
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
-  // layout (persisted)
-  useEffect(() => {
-    try { window.localStorage.setItem('juicecut.settings.playheadTop', String(playheadTop)); } catch {}
-  }, [playheadTop]);
-  useEffect(() => {
-    try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {}
-  }, [includeResizeInUndo]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      // Undo: Ctrl+Z (no modifiers)
-      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        history.undo(snapshot(), restore);
-      }
-      // Redo: Ctrl+Shift+Z, Ctrl+Alt+Z, Ctrl+Y
-      if (e.ctrlKey && ((e.shiftKey && e.key.toLowerCase() === 'z') || (e.altKey && e.key.toLowerCase() === 'z') || (e.key.toLowerCase() === 'y' && !e.altKey && !e.shiftKey))) {
-        e.preventDefault();
-        history.redo(snapshot(), restore);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [history, snapshot, restore]);
 
   useEffect(() => {
     if (playing) {
@@ -176,7 +93,6 @@ function AppContent() {
   }, []);
 
   const handleAddMedia = useCallback(async (files: FileList) => {
-    history.push(snapshot());
     const newItems = new Map(mediaItems);
     for (const file of Array.from(files)) {
       const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
@@ -195,17 +111,15 @@ function AppContent() {
   }, [mediaItems]);
 
   const handleRemoveMedia = useCallback((id: string) => {
-    history.push(snapshot());
     const newItems = new Map(mediaItems);
     const item = newItems.get(id);
     if (item) URL.revokeObjectURL(item.src);
     newItems.delete(id);
     setMediaItems(newItems);
     setClips(prev => prev.filter(c => c.mediaId !== id));
-  }, [mediaItems, history, snapshot]);
+  }, [mediaItems]);
 
   const handleDropMedia = useCallback((mediaId: string, track: number, startFrame: number) => {
-    history.push(snapshot());
     const media = mediaItems.get(mediaId);
     if (!media) return;
     const trackObj = TRACKS[track];
@@ -230,7 +144,6 @@ function AppContent() {
   }, []);
 
   const handleNudge = useCallback((ids: string[], delta: number) => {
-    history.push(snapshot());
     setClips(prev => {
       const movers = new Set(ids);
       return prev.map(clip => {
@@ -247,10 +160,9 @@ function AppContent() {
         return { ...clip, startFrame: newStart, endFrame: newStart + len };
       });
     });
-  }, [history, snapshot]);
+  }, []);
 
   const handleSplitClip = useCallback((clipId: string, frame: number) => {
-    history.push(snapshot());
     setClips(prev => {
       const clip = prev.find(c => c.id === clipId);
       if (!clip || frame <= clip.startFrame || frame >= clip.endFrame) return prev;
@@ -265,10 +177,9 @@ function AppContent() {
       };
       return prev.map(c => c.id === clipId ? part1 : c).concat(part2);
     });
-  }, [history, snapshot]);
+  }, []);
 
   const handleTrimLatter = useCallback((clipId: string, frame: number, ripple: boolean) => {
-    history.push(snapshot());
     setClips(prev => {
       const clip = prev.find(c => c.id === clipId);
       if (!clip || frame <= clip.startFrame) return prev;
@@ -282,10 +193,9 @@ function AppContent() {
         return c;
       });
     });
-  }, [history, snapshot]);
+  }, []);
 
   const handleTrimFormer = useCallback((clipId: string, frame: number, ripple: boolean) => {
-    history.push(snapshot());
     setClips(prev => {
       const clip = prev.find(c => c.id === clipId);
       if (!clip || frame >= clip.endFrame) return prev;
@@ -298,10 +208,9 @@ function AppContent() {
         return c;
       });
     });
-  }, [history, snapshot]);
+  }, []);
 
   const handleJoin = useCallback((clipAId: string, clipBId: string) => {
-    history.push(snapshot());
     setClips(prev => {
       const a = prev.find(c => c.id === clipAId);
       const b = prev.find(c => c.id === clipBId);
@@ -312,23 +221,21 @@ function AppContent() {
       };
       return prev.filter(c => c.id !== clipAId && c.id !== clipBId).concat(merged);
     });
-  }, [history, snapshot]);
+  }, []);
 
   const handleFadeChange = useCallback((clipId: string, side: 'in' | 'out', frames: number) => {
-    history.push(snapshot());
     setClips(prev => prev.map(c => {
       if (c.id !== clipId) return c;
       const maxFade = Math.floor((c.endFrame - c.startFrame) / 2);
       const clamped = Math.min(Math.max(0, frames), maxFade);
       return { ...c, fades: { ...c.fades, [side]: clamped } };
     }));
-  }, [history, snapshot]);
+  }, []);
 
   const handleStepEdge = useCallback((
     clipId: string | null, cutBetween: [string, string] | null,
     direction: number, ripple: boolean
   ) => {
-    history.push(snapshot());
     setClips(prev => {
       if (cutBetween) {
         const [aId, bId] = cutBetween;
@@ -352,12 +259,11 @@ function AppContent() {
       }
       return prev;
     });
-  }, [history, snapshot]);
+  }, []);
 
   const handleRollApply = useCallback((clipId: string, newSrcIn: number, newSrcOut: number) => {
-    history.push(snapshot());
     setClips(prev => prev.map(c => c.id === clipId ? { ...c, srcIn: newSrcIn, srcOut: newSrcOut } : c));
-  }, [history, snapshot]);
+  }, []);
 
   const handleExport = useCallback(async () => {
     const videoClips = clips.filter(c => c.type === 'video' && c.track === 0)
@@ -431,119 +337,56 @@ function AppContent() {
             <rect x="2" y="12" width="8" height="8" rx="1.5" fill="#fb923c"/>
             <rect x="12" y="12" width="8" height="8" rx="1.5" fill="#f472b6"/>
           </svg>
-          <span>Juice Cut</span>
+          <span>CutForge</span>
         </div>
         <span className="app-sub">Browser Video Editor</span>
-        <button className="icon-btn" onClick={() => setSettingsOpen(true)} title="Settings">⚙</button>
+        <button className="icon-btn" style={{ marginLeft: 'auto' }} onClick={() => setSettingsOpen(true)} title="Settings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
       </header>
-      <div className="workspace" style={{ display: 'flex', minHeight: 0 }}>
-        <div style={{ width: leftCollapsed ? 36 : leftWidth, minWidth: leftCollapsed ? 36 : 120, maxWidth: 800, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: 6, display: 'flex', justifyContent: 'center' }}>
-            <button
-              className="icon-btn collapse-toggle"
-              title={leftCollapsed ? 'Expand media pool' : 'Collapse media pool'}
-              onClick={() => {
-                // toggle collapse and adjust timeline height: expand timeline when collapsing
-                if (!leftCollapsed) {
-                  setSavedTimelineHeight(timelineHeight);
-                  const newH = Math.min(900, Math.max(120, Math.round(window.innerHeight * 0.4)));
-                  setTimelineHeight(newH);
-                  setLeftCollapsed(true);
-                } else {
-                  if (savedTimelineHeight !== null) setTimelineHeight(savedTimelineHeight);
-                  setSavedTimelineHeight(null);
-                  setLeftCollapsed(false);
-                }
-              }}
-            >
-              {leftCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-            </button>
-          </div>
-          {!leftCollapsed && (
-            <MediaPool
-              items={Array.from(mediaItems.values())}
-              selectedMediaId={selectedMediaId}
-              onSelect={setSelectedMediaId}
-              onAdd={handleAddMedia}
-              onRemove={handleRemoveMedia}
-            />
-          )}
-        </div>
-        {!leftCollapsed && (
-          <Splitter orientation="vertical" onChange={(dx) => {
-            setLeftWidth(w => Math.max(120, Math.min(800, w + dx)));
-          }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
-          {/* Viewer area - reserve space for timeline via paddingBottom so timeline is anchored to bottom */}
-          <div style={{ flex: 1, minHeight: 0, paddingBottom: timelineHeight }}>
-            <Viewer
-              clips={clips}
-              mediaItems={mediaItems}
-              playhead={playhead}
-              playing={playing}
-              totalFrames={totalFrames}
-              onPlayPause={() => setPlaying(p => !p)}
-              onSeek={setPlayhead}
-              onExport={handleExport}
-            />
-          </div>
-
-          {/* Horizontal splitter positioned above the timeline (absolute) */}
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: timelineHeight, display: 'flex', justifyContent: 'stretch', pointerEvents: 'none' }}>
-            <div style={{ pointerEvents: 'all', width: '100%' }}>
-              <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
-                // downward pointer movement should increase timeline height
-                setTimelineHeight(h => Math.max(120, Math.min(900, h - dy)));
-              }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
-            </div>
-          </div>
-
-          {/* Timeline anchored to bottom */}
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: timelineHeight, minHeight: 120 }}>
-            <Timeline
-              clips={clips}
-              tracks={TRACKS}
-              mediaItems={mediaItems}
-              playhead={playhead}
-              playheadTop={playheadTop}
-              selectedIds={selectedIds}
-              onSeek={setPlayhead}
-              onDropMedia={handleDropMedia}
-              onSelectClip={handleSelectClip}
-              onSplitClip={handleSplitClip}
-              onTrimLatter={handleTrimLatter}
-              onTrimFormer={handleTrimFormer}
-              onNudge={handleNudge}
-              onJoin={handleJoin}
-              onFadeChange={handleFadeChange}
-              onRoll={setRollClipId}
-              onStepEdge={handleStepEdge}
-              totalFrames={totalFrames}
-            />
-          </div>
-        </div>
+      <div className="workspace">
+        <MediaPool
+          items={Array.from(mediaItems.values())}
+          selectedMediaId={selectedMediaId}
+          onSelect={setSelectedMediaId}
+          onAdd={handleAddMedia}
+          onRemove={handleRemoveMedia}
+        />
+        <Viewer
+          clips={clips}
+          mediaItems={mediaItems}
+          playhead={playhead}
+          playing={playing}
+          totalFrames={totalFrames}
+          onPlayPause={() => setPlaying(p => !p)}
+          onSeek={setPlayhead}
+          onExport={handleExport}
+        />
       </div>
-      <Settings
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        playheadTop={playheadTop}
-        onChangePlayheadTop={setPlayheadTop}
-        includeResizeInUndo={includeResizeInUndo}
-        onToggleIncludeResizeInUndo={setIncludeResizeInUndo}
+      <Timeline
+        clips={clips}
+        tracks={TRACKS}
+        playhead={playhead}
+        selectedIds={selectedIds}
+        onSeek={setPlayhead}
+        onDropMedia={handleDropMedia}
+        onSelectClip={handleSelectClip}
+        onSplitClip={handleSplitClip}
+        onTrimLatter={handleTrimLatter}
+        onTrimFormer={handleTrimFormer}
+        onNudge={handleNudge}
+        onJoin={handleJoin}
+        onFadeChange={handleFadeChange}
+        onRoll={setRollClipId}
+        onStepEdge={handleStepEdge}
+        totalFrames={totalFrames}
       />
       {rollClip && rollMedia && (
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
       )}
+      <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={settings} onChange={setSettings} />
     </div>
-  );
-}
-
-export default function App() {
-  return (
-    <HistoryProvider>
-      <AppContent />
-    </HistoryProvider>
   );
 }
