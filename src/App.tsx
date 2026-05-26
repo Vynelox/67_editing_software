@@ -436,48 +436,49 @@ function AppContent() {
         <span className="app-sub">Browser Video Editor</span>
         <button className="icon-btn" onClick={() => setSettingsOpen(true)} title="Settings">⚙</button>
       </header>
-      <div className="workspace" style={{ display: 'flex', minHeight: 0 }}>
-        <div style={{ width: leftCollapsed ? 36 : leftWidth, minWidth: leftCollapsed ? 36 : 120, maxWidth: 800, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: 6, display: 'flex', justifyContent: 'center' }}>
-            <button
-              className="icon-btn collapse-toggle"
-              title={leftCollapsed ? 'Expand media pool' : 'Collapse media pool'}
-              onClick={() => {
-                // toggle collapse and adjust timeline height: expand timeline when collapsing
-                if (!leftCollapsed) {
-                  setSavedTimelineHeight(timelineHeight);
-                  const newH = Math.min(900, Math.max(120, Math.round(window.innerHeight * 0.4)));
-                  setTimelineHeight(newH);
-                  setLeftCollapsed(true);
-                } else {
-                  if (savedTimelineHeight !== null) setTimelineHeight(savedTimelineHeight);
-                  setSavedTimelineHeight(null);
-                  setLeftCollapsed(false);
-                }
-              }}
-            >
-              {leftCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-            </button>
+      <div className="workspace" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {/* Top row: MediaPool (left) + vertical splitter + Viewer (right) */}
+        <div style={{ display: 'flex', minHeight: 0, flex: '1 1 auto' }}>
+          <div style={{ width: leftCollapsed ? 36 : leftWidth, minWidth: leftCollapsed ? 36 : 120, maxWidth: 800, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: 6, display: 'flex', justifyContent: 'center' }}>
+              <button
+                className="icon-btn collapse-toggle"
+                title={leftCollapsed ? 'Expand media pool' : 'Collapse media pool'}
+                onClick={() => {
+                  // toggle collapse and adjust timeline height: expand timeline when collapsing
+                  if (!leftCollapsed) {
+                    setSavedTimelineHeight(timelineHeight);
+                    const newH = Math.min(900, Math.max(120, Math.round(window.innerHeight * 0.4)));
+                    setTimelineHeight(newH);
+                    setLeftCollapsed(true);
+                  } else {
+                    if (savedTimelineHeight !== null) setTimelineHeight(savedTimelineHeight);
+                    setSavedTimelineHeight(null);
+                    setLeftCollapsed(false);
+                  }
+                }}
+              >
+                {leftCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+              </button>
+            </div>
+            {!leftCollapsed && (
+              <MediaPool
+                items={Array.from(mediaItems.values())}
+                selectedMediaId={selectedMediaId}
+                onSelect={setSelectedMediaId}
+                onAdd={handleAddMedia}
+                onRemove={handleRemoveMedia}
+              />
+            )}
           </div>
-          {!leftCollapsed && (
-            <MediaPool
-              items={Array.from(mediaItems.values())}
-              selectedMediaId={selectedMediaId}
-              onSelect={setSelectedMediaId}
-              onAdd={handleAddMedia}
-              onRemove={handleRemoveMedia}
-            />
-          )}
-        </div>
-        {!leftCollapsed && (
-          <Splitter orientation="vertical" onChange={(dx) => {
-            setLeftWidth(w => Math.max(120, Math.min(800, w + dx)));
-          }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
-        )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
-          {/* Viewer area - reserve space for timeline via paddingBottom so timeline is anchored to bottom */}
-          <div style={{ flex: 1, minHeight: 0, paddingBottom: timelineHeight }}>
+          {!leftCollapsed && (
+            <Splitter orientation="vertical" onChange={(dx) => {
+              setLeftWidth(w => Math.max(120, Math.min(800, w + dx)));
+            }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+          )}
+
+          <div style={{ flex: 1, minHeight: 0 }}>
             <Viewer
               clips={clips}
               mediaItems={mediaItems}
@@ -489,40 +490,38 @@ function AppContent() {
               onExport={handleExport}
             />
           </div>
+        </div>
 
-          {/* Horizontal splitter positioned above the timeline (absolute) */}
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: timelineHeight, display: 'flex', justifyContent: 'stretch', pointerEvents: 'none' }}>
-            <div style={{ pointerEvents: 'all', width: '100%' }}>
-              <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
-                // downward pointer movement should increase timeline height
-                setTimelineHeight(h => Math.max(120, Math.min(900, h - dy)));
-              }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
-            </div>
-          </div>
+        {/* Horizontal splitter between top row and timeline */}
+        <div style={{ width: '100%' }}>
+          <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
+            // downward pointer movement should increase timeline height
+            setTimelineHeight(h => Math.max(120, Math.min(900, h + dy)));
+          }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+        </div>
 
-          {/* Timeline anchored to bottom */}
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: timelineHeight, minHeight: 120 }}>
-            <Timeline
-              clips={clips}
-              tracks={TRACKS}
-              mediaItems={mediaItems}
-              playhead={playhead}
-              playheadTop={playheadTop}
-              selectedIds={selectedIds}
-              onSeek={setPlayhead}
-              onDropMedia={handleDropMedia}
-              onSelectClip={handleSelectClip}
-              onSplitClip={handleSplitClip}
-              onTrimLatter={handleTrimLatter}
-              onTrimFormer={handleTrimFormer}
-              onNudge={handleNudge}
-              onJoin={handleJoin}
-              onFadeChange={handleFadeChange}
-              onRoll={setRollClipId}
-              onStepEdge={handleStepEdge}
-              totalFrames={totalFrames}
-            />
-          </div>
+        {/* Timeline as full-width bottom row */}
+        <div style={{ height: timelineHeight, minHeight: 120 }}>
+          <Timeline
+            clips={clips}
+            tracks={TRACKS}
+            mediaItems={mediaItems}
+            playhead={playhead}
+            playheadTop={playheadTop}
+            selectedIds={selectedIds}
+            onSeek={setPlayhead}
+            onDropMedia={handleDropMedia}
+            onSelectClip={handleSelectClip}
+            onSplitClip={handleSplitClip}
+            onTrimLatter={handleTrimLatter}
+            onTrimFormer={handleTrimFormer}
+            onNudge={handleNudge}
+            onJoin={handleJoin}
+            onFadeChange={handleFadeChange}
+            onRoll={setRollClipId}
+            onStepEdge={handleStepEdge}
+            totalFrames={totalFrames}
+          />
         </div>
       </div>
       <Settings
