@@ -1,58 +1,34 @@
-import { useState } from 'react';
-import { X, Settings as SettingsIcon } from 'lucide-react';
-
-interface Settings {
-  playneedleVerticalOffset: number;
-}
+import React from 'react';
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  settings: Settings;
-  onChange: (settings: Settings) => void;
+  playheadTop: number;
+  onChangePlayheadTop: (v: number) => void;
+  includeResizeInUndo: boolean;
+  onToggleIncludeResizeInUndo: (v: boolean) => void;
 }
 
-export const DEFAULT_SETTINGS: Settings = {
-  playneedleVerticalOffset: 50,
-};
-
-export default function Settings({ open, onClose, settings, onChange }: Props) {
-  const [local, setLocal] = useState<Settings>(settings);
-
+export default function Settings({ open, onClose, playheadTop, onChangePlayheadTop, includeResizeInUndo, onToggleIncludeResizeInUndo }: Props) {
   if (!open) return null;
-
-  const update = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    const next = { ...local, [key]: value };
-    setLocal(next);
-    onChange(next);
-  };
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay" role="dialog" aria-modal="true">
+      <div className="modal-box">
         <div className="modal-header">
-          <span className="flex items-center gap-2">
-            <SettingsIcon size={15} />
-            Settings
-          </span>
-          <button className="icon-btn" onClick={onClose}><X size={15} /></button>
+          <div>Settings</div>
+          <button className="icon-btn" onClick={onClose}>✕</button>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <label style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            Playneedle vertical offset (px)
+            <input type="number" value={playheadTop} onChange={e => onChangePlayheadTop(Number(e.target.value))} style={{ width: 120, marginLeft: 8 }} />
+          </label>
 
-        <div className="settings-fields">
-          <label className="settings-field">
-            <span className="settings-label">Playneedle Vertical Offset</span>
-            <span className="settings-hint">Pixels from top of the timeline ruler</span>
-            <input
-              type="number"
-              className="settings-input"
-              value={local.playneedleVerticalOffset}
-              min={0}
-              max={500}
-              onChange={e => update('playneedleVerticalOffset', Number(e.target.value))}
-            />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input type="checkbox" checked={includeResizeInUndo} onChange={e => onToggleIncludeResizeInUndo(e.target.checked)} />
+            <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
           </label>
         </div>
-
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>Close</button>
         </div>
