@@ -4,6 +4,7 @@ import type { TimelineClip, Track, MediaItem } from '../types';
 import { FPS, formatTimecode } from '../types';
 import TorusMenu from './TorusMenu';
 import Waveform from './Waveform';
+import ThumbnailRoll from './ThumbnailRoll';
 
 interface Props {
   clips: TimelineClip[];
@@ -281,6 +282,11 @@ export default function Timeline({
                       {clip.type === 'audio' && (() => {
                         const media = mediaItems.get(clip.mediaId);
                         if (media) return <Waveform src={media.src} width={w} height={TRACK_H - 24} color="#d1fae5" />;
+                        return null;
+                      })()}
+                      {clip.type === 'video' && (() => {
+                        const media = mediaItems.get(clip.mediaId);
+                        if (media) return <ThumbnailRoll src={media.src} totalWidth={w} height={Math.min(48, TRACK_H - 16)} count={Math.min(8, Math.max(3, Math.floor(w / 80)))} />;
                         return null;
                       })()}
                       <div className="fade-handle fade-handle-l" onMouseDown={e => startFadeDrag(e, clip.id, 'in')} />
