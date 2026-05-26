@@ -410,6 +410,7 @@ function AppContent() {
       <Timeline
         clips={clips}
         tracks={TRACKS}
+          mediaItems={mediaItems}
         playhead={playhead}
         selectedIds={selectedIds}
         onSeek={setPlayhead}

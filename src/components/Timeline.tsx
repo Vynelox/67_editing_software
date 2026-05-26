@@ -1,8 +1,9 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { Film, Music } from 'lucide-react';
-import type { TimelineClip, Track } from '../types';
+import type { TimelineClip, Track, MediaItem } from '../types';
 import { FPS, formatTimecode } from '../types';
 import TorusMenu from './TorusMenu';
+import Waveform from './Waveform';
 
 interface Props {
   clips: TimelineClip[];
@@ -35,13 +36,18 @@ type TorusTarget =
   | { kind: 'edge'; clipId: string; side: 'start' | 'end'; frame: number }
   | { kind: 'cut'; clipAId: string; clipBId: string; frame: number };
 
+interface PropsWithMedia extends Props {
+  mediaItems: Map<string, MediaItem>;
+}
+
 export default function Timeline({
   clips, tracks, playhead, selectedIds,
   onSeek, onDropMedia, onSelectClip,
   onSplitClip, onTrimLatter, onTrimFormer,
   onNudge, onJoin, onFadeChange, onRoll, onStepEdge,
   totalFrames
-}: Props) {
+  , mediaItems
+}: PropsWithMedia) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
   const [torusPos, setTorusPos] = useState<{ x: number; y: number } | null>(null);
@@ -272,6 +278,11 @@ export default function Timeline({
                       {fadeInW > 0 && <div className="fade-overlay fade-in" style={{ width: fadeInW }} />}
                       {fadeOutW > 0 && <div className="fade-overlay fade-out" style={{ width: fadeOutW }} />}
                       <span className="clip-label">{clip.name}</span>
+                      {clip.type === 'audio' && (() => {
+                        const media = mediaItems.get(clip.mediaId);
+                        if (media) return <Waveform src={media.src} width={w} height={TRACK_H - 24} color="#d1fae5" />;
+                        return null;
+                      })()}
                       <div className="fade-handle fade-handle-l" onMouseDown={e => startFadeDrag(e, clip.id, 'in')} />
                       <div className="fade-handle fade-handle-r" onMouseDown={e => startFadeDrag(e, clip.id, 'out')} />
                     </div>
