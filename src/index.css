@@ -506,13 +506,13 @@ html, body, #root {
 .tl-playhead {
   position: absolute;
   top: 0;
-  z-index: 20;
+  z-index: 40; /* below torus menu */
   pointer-events: none;
 }
 
 .playhead-btn {
   position: absolute;
-  top: 0;
+  top: -6px; /* lift button above ruler */
   left: -8px;
   width: 16px; height: 16px;
   border-radius: 50%;
@@ -522,7 +522,7 @@ html, body, #root {
   pointer-events: all;
   box-shadow: 0 0 0 3px var(--playhead-glow), 0 0 12px var(--playhead-color);
   transition: transform 0.1s, box-shadow 0.1s;
-  z-index: 21;
+  z-index: 41; /* ensure button above ruler but below torus */
 }
 .playhead-btn:hover {
   transform: scale(1.2);

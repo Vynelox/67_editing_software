@@ -185,6 +185,32 @@ export default function Timeline({
     };
   }, [handleMouseMove, handleMouseUp]);
 
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLElement>) => {
+    const el = e.currentTarget as HTMLElement;
+    // If Alt is pressed, zoom horizontally centered at cursor
+    if (e.altKey) {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left + el.scrollLeft;
+      const beforeFrame = xToFrame(mouseX, zoom);
+      const scale = e.deltaY < 0 ? 1.12 : 0.9;
+      const newZoom = Math.max(0.25, Math.min(4, zoom * scale));
+      setZoom(newZoom);
+      // keep cursor centered on the same frame
+      const newScrollLeft = frameToX(beforeFrame, newZoom) - (e.clientX - rect.left);
+      el.scrollLeft = Math.max(0, newScrollLeft);
+      return;
+    }
+
+    // Normal wheel: pan horizontally
+    // Prefer deltaX when available (touchpad), otherwise use deltaY
+    const delta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
+    if (delta !== 0) {
+      e.preventDefault();
+      el.scrollLeft += delta;
+    }
+  }, [zoom]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft' && selectedIds.length > 0) { e.preventDefault(); onNudge(selectedIds, -1); }
@@ -234,7 +260,8 @@ export default function Timeline({
           ))}
         </div>
 
-        <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto', flex: 1 }}>
+        <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto', flex: 1 }} onWheel={handleWheel}>
+          {/* wheel handler attached via prop below for proper typing */}
           <div style={{ width: totalWidth, position: 'relative' }}>
             <div className="tl-ruler" style={{ height: HEADER_H, width: totalWidth }}>
               {rulerTicks().map((t, i) => (
