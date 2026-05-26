@@ -39,6 +39,7 @@ type TorusTarget =
 
 interface PropsWithMedia extends Props {
   mediaItems: Map<string, MediaItem>;
+  playheadTop?: number;
 }
 
 export default function Timeline({
@@ -47,7 +48,7 @@ export default function Timeline({
   onSplitClip, onTrimLatter, onTrimFormer,
   onNudge, onJoin, onFadeChange, onRoll, onStepEdge,
   totalFrames
-  , mediaItems
+  , mediaItems, playheadTop
 }: PropsWithMedia) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -100,8 +101,9 @@ export default function Timeline({
     if (!rect) return;
     setTorusTarget(target);
     // position in viewport coordinates so menu can be fixed and escape stacking contexts
-    setTorusPos({ x: e.clientX, y: rect.top + (HEADER_H - 2) });
-  }, [getPlayheadContext]);
+    const offset = typeof playheadTop === 'number' ? playheadTop : -6;
+    setTorusPos({ x: e.clientX, y: rect.top + (HEADER_H - 2) + offset });
+  }, [getPlayheadContext, playheadTop]);
 
   const getJoinPairs = useCallback(() => {
     const pairs: Array<{ clipA: TimelineClip; clipB: TimelineClip }> = [];
@@ -346,6 +348,7 @@ export default function Timeline({
             >
               <button
                 className="playhead-btn"
+                style={{ top: typeof playheadTop === 'number' ? playheadTop : undefined }}
                 onMouseDown={() => setPlayheadDragging(true)}
                 onClick={handleNeedleClick}
                 title="Click for edit options"

@@ -3,6 +3,7 @@ import MediaPool from './components/MediaPool';
 import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
+import Settings from './components/Settings';
 import {
   type MediaItem, type TimelineClip, type Track,
   FPS, generateId, secondsToFrames
@@ -66,6 +67,14 @@ function AppContent() {
   const [rollClipId, setRollClipId] = useState<string | null>(null);
   const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // settings (persisted)
+  const [playheadTop, setPlayheadTop] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.playheadTop'); return v ? Number(v) : -6; } catch { return -6; }
+  });
+  const [includeResizeInUndo, setIncludeResizeInUndo] = useState<boolean>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.includeResizeInUndo'); return v === null ? true : v === 'true'; } catch { return true; }
+  });
+
   const totalFrames = clips.reduce((max, c) => Math.max(max, c.endFrame), 0);
 
   const snapshot = useCallback(() => ({
@@ -73,7 +82,8 @@ function AppContent() {
     mediaItems: Array.from(mediaItems.entries()),
     selectedIds: [...selectedIds],
     playhead,
-  }), [clips, mediaItems, selectedIds, playhead]);
+    settings: { playheadTop, includeResizeInUndo }
+  }), [clips, mediaItems, selectedIds, playhead, playheadTop, includeResizeInUndo]);
 
   const restore = useCallback((snap: any) => {
     try {
@@ -81,10 +91,24 @@ function AppContent() {
       setMediaItems(new Map(Array.isArray(snap?.mediaItems) ? snap.mediaItems : []));
       setSelectedIds(Array.isArray(snap?.selectedIds) ? snap.selectedIds : []);
       setPlayhead(typeof snap?.playhead === 'number' ? snap.playhead : 0);
+      if (snap?.settings) {
+        setPlayheadTop(typeof snap.settings.playheadTop === 'number' ? snap.settings.playheadTop : playheadTop);
+        setIncludeResizeInUndo(typeof snap.settings.includeResizeInUndo === 'boolean' ? snap.settings.includeResizeInUndo : includeResizeInUndo);
+      }
     } catch (err) {
       console.warn('Failed to restore snapshot', err);
     }
-  }, [setClips, setMediaItems, setSelectedIds, setPlayhead]);
+  }, [setClips, setMediaItems, setSelectedIds, setPlayhead, playheadTop, includeResizeInUndo]);
+
+  // settings
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playheadTop', String(playheadTop)); } catch {}
+  }, [playheadTop]);
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {}
+  }, [includeResizeInUndo]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -387,6 +411,7 @@ function AppContent() {
           <span>Juice Cut</span>
         </div>
         <span className="app-sub">Browser Video Editor</span>
+        <button className="icon-btn" onClick={() => setSettingsOpen(true)} title="Settings">⚙</button>
       </header>
       <div className="workspace">
         <MediaPool
@@ -412,6 +437,7 @@ function AppContent() {
         tracks={TRACKS}
           mediaItems={mediaItems}
         playhead={playhead}
+        playheadTop={playheadTop}
         selectedIds={selectedIds}
         onSeek={setPlayhead}
         onDropMedia={handleDropMedia}
@@ -425,6 +451,14 @@ function AppContent() {
         onRoll={setRollClipId}
         onStepEdge={handleStepEdge}
         totalFrames={totalFrames}
+      />
+      <Settings
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        playheadTop={playheadTop}
+        onChangePlayheadTop={setPlayheadTop}
+        includeResizeInUndo={includeResizeInUndo}
+        onToggleIncludeResizeInUndo={setIncludeResizeInUndo}
       />
       {rollClip && rollMedia && (
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
