@@ -99,7 +99,8 @@ export default function Timeline({
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     setTorusTarget(target);
-    setTorusPos({ x: e.clientX - rect.left, y: HEADER_H - 2 });
+    // position in viewport coordinates so menu can be fixed and escape stacking contexts
+    setTorusPos({ x: e.clientX, y: rect.top + (HEADER_H - 2) });
   }, [getPlayheadContext]);
 
   const getJoinPairs = useCallback(() => {

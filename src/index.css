@@ -541,8 +541,8 @@ html, body, #root {
 
 /* Torus Menu */
 .torus-overlay {
-  position: absolute;
-  z-index: 100;
+  position: fixed;
+  z-index: 2000;
   width: 240px;
   height: 240px;
   pointer-events: all;
