@@ -278,22 +278,23 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
   const body = (
     <div className="color-popover-inner">
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-        <div style={{ position: 'relative', width: 220, height: 220 }}>
-          <canvas ref={canvasRef} style={{ borderRadius: 8, display: 'block' }} />
-          {/* selection indicator */}
-          <div
-            style={{
-              position: 'absolute',
-              left: `calc(50% + ${Math.cos(hue * Math.PI/180) * sat * 50}% - 6px)`,
-              top: `calc(50% + ${Math.sin(hue * Math.PI/180) * sat * 50}% - 6px)`,
-              width: 12,
-              height: 12,
-              borderRadius: 9999,
-              border: '2px solid white',
-              boxShadow: '0 0 0 2px rgba(0,0,0,0.5)'
-            }}
-          />
-        </div>
+        <div className="color-wheel" style={{ position: 'relative', width: 220, height: 220 }}>
+              <canvas ref={canvasRef} style={{ borderRadius: 8, display: 'block' }} />
+              {/* selection indicator (non-interactive so events reach the canvas) */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: `calc(50% + ${Math.cos(hue * Math.PI/180) * sat * 50}% - 6px)`,
+                  top: `calc(50% + ${Math.sin(hue * Math.PI/180) * sat * 50}% - 6px)`,
+                  width: 12,
+                  height: 12,
+                  borderRadius: 9999,
+                  border: '2px solid white',
+                  boxShadow: '0 0 0 2px rgba(0,0,0,0.5)',
+                  pointerEvents: 'none'
+                }}
+              />
+            </div>
 
         <div style={{ width: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <input
@@ -346,7 +347,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
     const el = target as HTMLElement;
     if (!el) return false;
     // Don't start drag when interacting with controls.
-    if (el.closest('input, button, canvas')) return false;
+    if (el.closest('input, button, canvas, .color-wheel')) return false;
     return true;
   };
 
