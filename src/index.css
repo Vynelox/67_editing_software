@@ -774,6 +774,65 @@ html, body, #root {
   gap: 8px;
 }
 
+.settings-modal {
+  width: 480px;
+}
+
+.settings-body {
+  display: flex;
+  gap: 0;
+  min-height: 160px;
+}
+
+.settings-tabs {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 112px;
+  padding: 8px;
+  gap: 4px;
+  border-right: 1px solid var(--border);
+}
+
+.settings-tab {
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.settings-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.settings-tab--active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.settings-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.settings-panel-content--empty {
+  min-height: 120px;
+}
+
 .settings-field {
   display: flex;
   align-items: center;

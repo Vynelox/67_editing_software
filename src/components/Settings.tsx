@@ -1,4 +1,6 @@
-import React from 'react';
+import { useState } from 'react';
+
+type SettingsTab = 'appearance' | 'misc';
 
 interface Props {
   open: boolean;
@@ -10,40 +12,71 @@ interface Props {
 }
 
 export default function Settings({ open, onClose, playheadTop, onChangePlayheadTop, includeResizeInUndo, onToggleIncludeResizeInUndo }: Props) {
+  const [activeTab, setActiveTab] = useState<SettingsTab>('misc');
+
   if (!open) return null;
+
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true">
-      <div className="modal-box">
+      <div className="modal-box settings-modal">
         <div className="modal-header modal-header--centered">
           <span className="panel-title settings-title">Settings</span>
           <button className="icon-btn modal-close-btn" onClick={onClose} aria-label="Close settings">✕</button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <label className="settings-field">
-            Playneedle vertical offset (%)
-            <input
-              type="number"
-              className="settings-number-input"
-              min={0}
-              max={100}
-              step={1}
-              value={playheadTop}
-              onChange={e => {
-                const v = Number(e.target.value);
-                if (!Number.isNaN(v)) onChangePlayheadTop(Math.min(100, Math.max(0, v)));
-              }}
-            />
-          </label>
 
-          <label className="settings-checkbox-field">
-            <span>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
-            <input
-              type="checkbox"
-              className="settings-checkbox"
-              checked={includeResizeInUndo}
-              onChange={e => onToggleIncludeResizeInUndo(e.target.checked)}
-            />
-          </label>
+        <div className="settings-body">
+          <nav className="settings-tabs" aria-label="Settings sections">
+            <button
+              type="button"
+              className={`settings-tab${activeTab === 'appearance' ? ' settings-tab--active' : ''}`}
+              onClick={() => setActiveTab('appearance')}
+            >
+              Appearance
+            </button>
+            <button
+              type="button"
+              className={`settings-tab${activeTab === 'misc' ? ' settings-tab--active' : ''}`}
+              onClick={() => setActiveTab('misc')}
+            >
+              Misc
+            </button>
+          </nav>
+
+          <div className="settings-panel">
+            {activeTab === 'appearance' && (
+              <div className="settings-panel-content settings-panel-content--empty" />
+            )}
+
+            {activeTab === 'misc' && (
+              <div className="settings-panel-content">
+                <label className="settings-field">
+                  Playneedle vertical offset (%)
+                  <input
+                    type="number"
+                    className="settings-number-input"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={playheadTop}
+                    onChange={e => {
+                      const v = Number(e.target.value);
+                      if (!Number.isNaN(v)) onChangePlayheadTop(Math.min(100, Math.max(0, v)));
+                    }}
+                  />
+                </label>
+
+                <label className="settings-checkbox-field">
+                  <span>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
+                  <input
+                    type="checkbox"
+                    className="settings-checkbox"
+                    checked={includeResizeInUndo}
+                    onChange={e => onToggleIncludeResizeInUndo(e.target.checked)}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
