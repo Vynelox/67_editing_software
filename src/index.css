@@ -878,6 +878,25 @@ html, body, #root {
   position: relative;
 }
 
+/* Layout tweaks for misc settings: labels left, inputs right */
+.settings-panel-content > .settings-field,
+.settings-panel-content > .settings-checkbox-field {
+  justify-content: space-between;
+}
+
+.settings-panel-content > .settings-field > input,
+.settings-panel-content > .settings-checkbox-field > input {
+  margin-left: 0;
+}
+
+.settings-number-input {
+  margin-left: auto;
+}
+
+.settings-checkbox {
+  margin-left: auto;
+}
+
 .settings-checkbox:checked {
   border-color: var(--accent-blue);
 }
