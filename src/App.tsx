@@ -496,7 +496,7 @@ function AppContent() {
         <div style={{ width: '100%' }}>
           <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
             // downward pointer movement should increase timeline height
-            setTimelineHeight(h => Math.max(120, Math.min(900, h + dy)));
+            setTimelineHeight(h => Math.max(120, Math.min(900, h - dy)));
           }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
         </div>
 
