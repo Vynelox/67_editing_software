@@ -399,23 +399,24 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
     open && fullScreen
       ? createPortal(
           <div
-            className="color-fullscreen-overlay"
-            onMouseDown={() => setOpen(false)}
-            role="dialog"
-            aria-label="Color picker"
-          >
-            <div
-              className="color-fullscreen-center"
-              ref={popoverRef}
-              onMouseDown={e => e.stopPropagation()}
-              onPointerDown={onDragPointerDown}
-              onPointerMove={onDragPointerMove}
-              onPointerUp={onDragPointerUp}
-              style={dragPos ? { left: dragPos.left, top: dragPos.top, transform: 'none' } : undefined}
-            >
-              {body}
-            </div>
-          </div>,
+                  className="color-fullscreen-overlay"
+                  onMouseDown={() => setOpen(false)}
+                  role="dialog"
+                  aria-label="Color picker"
+                  style={{ background: 'transparent' }}
+                >
+                  <div
+                    className="color-fullscreen-center"
+                    ref={popoverRef}
+                    onMouseDown={e => e.stopPropagation()}
+                    onPointerDown={onDragPointerDown}
+                    onPointerMove={onDragPointerMove}
+                    onPointerUp={onDragPointerUp}
+                    style={dragPos ? { left: dragPos.left, top: dragPos.top, transform: 'none' } : undefined}
+                  >
+                    {body}
+                  </div>
+                </div>,
           document.body
         )
       : null;
