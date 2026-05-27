@@ -89,6 +89,7 @@ function AppContent() {
   const [timelineHeight, setTimelineHeight] = useState<number>(() => {
     try { const v = window.localStorage.getItem('juicecut.layout.timelineHeight'); return v ? Number(v) : 220; } catch { return 220; }
   });
+  const [layoutStacked, setLayoutStacked] = useState(false);
   useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftWidth', String(leftWidth)); } catch {} }, [leftWidth]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.layout.timelineHeight', String(timelineHeight)); } catch {} }, [timelineHeight]);
 
@@ -434,74 +435,82 @@ function AppContent() {
           <span>Juice Cut</span>
         </div>
         <span className="app-sub">Browser Video Editor</span>
+        <button
+          className="icon-btn layout-toggle"
+          onClick={() => setLayoutStacked(s => !s)}
+          title={layoutStacked ? 'Layout: wide timeline (bottom)' : 'Layout: stacked (timeline bottom-right)'}
+        >
+          ⊞
+        </button>
         <button className="icon-btn" onClick={() => setSettingsOpen(true)} title="Settings">⚙</button>
       </header>
       <div
-        className="workspace"
-        style={{ '--timeline-height': `${timelineHeight}px` } as React.CSSProperties}
+        className={`workspace${layoutStacked ? ' workspace--stacked' : ''}`}
+        style={{
+          '--timeline-height': `${timelineHeight}px`,
+          '--left-width': `${leftCollapsed ? 36 : leftWidth}px`,
+          '--vsplit-width': leftCollapsed ? '0px' : '8px',
+        } as React.CSSProperties}
       >
-        {/* Top row: MediaPool (left) + vertical splitter + Viewer (right) */}
-        <div style={{ display: 'flex', minHeight: 0, flex: '1 1 auto' }}>
-          <div style={{ width: leftCollapsed ? 36 : leftWidth, minWidth: leftCollapsed ? 36 : 120, maxWidth: 800, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: 6, display: 'flex', justifyContent: 'center' }}>
-              <button
-                className="icon-btn collapse-toggle"
-                title={leftCollapsed ? 'Expand media pool' : 'Collapse media pool'}
-                onClick={() => {
-                  // toggle collapse and adjust timeline height: expand timeline when collapsing
-                  if (!leftCollapsed) {
-                    setSavedTimelineHeight(timelineHeight);
-                    const newH = Math.min(900, Math.max(120, Math.round(window.innerHeight * 0.4)));
-                    setTimelineHeight(newH);
-                    setLeftCollapsed(true);
-                  } else {
-                    if (savedTimelineHeight !== null) setTimelineHeight(savedTimelineHeight);
-                    setSavedTimelineHeight(null);
-                    setLeftCollapsed(false);
-                  }
-                }}
-              >
-                {leftCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-              </button>
-            </div>
-            {!leftCollapsed && (
-              <MediaPool
-                items={Array.from(mediaItems.values())}
-                selectedMediaId={selectedMediaId}
-                onSelect={setSelectedMediaId}
-                onAdd={handleAddMedia}
-                onRemove={handleRemoveMedia}
-              />
-            )}
+        <div className="workspace-panel-mediapool">
+          <div style={{ padding: 6, display: 'flex', justifyContent: 'center' }}>
+            <button
+              className="icon-btn collapse-toggle"
+              title={leftCollapsed ? 'Expand media pool' : 'Collapse media pool'}
+              onClick={() => {
+                if (!leftCollapsed) {
+                  setSavedTimelineHeight(timelineHeight);
+                  const newH = Math.min(900, Math.max(120, Math.round(window.innerHeight * 0.4)));
+                  setTimelineHeight(newH);
+                  setLeftCollapsed(true);
+                } else {
+                  if (savedTimelineHeight !== null) setTimelineHeight(savedTimelineHeight);
+                  setSavedTimelineHeight(null);
+                  setLeftCollapsed(false);
+                }
+              }}
+            >
+              {leftCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+            </button>
           </div>
-
           {!leftCollapsed && (
+            <MediaPool
+              items={Array.from(mediaItems.values())}
+              selectedMediaId={selectedMediaId}
+              onSelect={setSelectedMediaId}
+              onAdd={handleAddMedia}
+              onRemove={handleRemoveMedia}
+            />
+          )}
+        </div>
+
+        {!leftCollapsed && (
+          <div className="workspace-vsplit">
             <Splitter orientation="vertical" onChange={(dx) => {
               setLeftWidth(w => Math.max(120, Math.min(800, w + dx)));
             }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
-          )}
-
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <Viewer
-              clips={clips}
-              mediaItems={mediaItems}
-              playhead={playhead}
-              playing={playing}
-              totalFrames={totalFrames}
-              onPlayPause={() => setPlaying(p => !p)}
-              onSeek={setPlayhead}
-              onExport={handleExport}
-            />
           </div>
+        )}
+
+        <div className="workspace-panel-viewer">
+          <Viewer
+            clips={clips}
+            mediaItems={mediaItems}
+            playhead={playhead}
+            playing={playing}
+            totalFrames={totalFrames}
+            onPlayPause={() => setPlaying(p => !p)}
+            onSeek={setPlayhead}
+            onExport={handleExport}
+          />
         </div>
 
-        {/* Horizontal splitter between top row and timeline */}
-        <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
-          // downward pointer movement should increase timeline height
-          setTimelineHeight(h => Math.max(120, Math.min(900, h - dy)));
-        }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+        <div className="workspace-hsplit">
+          <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
+            setTimelineHeight(h => Math.max(120, Math.min(900, h - dy)));
+          }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+        </div>
 
-        {/* Timeline as full-width bottom row */}
         <Timeline
           clips={clips}
           tracks={TRACKS}

@@ -78,10 +78,65 @@ html, body, #root {
 
 .workspace {
   display: grid;
+  grid-template-columns: var(--left-width, 260px) var(--vsplit-width, 8px) 1fr;
   grid-template-rows: 1fr 8px var(--timeline-height, 220px);
+  grid-template-areas:
+    "mediapool vsplit viewer"
+    "hsplit hsplit hsplit"
+    "timeline timeline timeline";
   flex: 1;
   min-height: 0;
   border-bottom: 1px solid var(--border);
+}
+
+/* MediaPool full-height left, Viewer + Timeline stacked on the right */
+.workspace.workspace--stacked {
+  grid-template-areas:
+    "mediapool vsplit viewer"
+    "mediapool vsplit hsplit"
+    "mediapool vsplit timeline";
+}
+
+.workspace-panel-mediapool {
+  grid-area: mediapool;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workspace-panel-viewer {
+  grid-area: viewer;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workspace-vsplit {
+  grid-area: vsplit;
+  display: flex;
+  min-height: 0;
+}
+
+.workspace-vsplit [role="separator"] {
+  flex: 1;
+  height: 100%;
+}
+
+.workspace-hsplit {
+  grid-area: hsplit;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.workspace-hsplit [role="separator"] {
+  width: 100%;
+}
+
+.layout-toggle {
+  margin-left: auto;
 }
 
 .panel-header {
@@ -322,12 +377,12 @@ html, body, #root {
 
 /* Timeline */
 .timeline {
+  grid-area: timeline;
   display: flex;
   flex-direction: column;
   background: var(--bg-panel);
-  height: 100%; /* fill parent container so anchored layout can control size */
-  min-height: 120px;
-  flex-shrink: 0;
+  height: 100%;
+  min-height: 0;
   position: relative;
   overflow: hidden;
 }
