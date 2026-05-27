@@ -868,6 +868,46 @@ html, body, #root {
   cursor: pointer; padding: 0; display: inline-block;
 }
 
+/* Make the color-picker area use the elevated panel background */
+.color-controls {
+  background: var(--bg-elevated);
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+input[type="color"] {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  width: 28px;
+  height: 18px;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* Custom color picker popover styles */
+.color-picker { display: inline-block; }
+.color-popover {
+  position: absolute;
+  right: 0;
+  z-index: 300;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+.color-popover-inner { display: flex; flex-direction: column; gap: 8px; min-width: 240px; }
+.color-preview-large { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border); }
+.color-hex-row { display: flex; gap: 8px; align-items: center; }
+.color-hex-label { color: var(--text-secondary); font-size: 12px; min-width: 34px; }
+.color-hex-input { flex: 1; padding: 6px 8px; background: var(--bg-panel); color: var(--text-primary); border: 1px solid var(--border-mid); border-radius: 6px; }
+.color-slider-row { display: flex; gap: 8px; align-items: center; }
+.color-slider-row label { width: 18px; color: var(--text-secondary); }
+.color-slider-row input[type="range"] { flex: 1; }
+.color-val { width: 36px; text-align: right; color: var(--text-secondary); font-size: 12px; }
+
 .settings-panel-content--empty {
   min-height: 120px;
 }

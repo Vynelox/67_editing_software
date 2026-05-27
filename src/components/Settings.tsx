@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ColorPicker from './ColorPicker';
 
 type SettingsTab = 'appearance' | 'misc';
 
@@ -100,23 +101,9 @@ function AppearanceControls() {
             <div key={field.varName} className="color-field">
               <div className="color-label">{field.label}</div>
               <div className="color-controls">
-                <button
-                  type="button"
-                  className="color-preview"
-                  title={`Edit ${field.label}`}
-                  style={{ background: colors[field.varName] || '#000' }}
-                  onClick={() => {
-                    const id = 'color-input-' + field.varName.replace(/[^a-z0-9]/gi, '');
-                    const el = document.getElementById(id) as HTMLInputElement | null;
-                    el?.click();
-                  }}
-                />
-                <input
-                  id={'color-input-' + field.varName.replace(/[^a-z0-9]/gi, '')}
-                  type="color"
+                <ColorPicker
                   value={colors[field.varName] || '#000000'}
-                  onChange={(e) => updateColor(field.varName, e.target.value)}
-                  style={{ display: 'none' }}
+                  onChange={(hex) => updateColor(field.varName, hex)}
                 />
               </div>
             </div>
