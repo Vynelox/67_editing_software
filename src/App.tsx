@@ -501,7 +501,7 @@ function AppContent() {
         </div>
 
         {/* Timeline as full-width bottom row */}
-        <div style={{ height: timelineHeight, minHeight: 120 }}>
+        <div style={{ height: timelineHeight, minHeight: 120, flexShrink: 0 }}>
           <Timeline
             clips={clips}
             tracks={TRACKS}
