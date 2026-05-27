@@ -19,9 +19,20 @@ export default function Settings({ open, onClose, playheadTop, onChangePlayheadT
           <button className="icon-btn" onClick={onClose}>✕</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <label style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            Playneedle vertical offset (px)
-            <input type="number" value={playheadTop} onChange={e => onChangePlayheadTop(Number(e.target.value))} style={{ width: 120, marginLeft: 8 }} />
+          <label className="settings-field">
+            Playneedle vertical offset (%)
+            <input
+              type="number"
+              className="settings-number-input"
+              min={0}
+              max={100}
+              step={1}
+              value={playheadTop}
+              onChange={e => {
+                const v = Number(e.target.value);
+                if (!Number.isNaN(v)) onChangePlayheadTop(Math.min(100, Math.max(0, v)));
+              }}
+            />
           </label>
 
           <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

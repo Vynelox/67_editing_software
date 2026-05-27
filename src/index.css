@@ -599,7 +599,6 @@ html, body, #root {
 
 .playhead-btn {
   position: absolute;
-  top: -6px; /* lift button above ruler */
   left: -8px;
   width: 16px; height: 16px;
   border-radius: 50%;
@@ -754,6 +753,29 @@ html, body, #root {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.settings-field {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.settings-number-input {
+  width: 72px;
+  margin-left: 8px;
+  padding: 4px 8px;
+  background: #000;
+  color: var(--text-primary);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.settings-number-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
 }
 
 .btn-primary {

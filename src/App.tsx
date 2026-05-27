@@ -71,7 +71,19 @@ function AppContent() {
 
   // settings (persisted)
   const [playheadTop, setPlayheadTop] = useState<number>(() => {
-    try { const v = window.localStorage.getItem('juicecut.settings.playheadTop'); return v ? Number(v) : -6; } catch { return -6; }
+    try {
+      const v = window.localStorage.getItem('juicecut.settings.playheadTopPercent');
+      if (v) {
+        const n = Number(v);
+        if (!Number.isNaN(n) && n >= 0 && n <= 100) return n;
+      }
+      const legacy = window.localStorage.getItem('juicecut.settings.playheadTop');
+      if (legacy) {
+        const n = Number(legacy);
+        if (!Number.isNaN(n) && n >= 0 && n <= 100) return n;
+      }
+    } catch { /* ignore */ }
+    return 15;
   });
   const [includeResizeInUndo, setIncludeResizeInUndo] = useState<boolean>(() => {
     try { const v = window.localStorage.getItem('juicecut.settings.includeResizeInUndo'); return v === null ? true : v === 'true'; } catch { return true; }
@@ -111,7 +123,10 @@ function AppContent() {
       setSelectedIds(Array.isArray(snap?.selectedIds) ? snap.selectedIds : []);
       setPlayhead(typeof snap?.playhead === 'number' ? snap.playhead : 0);
       if (snap?.settings) {
-        setPlayheadTop(typeof snap.settings.playheadTop === 'number' ? snap.settings.playheadTop : playheadTop);
+        if (typeof snap.settings.playheadTop === 'number') {
+          const v = snap.settings.playheadTop;
+          setPlayheadTop(v >= 0 && v <= 100 ? v : 15);
+        }
         setIncludeResizeInUndo(typeof snap.settings.includeResizeInUndo === 'boolean' ? snap.settings.includeResizeInUndo : includeResizeInUndo);
       }
       if (snap?.layout) {
@@ -128,7 +143,7 @@ function AppContent() {
 
   // layout (persisted)
   useEffect(() => {
-    try { window.localStorage.setItem('juicecut.settings.playheadTop', String(playheadTop)); } catch {}
+    try { window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop)); } catch {}
   }, [playheadTop]);
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {}

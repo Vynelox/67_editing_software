@@ -28,6 +28,13 @@ interface Props {
 const TRACK_H = 64;
 const HEADER_H = 32;
 const PX_PER_FRAME = 4;
+const PLAYHEAD_BTN_H = 16;
+const DEFAULT_PLAYHEAD_TOP_PCT = 15;
+
+function playheadTopStyle(percent: number | undefined): string {
+  const pct = typeof percent === 'number' ? Math.min(100, Math.max(0, percent)) : DEFAULT_PLAYHEAD_TOP_PCT;
+  return `calc((100% - ${PLAYHEAD_BTN_H}px) * ${pct} / 100)`;
+}
 
 function frameToX(frame: number, zoom: number) { return frame * PX_PER_FRAME * zoom; }
 function xToFrame(x: number, zoom: number) { return Math.round(x / (PX_PER_FRAME * zoom)); }
@@ -101,7 +108,10 @@ export default function Timeline({
     if (!rect) return;
     setTorusTarget(target);
     // position in viewport coordinates so menu can be fixed and escape stacking contexts
-    const offset = typeof playheadTop === 'number' ? playheadTop : -6;
+    const playheadEl = containerRef.current?.querySelector('.tl-playhead') as HTMLElement | null;
+    const playheadH = playheadEl?.clientHeight ?? 0;
+    const pct = typeof playheadTop === 'number' ? Math.min(100, Math.max(0, playheadTop)) : DEFAULT_PLAYHEAD_TOP_PCT;
+    const offset = (pct / 100) * Math.max(0, playheadH - PLAYHEAD_BTN_H);
     setTorusPos({ x: e.clientX, y: rect.top + (HEADER_H - 2) + offset });
   }, [getPlayheadContext, playheadTop]);
 
@@ -353,7 +363,7 @@ export default function Timeline({
             >
               <button
                 className="playhead-btn"
-                style={{ top: typeof playheadTop === 'number' ? playheadTop : undefined }}
+                style={{ top: playheadTopStyle(playheadTop) }}
                 onMouseDown={() => setPlayheadDragging(true)}
                 onClick={handleNeedleClick}
                 title="Click for edit options"
