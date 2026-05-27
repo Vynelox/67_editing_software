@@ -35,9 +35,14 @@ export default function Settings({ open, onClose, playheadTop, onChangePlayheadT
             />
           </label>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input type="checkbox" checked={includeResizeInUndo} onChange={e => onToggleIncludeResizeInUndo(e.target.checked)} />
-            <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
+          <label className="settings-checkbox-field">
+            <span>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
+            <input
+              type="checkbox"
+              className="settings-checkbox"
+              checked={includeResizeInUndo}
+              onChange={e => onToggleIncludeResizeInUndo(e.target.checked)}
+            />
           </label>
         </div>
         <div className="modal-footer">
