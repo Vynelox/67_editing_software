@@ -77,8 +77,8 @@ html, body, #root {
 }
 
 .workspace {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 1fr 8px var(--timeline-height, 220px);
   flex: 1;
   min-height: 0;
   border-bottom: 1px solid var(--border);
