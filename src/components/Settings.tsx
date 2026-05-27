@@ -45,9 +45,6 @@ export default function Settings({ open, onClose, playheadTop, onChangePlayheadT
             />
           </label>
         </div>
-        <div className="modal-footer">
-          <button className="btn-secondary" onClick={onClose}>Close</button>
-        </div>
       </div>
     </div>
   );
