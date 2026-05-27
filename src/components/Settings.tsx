@@ -104,6 +104,7 @@ function AppearanceControls() {
                 <ColorPicker
                   value={colors[field.varName] || '#000000'}
                   onChange={(hex) => updateColor(field.varName, hex)}
+                  fullScreen
                 />
               </div>
             </div>

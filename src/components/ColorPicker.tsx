@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
+// Additional imports for portal functionality
 interface Props {
   value: string; // hex color like #rrggbb
   onChange: (hex: string) => void;
+  fullScreen?: boolean;
 }
 
 function clamp(n: number, a = 0, b = 255) { return Math.min(b, Math.max(a, Math.round(n))); }
@@ -78,7 +81,11 @@ function hexToHsl(hex: string) {
   return rgbToHsl(r, g, b);
 }
 
-export default function ColorPicker({ value, onChange }: Props) {
+function hslCss(h: number, s: number, l: number) {
+  return `hsl(${Math.round(h)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+}
+
+export default function ColorPicker({ value, onChange, fullScreen }: Props) {
   const [open, setOpen] = useState(false);
   const [hex, setHex] = useState(value || '#000000');
   // use H, S(0-1), L(0-1)
@@ -87,8 +94,11 @@ export default function ColorPicker({ value, onChange }: Props) {
   const [sat, setSat] = useState(initHsl.s || 0);
   const [light, setLight] = useState((initHsl.l || 0) * 100);
   const ref = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const draggingRef = useRef(false);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
 
   useEffect(() => {
     setHex(value || '#000000');
@@ -100,12 +110,41 @@ export default function ColorPicker({ value, onChange }: Props) {
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
-      if (!ref.current) return;
-      if (!ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      const insideTrigger = ref.current && ref.current.contains(target);
+      const insidePopover = popoverRef.current && popoverRef.current.contains(target);
+      if (!insideTrigger && !insidePopover) setOpen(false);
     }
-    if (open) document.addEventListener('mousedown', onDoc);
+    if (open && !fullScreen) document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
-  }, [open]);
+  }, [open, fullScreen]);
+
+  function updatePopoverPos() {
+    const btn = triggerRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const preferredWidth = 300; // approx popover width
+    const preferredHeight = 320; // approx popover height
+    let left = rect.left;
+    if (left + preferredWidth > window.innerWidth) left = Math.max(8, window.innerWidth - preferredWidth - 8);
+    let top = rect.bottom + 8;
+    if (top + preferredHeight > window.innerHeight) {
+      top = rect.top - preferredHeight - 8;
+      if (top < 8) top = 8;
+    }
+    setPos({ left, top });
+  }
+
+  useEffect(() => {
+    if (!open || fullScreen) return;
+    updatePopoverPos();
+    window.addEventListener('resize', updatePopoverPos);
+    window.addEventListener('scroll', updatePopoverPos, true);
+    return () => {
+      window.removeEventListener('resize', updatePopoverPos);
+      window.removeEventListener('scroll', updatePopoverPos, true);
+    };
+  }, [open, fullScreen]);
 
   function applyRgb(r: number, g: number, b: number) {
     const h = rgbToHex(r,g,b);
@@ -201,14 +240,16 @@ export default function ColorPicker({ value, onChange }: Props) {
       setHex(previewHex);
     };
     const onPointerUp = () => { draggingRef.current = false; canvas.releasePointerCapture && canvas.releasePointerCapture((canvas as any).pointerId); };
-    canvas.addEventListener('pointerdown', (e: PointerEvent) => {
+    const onPointerDown = (e: PointerEvent) => {
       draggingRef.current = true;
       (e.target as Element).setPointerCapture && (e.target as Element).setPointerCapture((e as any).pointerId);
       onPointer(e);
-    });
+    };
+    canvas.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', (e) => { if (draggingRef.current) onPointer(e as PointerEvent); });
     window.addEventListener('pointerup', onPointerUp);
     return () => {
+      canvas.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', (e) => { if (draggingRef.current) onPointer(e as PointerEvent); });
       window.removeEventListener('pointerup', onPointerUp);
     };
@@ -220,6 +261,99 @@ export default function ColorPicker({ value, onChange }: Props) {
     setHex(h);
   }, [hue, sat, light]);
 
+  const body = (
+    <div className="color-popover-inner">
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+        <div style={{ position: 'relative', width: 220, height: 220 }}>
+          <canvas ref={canvasRef} style={{ borderRadius: 8, display: 'block' }} />
+          {/* selection indicator */}
+          <div
+            style={{
+              position: 'absolute',
+              left: `calc(50% + ${Math.cos(hue * Math.PI/180) * sat * 50}% - 6px)`,
+              top: `calc(50% + ${Math.sin(hue * Math.PI/180) * sat * 50}% - 6px)`,
+              width: 12,
+              height: 12,
+              borderRadius: 9999,
+              border: '2px solid white',
+              boxShadow: '0 0 0 2px rgba(0,0,0,0.5)'
+            }}
+          />
+        </div>
+
+        <div style={{ width: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <input
+            aria-label="Lightness"
+            type="range"
+            min={0}
+            max={100}
+            value={light}
+            onChange={e => setLight(Number(e.target.value))}
+            style={{
+              transform: 'rotate(-90deg)',
+              width: 220,
+              height: 24,
+              background: `linear-gradient(to right, ${hslCss(hue, sat, 0)}, ${hslCss(hue, sat, 1)})`,
+              WebkitAppearance: 'none',
+            }}
+          />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
+        <div className="color-preview-large" style={{ width: 120, height: 28, background: hex }} />
+        <div style={{ flex: 1 }}>
+          <input
+            className="color-hex-input"
+            value={hex}
+            onChange={e => onHexChange(e.target.value)}
+            onBlur={() => {
+              const normalized = /^#?[0-9a-fA-F]{3}$/.test(hex)
+                ? ('#' + hex.replace('#','').split('').map(c=>c+c).join(''))
+                : (hex.startsWith('#') ? hex : ('#' + hex));
+              if (/^#([0-9a-fA-F]{6})$/.test(normalized)) {
+                setHex(normalized);
+                const hs = hexToHsl(normalized);
+                setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l||0)*100);
+                onChange(normalized);
+              } else {
+                setHex(value);
+              }
+            }}
+          />
+        </div>
+      </div>
+
+    </div>
+  );
+
+  const inlinePopover = open && !fullScreen && (
+    <div className="color-popover" role="dialog" aria-label="Color picker" ref={popoverRef}>
+      {body}
+    </div>
+  );
+
+  const fullscreenPopover =
+    open && fullScreen
+      ? createPortal(
+          <div
+            className="color-fullscreen-overlay"
+            onMouseDown={() => setOpen(false)}
+            role="dialog"
+            aria-label="Color picker"
+          >
+            <div
+              className="color-fullscreen-center"
+              ref={popoverRef}
+              onMouseDown={e => e.stopPropagation()}
+            >
+              {body}
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
     <div className="color-picker" ref={ref} style={{ position: 'relative' }}>
       <button
@@ -230,63 +364,8 @@ export default function ColorPicker({ value, onChange }: Props) {
         aria-label={`Open color picker (${hex})`}
       />
 
-      {open && (
-        <div className="color-popover" role="dialog" aria-label="Color picker">
-          <div className="color-popover-inner">
-            <div className="color-preview-large" style={{ background: hex }} />
-
-            <div className="color-hex-row">
-              <label className="color-hex-label">Hex</label>
-              <input
-                className="color-hex-input"
-                value={hex}
-                onChange={e => onHexChange(e.target.value)}
-                onBlur={() => {
-                  const normalized = /^#?[0-9a-fA-F]{3}$/.test(hex)
-                    ? ('#' + hex.replace('#','').split('').map(c=>c+c).join(''))
-                    : (hex.startsWith('#') ? hex : ('#' + hex));
-                  if (/^#([0-9a-fA-F]{6})$/.test(normalized)) {
-                    setHex(normalized);
-                    const hs = hexToHsl(normalized);
-                    setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l||0)*100);
-                    onChange(normalized);
-                  } else {
-                    setHex(value);
-                  }
-                }}
-              />
-            </div>
-
-            <div style={{ position: 'relative', width: 220, height: 220 }}>
-              <canvas ref={canvasRef} style={{ borderRadius: 8, display: 'block' }} />
-              {/* selection indicator */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: `calc(50% + ${Math.cos(hue * Math.PI/180) * sat * 50}% - 6px)`,
-                  top: `calc(50% + ${Math.sin(hue * Math.PI/180) * sat * 50}% - 6px)`,
-                  width: 12,
-                  height: 12,
-                  borderRadius: 9999,
-                  border: '2px solid white',
-                  boxShadow: '0 0 0 2px rgba(0,0,0,0.5)'
-                }}
-              />
-            </div>
-
-            <div className="color-slider-row" style={{ marginTop: 8 }}>
-              <label>Light</label>
-              <input type="range" min={0} max={100} value={light} onChange={e => setLight(Number(e.target.value))} />
-              <div className="color-val">{Math.round(light)}</div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button type="button" className="btn-primary" onClick={() => { onChange(hex); setOpen(false); }}>Apply</button>
-              <button type="button" className="btn-secondary" onClick={() => { setHex(value); const hs = hexToHsl(value); setHue(hs.h||0); setSat(hs.s||0); setLight((hs.l||0)*100); setOpen(false); }}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {inlinePopover}
+      {fullscreenPopover}
     </div>
   );
 }

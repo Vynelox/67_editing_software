@@ -797,6 +797,8 @@ html, body, #root {
   border-right: 1px solid var(--border);
   align-self: stretch;
   justify-content: center; /* vertically center the tab buttons */
+  position: relative;
+  z-index: 1;
 }
 
 .settings-tab {
@@ -827,6 +829,8 @@ html, body, #root {
   min-width: 0;
   min-height: 0; /* allow inner scrolling */
   overflow: auto; /* only this panel scrolls */
+  position: relative;
+  z-index: 2;
 }
 
 .settings-panel-content {
@@ -898,7 +902,7 @@ input[type="color"] {
 .color-popover {
   position: absolute;
   right: 0;
-  z-index: 300;
+  z-index: 1200;
   background: var(--bg-elevated);
   border: 1px solid var(--border-mid);
   padding: 10px;
@@ -914,6 +918,24 @@ input[type="color"] {
 .color-slider-row label { width: 18px; color: var(--text-secondary); }
 .color-slider-row input[type="range"] { flex: 1; }
 .color-val { width: 36px; text-align: right; color: var(--text-secondary); font-size: 12px; }
+
+.color-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-fullscreen-center {
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  border: 1px solid var(--border-mid);
+  padding: 16px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85);
+}
 
 .settings-panel-content--empty {
   min-height: 120px;
