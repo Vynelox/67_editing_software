@@ -924,12 +924,14 @@ input[type="color"] {
   inset: 0;
   z-index: 2500;
   background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
 }
 
 .color-fullscreen-center {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   background: var(--bg-elevated);
   border-radius: 8px;
   border: 1px solid var(--border-mid);

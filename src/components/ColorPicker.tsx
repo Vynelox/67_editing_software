@@ -100,6 +100,9 @@ export default function ColorPicker({ value, onChange, fullScreen }: Props) {
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const [pos, setPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
 
+  const [dragPos, setDragPos] = useState<{ left: number; top: number } | null>(null);
+  const dragStateRef = useRef<{ startX: number; startY: number; startLeft: number; startTop: number } | null>(null);
+
   useEffect(() => {
     setHex(value || '#000000');
     const hsl = hexToHsl(value || '#000000');
@@ -145,6 +148,10 @@ export default function ColorPicker({ value, onChange, fullScreen }: Props) {
       window.removeEventListener('scroll', updatePopoverPos, true);
     };
   }, [open, fullScreen]);
+
+  useEffect(() => {
+    if (!open) setDragPos(null);
+  }, [open]);
 
   function applyRgb(r: number, g: number, b: number) {
     const h = rgbToHex(r,g,b);
@@ -327,8 +334,56 @@ export default function ColorPicker({ value, onChange, fullScreen }: Props) {
     </div>
   );
 
+  const shouldStartDrag = (target: EventTarget | null) => {
+    if (!target) return false;
+    const el = target as HTMLElement;
+    if (!el) return false;
+    // Don't start drag when interacting with controls.
+    if (el.closest('input, button, canvas')) return false;
+    return true;
+  };
+
+  const onDragPointerDown = (e: React.PointerEvent) => {
+    if (!shouldStartDrag(e.target)) return;
+    const panel = popoverRef.current;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    const startLeft = dragPos?.left ?? rect.left;
+    const startTop = dragPos?.top ?? rect.top;
+    dragStateRef.current = { startX: e.clientX, startY: e.clientY, startLeft, startTop };
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    e.preventDefault();
+  };
+
+  const onDragPointerMove = (e: React.PointerEvent) => {
+    const st = dragStateRef.current;
+    if (!st) return;
+    const nextLeft = st.startLeft + (e.clientX - st.startX);
+    const nextTop = st.startTop + (e.clientY - st.startY);
+    // keep at least a small portion on-screen
+    const margin = 16;
+    const w = popoverRef.current?.offsetWidth ?? 0;
+    const h = popoverRef.current?.offsetHeight ?? 0;
+    const clampedLeft = Math.min(window.innerWidth - margin, Math.max(margin - w, nextLeft));
+    const clampedTop = Math.min(window.innerHeight - margin, Math.max(margin - h, nextTop));
+    setDragPos({ left: clampedLeft, top: clampedTop });
+  };
+
+  const onDragPointerUp = () => {
+    dragStateRef.current = null;
+  };
+
   const inlinePopover = open && !fullScreen && (
-    <div className="color-popover" role="dialog" aria-label="Color picker" ref={popoverRef}>
+    <div
+      className="color-popover"
+      role="dialog"
+      aria-label="Color picker"
+      ref={popoverRef}
+      onPointerDown={onDragPointerDown}
+      onPointerMove={onDragPointerMove}
+      onPointerUp={onDragPointerUp}
+      style={dragPos ? { left: dragPos.left, top: dragPos.top, right: 'auto' } : undefined}
+    >
       {body}
     </div>
   );
@@ -346,6 +401,10 @@ export default function ColorPicker({ value, onChange, fullScreen }: Props) {
               className="color-fullscreen-center"
               ref={popoverRef}
               onMouseDown={e => e.stopPropagation()}
+              onPointerDown={onDragPointerDown}
+              onPointerMove={onDragPointerMove}
+              onPointerUp={onDragPointerUp}
+              style={dragPos ? { left: dragPos.left, top: dragPos.top, transform: 'none' } : undefined}
             >
               {body}
             </div>
