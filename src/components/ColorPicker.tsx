@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 // Additional imports for portal functionality
 interface Props {
   value: string; // hex color like #rrggbb
   onChange: (hex: string) => void;
   fullScreen?: boolean;
+  autoOpen?: boolean;
+  onClose?: () => void;
 }
 
 function clamp(n: number, a = 0, b = 255) { return Math.min(b, Math.max(a, Math.round(n))); }
@@ -85,8 +88,8 @@ function hslCss(h: number, s: number, l: number) {
   return `hsl(${Math.round(h)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
 }
 
-export default function ColorPicker({ value, onChange, fullScreen }: Props) {
-  const [open, setOpen] = useState(false);
+export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onClose }: Props) {
+  const [open, setOpen] = useState(!!autoOpen);
   const [hex, setHex] = useState(value || '#000000');
   // use H, S(0-1), L(0-1)
   const initHsl = hexToHsl(value || '#000000');
@@ -151,6 +154,10 @@ export default function ColorPicker({ value, onChange, fullScreen }: Props) {
 
   useEffect(() => {
     if (!open) setDragPos(null);
+    if (!open) {
+      // notify parent when the picker closes
+      try { onClose && onClose(); } catch (e) {}
+    }
   }, [open]);
 
   function applyRgb(r: number, g: number, b: number) {
@@ -427,4 +434,25 @@ export default function ColorPicker({ value, onChange, fullScreen }: Props) {
       {fullscreenPopover}
     </div>
   );
+}
+
+// Programmatic helper: mount a fullscreen ColorPicker immediately
+export function OpenColorPicker(initial?: { value?: string; onChange?: (hex: string) => void }) {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const cleanup = () => {
+    try { root.unmount(); } catch (e) {}
+    if (container.parentNode) container.parentNode.removeChild(container);
+  };
+  root.render(
+    <ColorPicker
+      value={initial?.value || '#00ff88'}
+      onChange={(hex) => { try { initial?.onChange?.(hex); } catch {} }}
+      fullScreen
+      autoOpen
+      onClose={cleanup}
+    />
+  );
+  return cleanup;
 }
