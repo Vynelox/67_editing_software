@@ -829,6 +829,45 @@ html, body, #root {
   padding: 12px 16px;
 }
 
+/* Appearance sub-tabs */
+.appearance-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.appearance-subtab {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.appearance-subtab--active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* Color list */
+.appearance-plain { display: flex; flex-direction: column; gap: 8px; }
+.color-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.color-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: left;
+}
+.color-controls { display: flex; align-items: center; gap: 8px; }
+.color-preview {
+  width: 28px; height: 18px; border-radius: 4px; border: 1px solid var(--border-mid);
+  cursor: pointer; padding: 0; display: inline-block;
+}
+
 .settings-panel-content--empty {
   min-height: 120px;
 }
