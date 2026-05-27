@@ -14,9 +14,9 @@ export default function Settings({ open, onClose, playheadTop, onChangePlayheadT
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="modal-box">
-        <div className="modal-header">
-          <div>Settings</div>
-          <button className="icon-btn" onClick={onClose}>✕</button>
+        <div className="modal-header modal-header--centered">
+          <span className="panel-title settings-title">Settings</span>
+          <button className="icon-btn modal-close-btn" onClick={onClose} aria-label="Close settings">✕</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <label className="settings-field">
