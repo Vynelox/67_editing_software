@@ -777,11 +777,18 @@ html, body, #root {
 .settings-modal {
   width: 480px;
 }
+.settings-modal {
+  width: 480px;
+  max-height: 72vh;
+  overflow: hidden;
+}
 
 .settings-body {
   display: flex;
   gap: 0;
-  min-height: 160px;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 
 .settings-tabs {
