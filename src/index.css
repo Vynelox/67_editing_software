@@ -776,9 +776,6 @@ html, body, #root {
 
 .settings-modal {
   width: 480px;
-}
-.settings-modal {
-  width: 480px;
   max-height: 72vh;
   overflow: hidden;
 }
@@ -798,6 +795,8 @@ html, body, #root {
   padding: 8px;
   gap: 4px;
   border-right: 1px solid var(--border);
+  align-self: stretch;
+  justify-content: center; /* vertically center the tab buttons */
 }
 
 .settings-tab {
