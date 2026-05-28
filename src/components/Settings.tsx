@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import ColorPicker from './ColorPicker';
 import { createRoot } from 'react-dom/client';
+import { OpenColorPicker } from './ColorPicker';
 
 type SettingsTab = 'appearance' | 'misc';
 
@@ -10,7 +11,10 @@ interface Props {
   initialScroll?: number | null;
 }
 
-function AppearanceControls() {
+// Temporary storage for settings page data and scroll position
+let tempSettingsData: { pageData?: any; scroll?: number | null } | null = null;
+
+function AppearanceControls({ onClose, onReopen }: { onClose: () => void; onReopen: () => void }) {
   const [subTab, setSubTab] = useState<'plain' | 'blend'>('plain');
 
   const colorFields: { varName: string; label: string }[] = [
@@ -74,6 +78,41 @@ function AppearanceControls() {
     setColors(prev => ({ ...prev, [varName]: hex }));
   }
 
+  function handleColorClick(varName: string, currentValue: string) {
+    // Store current settings page data and scroll position
+    tempSettingsData = { pageData: { tab: 'appearance', subTab }, scroll: null };
+    
+    // Close settings
+    onClose();
+    
+    // Open color picker with the current color
+    const colorCleanup = OpenColorPicker({
+      value: currentValue,
+      onChange: (hex) => updateColor(varName, hex)
+    });
+    
+    // Set global callback to reopen settings when color picker closes
+    (window as any).__onColorPickerClose = () => {
+      if (tempSettingsData) {
+        OpenSettings(tempSettingsData.pageData, tempSettingsData.scroll);
+        tempSettingsData = null;
+      }
+    };
+    
+    // Override the color picker cleanup to also trigger the reopen callback
+    const originalCleanup = colorCleanup;
+    (window as any).__colorPickerCleanup = () => {
+      originalCleanup();
+      if ((window as any).__onColorPickerClose) {
+        (window as any).__onColorPickerClose();
+        (window as any).__onColorPickerClose = null;
+      }
+    };
+    
+    // Return the overridden cleanup
+    return (window as any).__colorPickerCleanup;
+  }
+
   return (
     <div>
       <div className="appearance-subtabs">
@@ -99,10 +138,12 @@ function AppearanceControls() {
             <div key={field.varName} className="color-field">
               <div className="color-label">{field.label}</div>
               <div className="color-controls">
-                <ColorPicker
-                  value={colors[field.varName] || '#000000'}
-                  onChange={(hex) => updateColor(field.varName, hex)}
-                  fullScreen
+                <button
+                  type="button"
+                  className="color-swatch"
+                  style={{ backgroundColor: colors[field.varName] || '#000000' }}
+                  onClick={() => handleColorClick(field.varName, colors[field.varName] || '#000000')}
+                  title="Click to pick a color"
                 />
               </div>
             </div>
@@ -193,7 +234,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   </button>
                 </div>
 
-                <AppearanceControls />
+                <AppearanceControls onClose={onClose} onReopen={() => {}} />
               </div>
             )}
 
@@ -247,5 +288,17 @@ export function OpenSettings(pageData?: any, scroll?: number | null) {
   return cleanup;
 }
 
+// Programmatic closer: closes the settings modal
+export function closeSettings() {
+  const existing = document.querySelector('.modal-overlay.settings-modal');
+  if (existing && existing.parentNode) {
+    existing.parentNode.removeChild(existing);
+  }
+}
+
+// Global callback for when color picker closes and settings should reopen
+(window as any).__onColorPickerClose = null;
+
 // attach to window for convenience
 try { (window as any).OpenSettings = OpenSettings; } catch (e) {}
+try { (window as any).closeSettings = closeSettings; } catch (e) {}
