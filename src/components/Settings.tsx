@@ -79,6 +79,10 @@ function AppearanceControls({ onClose, onReopen }: { onClose: () => void; onReop
   }
 
   function handleColorClick(varName: string, currentValue: string) {
+    // Find the color label for this varName
+    const colorField = colorFields.find(c => c.varName === varName);
+    const colorLabel = colorField ? colorField.label : 'Color';
+    
     // Store current settings page data and scroll position
     tempSettingsData = { pageData: { tab: 'appearance', subTab }, scroll: null };
     
@@ -88,7 +92,8 @@ function AppearanceControls({ onClose, onReopen }: { onClose: () => void; onReop
     // Open color picker with the current color
     const colorCleanup = OpenColorPicker({
       value: currentValue,
-      onChange: (hex) => updateColor(varName, hex)
+      onChange: (hex) => updateColor(varName, hex),
+      targetElement: colorLabel
     });
     
     // Set global callback to reopen settings when color picker closes

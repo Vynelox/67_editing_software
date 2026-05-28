@@ -9,6 +9,7 @@ interface Props {
   fullScreen?: boolean;
   autoOpen?: boolean;
   onClose?: () => void;
+  targetElement?: string;
 }
 
 function clamp(n: number, a = 0, b = 255) { return Math.min(b, Math.max(a, Math.round(n))); }
@@ -88,7 +89,42 @@ function hslCss(h: number, s: number, l: number) {
   return `hsl(${Math.round(h)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
 }
 
-export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onClose }: Props) {
+// Format title: cap at 2 lines, truncate with "…" if needed
+function formatTitle(text: string | undefined): string {
+  if (!text) return '';
+  const maxCharsPerLine = 29;
+  const maxLines = 2;
+  const maxTotalChars = maxCharsPerLine * maxLines;
+  
+  if (text.length <= maxTotalChars) {
+    // Check if we need to split into 2 lines
+    if (text.length > maxCharsPerLine) {
+      // Find a good split point (space or hyphen)
+      let splitPoint = text.lastIndexOf(' ', maxCharsPerLine);
+      if (splitPoint === -1) splitPoint = text.lastIndexOf('-', maxCharsPerLine);
+      if (splitPoint === -1) splitPoint = maxCharsPerLine;
+      
+      const line1 = text.slice(0, splitPoint);
+      const line2 = text.slice(splitPoint + 1);
+      return `${line1}\n${line2}`;
+    }
+    return text;
+  }
+  
+  // Truncate with "…"
+  const truncated = text.slice(0, maxTotalChars - 1);
+  // Find a good split point for the first line
+  let splitPoint = truncated.lastIndexOf(' ', maxCharsPerLine);
+  if (splitPoint === -1) splitPoint = maxCharsPerLine;
+  
+  const line1 = truncated.slice(0, splitPoint);
+  const line2 = truncated.slice(splitPoint + 1);
+  return `${line1}\n${line2}…`;
+}
+
+export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onClose, targetElement }: Props) {
+  // Format the title for display
+  const title = formatTitle(targetElement);
   const [open, setOpen] = useState(!!autoOpen);
   const [hex, setHex] = useState(value || '#000000');
   // use H, S(0-1), L(0-1)
@@ -279,6 +315,13 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
 
   const body = (
     <div className="color-popover-inner">
+      {title && (
+        <div className="color-picker-title">
+          {title.split('\n').map((line, i) => (
+            <span key={i}>{line}</span>
+          ))}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         <div className="color-wheel" style={{ position: 'relative', width: 220, height: 220 }}>
               <canvas ref={canvasRef} style={{ borderRadius: 8, display: 'block' }} />
@@ -441,7 +484,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
 }
 
 // Programmatic helper: mount a fullscreen ColorPicker immediately
-export function OpenColorPicker(initial?: { value?: string; onChange?: (hex: string) => void }) {
+export function OpenColorPicker(initial?: { value?: string; onChange?: (hex: string) => void; targetElement?: string }) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -455,6 +498,7 @@ export function OpenColorPicker(initial?: { value?: string; onChange?: (hex: str
       onChange={(hex) => { try { initial?.onChange?.(hex); } catch {} }}
       fullScreen
       autoOpen
+      targetElement={initial?.targetElement}
     />
   );
   return cleanup;
