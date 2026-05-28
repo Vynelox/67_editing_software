@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import ColorPicker from './ColorPicker';
+import { createRoot } from 'react-dom/client';
 
 type SettingsTab = 'appearance' | 'misc';
 
 interface Props {
-  open: boolean;
-  onClose: () => void;
-  playheadTop: number;
-  onChangePlayheadTop: (v: number) => void;
-  includeResizeInUndo: boolean;
-  onToggleIncludeResizeInUndo: (v: boolean) => void;
+  onClose?: () => void;
+  initialPageData?: any;
+  initialScroll?: number | null;
 }
 
 function AppearanceControls() {
@@ -121,20 +119,43 @@ function AppearanceControls() {
   );
 }
 
-export default function Settings({ open, onClose, playheadTop, onChangePlayheadTop, includeResizeInUndo, onToggleIncludeResizeInUndo }: Props) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('misc');
+export default function Settings(props: Props) {
+  // New self-hosted Settings component (manages its own persisted state)
+  return SettingsShell(props);
+}
 
-  if (!open) return null;
+function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => (initialPageData?.tab === 'appearance' ? 'appearance' : 'misc'));
+  const [appearanceSubTab, setAppearanceSubTab] = useState<'plain' | 'blend'>(() => initialPageData?.subTab || 'plain');
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  const [playheadTop, setPlayheadTop] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.playheadTopPercent'); return v ? Number(v) : 15; } catch { return 15; }
+  });
+  const [includeResizeInUndo, setIncludeResizeInUndo] = useState<boolean>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.includeResizeInUndo'); return v === null ? true : v === 'true'; } catch { return true; }
+  });
+
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop)); } catch {} }, [playheadTop]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {} }, [includeResizeInUndo]);
+
+  useEffect(() => {
+    // restore scroll if requested
+    if (initialScroll != null && panelRef.current) {
+      const el = panelRef.current.querySelector('.settings-panel-content');
+      if (el) el.scrollTop = initialScroll;
+    }
+  }, []);
 
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="modal-box settings-modal">
         <div className="modal-header modal-header--centered">
           <span className="panel-title settings-title">Settings</span>
-          <button className="icon-btn modal-close-btn" onClick={onClose} aria-label="Close settings">✕</button>
+          <button className="icon-btn modal-close-btn" onClick={() => { onClose?.(); }} aria-label="Close settings">✕</button>
         </div>
 
-        <div className="settings-body">
+        <div className="settings-body" ref={panelRef}>
           <nav className="settings-tabs" aria-label="Settings sections">
             <button
               type="button"
@@ -158,10 +179,18 @@ export default function Settings({ open, onClose, playheadTop, onChangePlayheadT
                 <div className="appearance-tabs" role="tablist" aria-label="Appearance sub-tabs">
                   <button
                     type="button"
-                    className={`appearance-tab${'plain' === 'plain' ? ' appearance-tab--active' : ''}`}
-                    onClick={() => { /* placeholder, controlled below */ }}
-                    style={{ display: 'none' }}
-                  />
+                    className={`appearance-tab${appearanceSubTab === 'plain' ? ' appearance-tab--active' : ''}`}
+                    onClick={() => setAppearanceSubTab('plain')}
+                  >
+                    Plain
+                  </button>
+                  <button
+                    type="button"
+                    className={`appearance-tab${appearanceSubTab === 'blend' ? ' appearance-tab--active' : ''}`}
+                    onClick={() => setAppearanceSubTab('blend')}
+                  >
+                    Blend
+                  </button>
                 </div>
 
                 <AppearanceControls />
@@ -181,7 +210,7 @@ export default function Settings({ open, onClose, playheadTop, onChangePlayheadT
                     value={playheadTop}
                     onChange={e => {
                       const v = Number(e.target.value);
-                      if (!Number.isNaN(v)) onChangePlayheadTop(Math.min(100, Math.max(0, v)));
+                      if (!Number.isNaN(v)) setPlayheadTop(Math.min(100, Math.max(0, v)));
                     }}
                   />
                 </label>
@@ -192,7 +221,7 @@ export default function Settings({ open, onClose, playheadTop, onChangePlayheadT
                     type="checkbox"
                     className="settings-checkbox"
                     checked={includeResizeInUndo}
-                    onChange={e => onToggleIncludeResizeInUndo(e.target.checked)}
+                    onChange={e => setIncludeResizeInUndo(e.target.checked)}
                   />
                 </label>
               </div>
@@ -203,3 +232,20 @@ export default function Settings({ open, onClose, playheadTop, onChangePlayheadT
     </div>
   );
 }
+
+// Programmatic opener: mounts Settings into document.body
+export function OpenSettings(pageData?: any, scroll?: number | null) {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const cleanup = () => {
+    try { root.unmount(); } catch (e) {}
+    if (container.parentNode) container.parentNode.removeChild(container);
+  };
+  root.render(<SettingsShell initialPageData={pageData} initialScroll={scroll ?? null} onClose={cleanup} />);
+  // expose cleanup to caller
+  return cleanup;
+}
+
+// attach to window for convenience
+try { (window as any).OpenSettings = OpenSettings; } catch (e) {}

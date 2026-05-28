@@ -3,7 +3,7 @@ import MediaPool from './components/MediaPool';
 import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
-import Settings from './components/Settings';
+import { OpenSettings } from './components/Settings';
 import Splitter from './components/Splitter';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
@@ -138,8 +138,7 @@ function AppContent() {
     }
   }, [setClips, setMediaItems, setSelectedIds, setPlayhead, playheadTop, includeResizeInUndo, leftWidth, timelineHeight]);
 
-  // settings
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  // settings are opened via OpenSettings()
 
   // layout (persisted)
   useEffect(() => {
@@ -457,7 +456,7 @@ function AppContent() {
         >
           ⊞
         </button>
-        <button className="icon-btn" onClick={() => setSettingsOpen(true)} title="Settings">⚙</button>
+        <button className="icon-btn" onClick={() => { try { OpenSettings({ tab: 'misc' }, null); } catch (e) {} }} title="Settings">⚙</button>
       </header>
       <div
         className={`workspace${layoutStacked ? ' workspace--stacked' : ''}`}
@@ -547,14 +546,7 @@ function AppContent() {
           totalFrames={totalFrames}
         />
       </div>
-      <Settings
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        playheadTop={playheadTop}
-        onChangePlayheadTop={setPlayheadTop}
-        includeResizeInUndo={includeResizeInUndo}
-        onToggleIncludeResizeInUndo={setIncludeResizeInUndo}
-      />
+      {/* Settings are mounted programmatically via OpenSettings(pageData, scroll) */}
       {rollClip && rollMedia && (
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
       )}
