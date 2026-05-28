@@ -352,7 +352,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
             style={{
               width: '100%',
               height: 24,
-              background: `linear-gradient(to right, ${hslCss(hue, sat, 0)}, ${hslCss(hue, sat, 1)})`,
+              background: `linear-gradient(to right, ${hslCss(hue, sat, 0)}, ${hslCss(hue, sat, 0.5)}, ${hslCss(hue, sat, 1)})`,
               WebkitAppearance: 'none',
               borderRadius: 4,
             }}
