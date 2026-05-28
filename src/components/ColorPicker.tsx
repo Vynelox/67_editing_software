@@ -322,7 +322,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
           ))}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
         <div className="color-wheel" style={{ position: 'relative', width: 220, height: 220 }}>
               <canvas ref={canvasRef} style={{ borderRadius: 8, display: 'block' }} />
               {/* selection indicator (non-interactive so events reach the canvas) */}
@@ -341,7 +341,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
               />
             </div>
 
-        <div style={{ width: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 220 }}>
           <input
             aria-label="Lightness"
             type="range"
@@ -350,11 +350,11 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
             value={light}
             onChange={e => setLight(Number(e.target.value))}
             style={{
-              transform: 'rotate(-90deg)',
-              width: 220,
+              width: '100%',
               height: 24,
               background: `linear-gradient(to right, ${hslCss(hue, sat, 0)}, ${hslCss(hue, sat, 1)})`,
               WebkitAppearance: 'none',
+              borderRadius: 4,
             }}
           />
         </div>
