@@ -923,15 +923,14 @@ input[type="color"] {
 }
 .color-popover-inner { display: flex; flex-direction: column; gap: 8px; min-width: 240px; }
 .color-picker-title {
-  font-size: 14px;
-  color: var(--text-primary);
-  text-align: center;
-  padding: 8px 8px 4px 8px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 8px 8px 4px 8px;
   line-height: 1.4;
-  background: var(--bg-panel);
-  border-radius: 4px;
-  margin-bottom: 4px;
+  text-align: center;
 }
 .color-picker-title span {
   display: block;
