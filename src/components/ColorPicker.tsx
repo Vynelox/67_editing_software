@@ -1,26 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-
-// Custom hook for debouncing a callback
-function useDebouncedCallback<Args extends any[]>(
-  callback: (...args: Args) => void,
-  delay: number
-): (...args: Args) => void {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const callbackRef = useRef(callback);
-
-  useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
-
-  return useCallback((...args: Args) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      callbackRef.current(...args);
-    }, delay);
-  }, [delay]);
-}
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
@@ -145,7 +123,6 @@ function formatTitle(text: string | undefined): string {
 }
 
 export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onClose, targetElement }: Props) {
-  const debouncedOnChange = useDebouncedCallback(onChange, 50); // 50ms debounce
   // Format the title for display
   const title = formatTitle(targetElement);
   const [open, setOpen] = useState(!!autoOpen);
@@ -317,7 +294,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       // update preview hex
       const previewHex = hslToHex(angle, s, lightRef.current/100);
       setHex(previewHex);
-      debouncedOnChange(previewHex);
+      onChange(previewHex);
     };
     const onPointerUp = () => { draggingRef.current = false; canvas.releasePointerCapture && canvas.releasePointerCapture((canvas as any).pointerId); };
     const onPointerDown = (e: PointerEvent) => {
