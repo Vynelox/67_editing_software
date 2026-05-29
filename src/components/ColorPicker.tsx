@@ -145,6 +145,7 @@ function formatTitle(text: string | undefined): string {
 }
 
 export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onClose, targetElement }: Props) {
+  const debouncedOnChange = useDebouncedCallback(onChange, 50); // 50ms debounce
   // Format the title for display
   const title = formatTitle(targetElement);
   const [open, setOpen] = useState(!!autoOpen);
@@ -154,6 +155,10 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
   const [hue, setHue] = useState(initHsl.h || 0);
   const [sat, setSat] = useState(initHsl.s || 0);
   const [light, setLight] = useState((initHsl.l || 0) * 100);
+  const lightRef = useRef(light);
+  useEffect(() => {
+    lightRef.current = light;
+  }, [light]);
   const ref = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -310,9 +315,9 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       setHue(angle);
       setSat(s);
       // update preview hex
-      const previewHex = hslToHex(angle, s, light/100);
+      const previewHex = hslToHex(angle, s, lightRef.current/100);
       setHex(previewHex);
-      onChange(previewHex);
+      debouncedOnChange(previewHex);
     };
     const onPointerUp = () => { draggingRef.current = false; canvas.releasePointerCapture && canvas.releasePointerCapture((canvas as any).pointerId); };
     const onPointerDown = (e: PointerEvent) => {
@@ -328,7 +333,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       window.removeEventListener('pointermove', (e) => { if (draggingRef.current) onPointer(e as PointerEvent); });
       window.removeEventListener('pointerup', onPointerUp);
     };
-  }, [light]);
+  }, []);
 
   // compute preview hex when hue/sat/light change
   useEffect(() => {
