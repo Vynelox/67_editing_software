@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { RotateCcw } from 'lucide-react';
+import Splitter from './Splitter';
 
 // Additional imports for portal functionality
 interface Props {
@@ -130,6 +131,10 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
   const [hex, setHex] = useState(value || '#000000');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [previousHex, setPreviousHex] = useState(value || '#000000');
+
+  // State for splitter
+  const [colorPreviewWidth, setColorPreviewWidth] = useState(100);
+  const [hexInputWidth, setHexInputWidth] = useState(112);
   // use H, S(0-1), L(0-1)
   const initHsl = hexToHsl(value || '#000000');
   const [hue, setHue] = useState(initHsl.h || 0);
@@ -394,9 +399,33 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
-        <div className="color-preview-large" style={{ width: 120, height: 28, background: hex }} />
-        <div style={{ width: 92, position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: 10, width: 220 }}>
+        <div className="color-preview-large" style={{ width: colorPreviewWidth, height: 28, background: hex }} />
+        <Splitter
+          orientation="vertical"
+          onChange={(dx) => {
+            const MIN_COLOR_PREVIEW_WIDTH = 50; // px
+            const MIN_HEX_INPUT_WIDTH = 92; // px (for 7 chars + undo button)
+            const currentTotalWidth = colorPreviewWidth + hexInputWidth; // Sum of current widths
+
+            let newColorPreviewWidth = colorPreviewWidth + dx;
+            let newHexInputWidth = hexInputWidth - dx;
+
+            // Enforce minimums
+            if (newColorPreviewWidth < MIN_COLOR_PREVIEW_WIDTH) {
+              newColorPreviewWidth = MIN_COLOR_PREVIEW_WIDTH;
+              newHexInputWidth = currentTotalWidth - MIN_COLOR_PREVIEW_WIDTH;
+            } else if (newHexInputWidth < MIN_HEX_INPUT_WIDTH) {
+              newHexInputWidth = MIN_HEX_INPUT_WIDTH;
+              newColorPreviewWidth = currentTotalWidth - MIN_HEX_INPUT_WIDTH;
+            }
+
+            setColorPreviewWidth(newColorPreviewWidth);
+            setHexInputWidth(newHexInputWidth);
+          }}
+          background={'rgba(255,255,255,0.2)'}
+        />
+        <div style={{ width: hexInputWidth, position: 'relative' }}>
           <input
             className="color-hex-input"
             value={hex}
