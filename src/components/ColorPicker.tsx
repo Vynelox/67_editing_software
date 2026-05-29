@@ -290,6 +290,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       // update preview hex
       const previewHex = hslToHex(angle, s, light/100);
       setHex(previewHex);
+      onChange(previewHex);
     };
     const onPointerUp = () => { draggingRef.current = false; canvas.releasePointerCapture && canvas.releasePointerCapture((canvas as any).pointerId); };
     const onPointerDown = (e: PointerEvent) => {
