@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
+import { RotateCcw } from 'lucide-react';
 
 // Additional imports for portal functionality
 interface Props {
@@ -127,6 +128,8 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
   const title = formatTitle(targetElement);
   const [open, setOpen] = useState(!!autoOpen);
   const [hex, setHex] = useState(value || '#000000');
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [previousHex, setPreviousHex] = useState(value || '#000000');
   // use H, S(0-1), L(0-1)
   const initHsl = hexToHsl(value || '#000000');
   const [hue, setHue] = useState(initHsl.h || 0);
@@ -159,7 +162,19 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       const target = e.target as Node;
       const insideTrigger = ref.current && ref.current.contains(target);
       const insidePopover = popoverRef.current && popoverRef.current.contains(target);
-      if (!insideTrigger && !insidePopover) setOpen(false);
+
+      if (isInputFocused) {
+        // If input was focused, apply current hex and unfocus
+        onChange(hex);
+        setIsInputFocused(false);
+        // If click was outside popover, still close it
+        if (!insideTrigger && !insidePopover) {
+          setOpen(false);
+        }
+      } else {
+        // If input was not focused, proceed with normal close logic
+        if (!insideTrigger && !insidePopover) setOpen(false);
+      }
     }
     if (open && !fullScreen) document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
@@ -221,7 +236,6 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       setHex(h);
       const hs = hexToHsl(h);
       setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l||0)*100);
-      onChange(h);
     } else {
       setHex(v);
     }
@@ -294,10 +308,19 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       // update preview hex
       const previewHex = hslToHex(angle, s, lightRef.current/100);
       setHex(previewHex);
-      onChange(previewHex);
+      if (!isInputFocused) {
+        onChange(previewHex);
+      }
     };
     const onPointerUp = () => { draggingRef.current = false; canvas.releasePointerCapture && canvas.releasePointerCapture((canvas as any).pointerId); };
     const onPointerDown = (e: PointerEvent) => {
+      if (isInputFocused) {
+        onChange(hex);
+        setIsInputFocused(false);
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      }
       draggingRef.current = true;
       (e.target as Element).setPointerCapture && (e.target as Element).setPointerCapture((e as any).pointerId);
       onPointer(e);
@@ -319,7 +342,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
   }, [hue, sat, light]);
 
   const body = (
-    <div className="color-popover-inner">
+    <div className="color-popover-inner" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {title && (
         <div className="color-picker-title">
           {title.split('\n').map((line, i) => (
@@ -353,7 +376,13 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
             min={0}
             max={100}
             value={light}
-            onChange={e => setLight(Number(e.target.value))}
+            onChange={e => {
+              if (isInputFocused) {
+                onChange(hex);
+                setIsInputFocused(false);
+              }
+              setLight(Number(e.target.value));
+            }}
             style={{
               width: '100%',
               height: 24,
@@ -367,25 +396,57 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
         <div className="color-preview-large" style={{ width: 120, height: 28, background: hex }} />
-        <div style={{ flex: 1 }}>
+        <div style={{ width: 92, position: 'relative' }}>
           <input
             className="color-hex-input"
             value={hex}
             onChange={e => onHexChange(e.target.value)}
+            onFocus={() => {
+              setIsInputFocused(true);
+              setPreviousHex(hex);
+            }}
             onBlur={() => {
+              setIsInputFocused(false);
               const normalized = /^#?[0-9a-fA-F]{3}$/.test(hex)
                 ? ('#' + hex.replace('#','').split('').map(c=>c+c).join(''))
-                : (hex.startsWith('#') ? hex : ('#' + hex));
+                : (hex.startsWith('#') ? hex : ('#'+hex));
               if (/^#([0-9a-fA-F]{6})$/.test(normalized)) {
-                setHex(normalized);
-                const hs = hexToHsl(normalized);
-                setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l||0)*100);
                 onChange(normalized);
               } else {
-                setHex(value);
+                onChange(value); // Revert to original if invalid
               }
+              // Re-sync internal state with parent value after blur
+              setHex(value);
+              const hs = hexToHsl(value);
+              setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l||0)*100);
             }}
+            style={{ paddingRight: isInputFocused ? 30 : 8, width: '100%', boxSizing: 'border-box' }} // Adjust padding when button is visible
           />
+          {isInputFocused && (
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => {
+                setHex(previousHex);
+                onChange(previousHex);
+                setIsInputFocused(false);
+                // Unfocus the input programmatically
+                if (document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur();
+                }
+              }}
+              title="Revert to previous color"
+              style={{
+                position: 'absolute',
+                right: 4,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 1,
+              }}
+            >
+              <RotateCcw size={16} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -403,6 +464,15 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
 
   const onDragPointerDown = (e: React.PointerEvent) => {
     if (!shouldStartDrag(e.target)) return;
+
+    if (isInputFocused) {
+      onChange(hex);
+      setIsInputFocused(false);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }
+
     const panel = popoverRef.current;
     if (!panel) return;
     const rect = panel.getBoundingClientRect();
