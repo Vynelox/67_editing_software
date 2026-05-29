@@ -135,6 +135,15 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
   // State for splitter
   const [colorPreviewWidth, setColorPreviewWidth] = useState(100);
   const [hexInputWidth, setHexInputWidth] = useState(112);
+
+  const [borderMidColor, setBorderMidColor] = useState('transparent');
+  const [borderDarkColor, setBorderDarkColor] = useState('transparent');
+
+  useEffect(() => {
+    const styles = getComputedStyle(document.documentElement);
+    setBorderMidColor(styles.getPropertyValue('--border-mid').trim() || 'transparent');
+    setBorderDarkColor(styles.getPropertyValue('--border').trim() || 'transparent');
+  }, []);
   // use H, S(0-1), L(0-1)
   const initHsl = hexToHsl(value || '#000000');
   const [hue, setHue] = useState(initHsl.h || 0);
@@ -304,7 +313,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       const dy = y - cy;
       const r = Math.sqrt(dx*dx + dy*dy);
       const radius = Math.min(cx, cy);
-      if (r > radius) return;
+
       let angle = Math.atan2(dy, dx) * 180 / Math.PI;
       if (angle < 0) angle += 360;
       const s = Math.min(1, r / radius);
@@ -326,6 +335,21 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
           document.activeElement.blur();
         }
       }
+
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const cx = canvas.width/2;
+      const cy = canvas.height/2;
+      const dx = x - cx;
+      const dy = y - cy;
+      const r = Math.sqrt(dx*dx + dy*dy);
+      const radius = Math.min(cx, cy);
+
+      // if (r > radius) return; // Removed this check
+
       draggingRef.current = true;
       (e.target as Element).setPointerCapture && (e.target as Element).setPointerCapture((e as any).pointerId);
       onPointer(e);
@@ -356,8 +380,8 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-        <div className="color-wheel" style={{ position: 'relative', width: 220, height: 220 }}>
-              <canvas ref={canvasRef} style={{ borderRadius: 8, display: 'block' }} />
+        <div className="color-wheel" style={{ position: 'relative', width: 220, height: 220, borderRadius: '50%', boxShadow: `0 0 0 1px ${borderMidColor}, 0 0 0 2px ${borderDarkColor}` }}>
+              <canvas ref={canvasRef} style={{ borderRadius: '50%', display: 'block' }} />
               {/* selection indicator (non-interactive so events reach the canvas) */}
               <div
                 style={{
