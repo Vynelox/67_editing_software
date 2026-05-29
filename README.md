@@ -15,7 +15,7 @@ so I should probably give a warning:
 expect shitty bugs, random crashes, weird gui, weird interfaces, and infected footage  
 i'm working on it. like chillax. I'm not superman  
 
-so, to answer all your questions I'm sure many of you are having
+so, to answer all your questions I'm sure you're having
 
 ### is it the best video editor on the planet?
 at its current state, nah, not really
