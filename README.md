@@ -8,12 +8,12 @@ it's a web app video editor. "broooo are you serious a website? that's not a rea
 
 and it's completely free, no watermark. so bye bye filmora, bye bye capcut, bye bye adobe, no more need to pay $1000 per month for a video editor that looks like dogshit. just use this one
 
-okay granted I actually finish this project because currently it's not done
+okay granted I actually finish this project because currently it's not done  
 so I should probably give a warning:
 
 # WARNING: THIS SOFTWARE IS HEAVILY, and when I say heavily, I mean *HEAVILY*, WORK IN PROGRESS
-expect shitty bugs, random crashes, weird gui, weird interfaces, and infected footage
-i'm working on it. like chillax. I'm not superman
+expect shitty bugs, random crashes, weird gui, weird interfaces, and infected footage  
+i'm working on it. like chillax. I'm not superman  
 
 so, to answer all your questions I'm sure many of you are having
 
