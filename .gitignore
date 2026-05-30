@@ -10,6 +10,7 @@ node_modules
 dist
 dist-ssr
 *.local
+*.aider
 
 .vscode/*
 !.vscode/extensions.json
@@ -21,3 +22,4 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.aider*
