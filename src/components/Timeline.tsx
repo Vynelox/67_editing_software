@@ -67,7 +67,7 @@ export default function Timeline({
   const [fadeState, setFadeState] = useState<{
     clipId: string; side: 'in' | 'out'; origFrames: number; mouseStartX: number;
   } | null>(null);
-  const [playheadDragging, setPlayheadDragging] = useState(false);
+  const playheadDraggingRef = useRef(false);
 
   // Smooth scrolling state - read directly in handlers for immediate updates
   const getScrollSmoothFactor = () => {
@@ -176,7 +176,7 @@ export default function Timeline({
       const newFrames = Math.max(0, fadeState.origFrames + deltaFrames);
       onFadeChange(fadeState.clipId, fadeState.side, newFrames);
     }
-    if (playheadDragging && containerRef.current) {
+    if (playheadDraggingRef.current && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const scrollEl = containerRef.current.querySelector('.tl-scroll') as HTMLElement;
       const scrollX = scrollEl?.scrollLeft ?? 0;
@@ -184,7 +184,7 @@ export default function Timeline({
       const frame = Math.max(0, xToFrame(x, zoom));
       onSeek(frame);
     }
-  }, [dragState, fadeState, playheadDragging, zoom, onFadeChange, onSeek]);
+  }, [dragState, fadeState, zoom, onFadeChange, onSeek]);
 
   const handleMouseUp = useCallback((e: MouseEvent) => {
     if (dragState) {
@@ -196,8 +196,10 @@ export default function Timeline({
       setDragState(null);
     }
     if (fadeState) setFadeState(null);
-    if (playheadDragging) setPlayheadDragging(false);
-  }, [dragState, fadeState, playheadDragging, zoom, onNudge]);
+    if (playheadDraggingRef.current) {
+      playheadDraggingRef.current = false;
+    }
+  }, [dragState, fadeState, zoom, onNudge]);
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
@@ -361,13 +363,15 @@ export default function Timeline({
                   style={{ height: TRACK_H, width: totalWidth }}
                   onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
                   onDrop={e => handleTrackDrop(e, tIdx)}
-                  onClick={(e) => {
+                  onMouseDown={(e) => {
                     if ((e.target as HTMLElement).classList.contains('tl-track')) {
+                      e.preventDefault();
                       const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement;
                       const scrollX = scrollEl?.scrollLeft ?? 0;
                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                       const x = e.clientX - rect.left + scrollX;
                       onSeek(xToFrame(x, zoom));
+                      playheadDraggingRef.current = true;
                     }
                   }}
                 >
@@ -435,7 +439,7 @@ export default function Timeline({
               <button
                 className="playhead-btn"
                 style={{ top: playheadTopStyle(playheadTop) }}
-                onMouseDown={() => setPlayheadDragging(true)}
+                onMouseDown={(e) => { e.preventDefault(); playheadDraggingRef.current = true; }}
                 onClick={handleNeedleClick}
                 title="Click for edit options"
               />
