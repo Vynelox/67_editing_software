@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Film, Music } from 'lucide-react';
 import type { TimelineClip, Track, MediaItem } from '../types';
 import { FPS, formatTimecode } from '../types';
@@ -68,6 +68,14 @@ export default function Timeline({
     clipId: string; side: 'in' | 'out'; origFrames: number; mouseStartX: number;
   } | null>(null);
   const [playheadDragging, setPlayheadDragging] = useState(false);
+
+  // Smooth scrolling state
+  const scrollSmoothFactor = useMemo(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.scrollSmooth'); return v ? Number(v) : 50; } catch { return 50; }
+  }, []);
+  const velocityRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const scrollElRef = useRef<HTMLElement | null>(null);
 
   const totalWidth = Math.max(frameToX(totalFrames + 60 * FPS, zoom), 1200);
 
@@ -197,11 +205,42 @@ export default function Timeline({
     };
   }, [handleMouseMove, handleMouseUp]);
 
+  // Momentum animation loop for smooth scrolling
+  useEffect(() => {
+    const animate = () => {
+      const vel = velocityRef.current;
+      if (Math.abs(vel) > 0.5 && scrollElRef.current) {
+        scrollElRef.current.scrollLeft += vel;
+        // Friction: higher smooth factor = less friction = more momentum
+        // Map 0-100 to friction 0.92-0.98
+        const friction = 0.92 + (scrollSmoothFactor / 100) * 0.06;
+        velocityRef.current = vel * friction;
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        velocityRef.current = 0;
+        rafRef.current = null;
+      }
+    };
+
+    if (velocityRef.current !== 0 && rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(animate);
+    }
+
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [scrollSmoothFactor]);
+
   const handleWheel = useCallback((e: React.WheelEvent<HTMLElement>) => {
     const el = e.currentTarget as HTMLElement;
+    scrollElRef.current = el;
     // If Alt is pressed, zoom horizontally centered at cursor
     if (e.altKey) {
       e.preventDefault();
+      velocityRef.current = 0; // Cancel momentum on zoom
       const rect = el.getBoundingClientRect();
       const mouseX = e.clientX - rect.left + el.scrollLeft;
       const beforeFrame = xToFrame(mouseX, zoom);
@@ -214,14 +253,38 @@ export default function Timeline({
       return;
     }
 
-    // Normal wheel: pan horizontally
+    // Normal wheel: pan horizontally with momentum
     // Prefer deltaX when available (touchpad), otherwise use deltaY
     const delta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
     if (delta !== 0) {
       e.preventDefault();
-      el.scrollLeft += delta;
+      if (scrollSmoothFactor === 0) {
+        // No smoothing: direct scroll
+        el.scrollLeft += delta;
+      } else {
+        // Add velocity for momentum scrolling
+        velocityRef.current += delta * 0.5;
+        // Start animation if not running
+        if (rafRef.current === null) {
+          rafRef.current = requestAnimationFrame(() => {
+            const animate = () => {
+              const vel = velocityRef.current;
+              if (Math.abs(vel) > 0.5 && scrollElRef.current) {
+                scrollElRef.current.scrollLeft += vel;
+                const friction = 0.92 + (scrollSmoothFactor / 100) * 0.06;
+                velocityRef.current = vel * friction;
+                rafRef.current = requestAnimationFrame(animate);
+              } else {
+                velocityRef.current = 0;
+                rafRef.current = null;
+              }
+            };
+            animate();
+          });
+        }
+      }
     }
-  }, [zoom]);
+  }, [zoom, scrollSmoothFactor]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

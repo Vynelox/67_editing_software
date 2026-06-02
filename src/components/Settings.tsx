@@ -181,9 +181,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [includeResizeInUndo, setIncludeResizeInUndo] = useState<boolean>(() => {
     try { const v = window.localStorage.getItem('juicecut.settings.includeResizeInUndo'); return v === null ? true : v === 'true'; } catch { return true; }
   });
+  const [scrollSmooth, setScrollSmooth] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.scrollSmooth'); return v ? Number(v) : 50; } catch { return 50; }
+  });
 
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop)); } catch {} }, [playheadTop]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {} }, [includeResizeInUndo]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollSmooth', String(scrollSmooth)); } catch {} }, [scrollSmooth]);
 
   useEffect(() => {
     // restore scroll if requested
@@ -270,6 +274,26 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     onChange={e => setIncludeResizeInUndo(e.target.checked)}
                   />
                 </label>
+
+                <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Timeline scroll smooth factor</span>
+                    <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12 }}>{scrollSmooth}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    className="settings-range-input"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={scrollSmooth}
+                    onChange={e => setScrollSmooth(Number(e.target.value))}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
+                    <span>Snappy</span>
+                    <span>Smooth</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>

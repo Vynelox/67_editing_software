@@ -1032,6 +1032,34 @@ input[type="color"] {
   margin-left: auto;
 }
 
+.settings-range-input {
+  width: 100%;
+  height: 6px;
+  appearance: none;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  accent-color: var(--accent-blue);
+}
+.settings-range-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.settings-range-input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
 .settings-checkbox:checked {
   border-color: var(--accent-blue);
 }
