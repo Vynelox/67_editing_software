@@ -26,7 +26,8 @@ function AppearanceControls({ onClose, onReopen }: { onClose: () => void; onReop
     { varName: '--border-mid', label: 'Border / Grid line (mid)' },
     { varName: '--text-primary', label: 'Primary text' },
     { varName: '--text-secondary', label: 'Secondary text' },
-    { varName: '--text-muted', label: 'Muted text' }
+    { varName: '--text-muted', label: 'Muted text' },
+    { varName: '--input-field', label: 'Input field color' }
   ];
 
   const [colors, setColors] = useState<Record<string, string>>({});
