@@ -181,8 +181,10 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
       const insidePopover = popoverRef.current && popoverRef.current.contains(target);
 
       if (isInputFocused) {
-        // If input was focused, apply current hex and unfocus
-        onChange(hexRef.current);
+        // If undo button was clicked (skipBlurApplyRef set), don't apply typed hex
+        if (!skipBlurApplyRef.current) {
+          onChange(hexRef.current);
+        }
         setIsInputFocused(false);
         // If click was outside popover, still close it
         if (!insideTrigger && !insidePopover) {
@@ -491,8 +493,12 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
             <button
               type="button"
               className="icon-btn"
-              onClick={() => {
+              onMouseDown={(e) => {
+                // Set flag on mousedown BEFORE blur fires, so onBlur knows to skip
+                e.preventDefault();
                 skipBlurApplyRef.current = true;
+              }}
+              onClick={() => {
                 setHex(previousHex);
                 onChange(previousHex);
                 setIsInputFocused(false);

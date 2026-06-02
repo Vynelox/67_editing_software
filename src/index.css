@@ -30,7 +30,9 @@
   --radius-lg: 10px;
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+/* Allow text selection in input fields */
+input, textarea, [contenteditable="true"] { user-select: text; }
 
 html, body, #root {
   height: 100%;

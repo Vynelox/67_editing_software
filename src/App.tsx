@@ -152,6 +152,11 @@ function AppContent() {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      // Prevent Ctrl+A from selecting text (except in input fields, handled above)
+      if (e.ctrlKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        return;
+      }
       // Undo: Ctrl+Z (no modifiers)
       if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') {
         e.preventDefault();

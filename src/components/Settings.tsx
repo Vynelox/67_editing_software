@@ -26,16 +26,7 @@ function AppearanceControls({ onClose, onReopen }: { onClose: () => void; onReop
     { varName: '--border-mid', label: 'Border / Grid line (mid)' },
     { varName: '--text-primary', label: 'Primary text' },
     { varName: '--text-secondary', label: 'Secondary text' },
-    { varName: '--text-muted', label: 'Muted text' },
-    { varName: '--clip-video-bg', label: 'Clip video background' },
-    { varName: '--clip-video-border', label: 'Clip video border' },
-    { varName: '--clip-audio-bg', label: 'Clip audio background' },
-    { varName: '--clip-audio-border', label: 'Clip audio border' },
-    { varName: '--clip-image-bg', label: 'Clip image background' },
-    { varName: '--clip-image-border', label: 'Clip image border' },
-    { varName: '--accent-green', label: 'Accent - green' },
-    { varName: '--accent-rose', label: 'Accent - rose' },
-    { varName: '--accent-orange', label: 'Accent - orange' }
+    { varName: '--text-muted', label: 'Muted text' }
   ];
 
   const [colors, setColors] = useState<Record<string, string>>({});
