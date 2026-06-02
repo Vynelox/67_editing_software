@@ -112,7 +112,7 @@ function AppearanceControls({ onClose, onReopen }: { onClose: () => void; onReop
   }
 
   return (
-    <div>
+    <>
       <div className="appearance-subtabs">
         <button
           type="button"
@@ -154,7 +154,7 @@ function AppearanceControls({ onClose, onReopen }: { onClose: () => void; onReop
           {/* left intentionally blank for now */}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -240,23 +240,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
           <div className="settings-panel">
             {activeTab === 'appearance' && (
               <div className="settings-panel-content">
-                <div className="appearance-tabs" role="tablist" aria-label="Appearance sub-tabs">
-                  <button
-                    type="button"
-                    className={`appearance-tab${appearanceSubTab === 'plain' ? ' appearance-tab--active' : ''}`}
-                    onClick={() => setAppearanceSubTab('plain')}
-                  >
-                    Plain
-                  </button>
-                  <button
-                    type="button"
-                    className={`appearance-tab${appearanceSubTab === 'blend' ? ' appearance-tab--active' : ''}`}
-                    onClick={() => setAppearanceSubTab('blend')}
-                  >
-                    Blend
-                  </button>
-                </div>
-
                 <AppearanceControls onClose={onClose} onReopen={() => {}} />
               </div>
             )}
