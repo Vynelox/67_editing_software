@@ -175,10 +175,14 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [scrollSmooth, setScrollSmooth] = useState<number>(() => {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollSmooth'); return v ? Number(v) : 50; } catch { return 50; }
   });
+  const [scrollAmount, setScrollAmount] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.scrollAmount'); return v ? Number(v) : 100; } catch { return 100; }
+  });
 
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop)); } catch {} }, [playheadTop]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {} }, [includeResizeInUndo]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollSmooth', String(scrollSmooth)); } catch {} }, [scrollSmooth]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollAmount', String(scrollAmount)); } catch {} }, [scrollAmount]);
 
   useEffect(() => {
     // restore scroll if requested
@@ -283,6 +287,26 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
                     <span>Snappy</span>
                     <span>Smooth</span>
+                  </div>
+                </div>
+
+                <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Timeline scroll amount</span>
+                    <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12 }}>{scrollAmount}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    className="settings-range-input"
+                    min={10}
+                    max={400}
+                    step={10}
+                    value={scrollAmount}
+                    onChange={e => setScrollAmount(Number(e.target.value))}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
+                    <span>Slow</span>
+                    <span>Fast</span>
                   </div>
                 </div>
               </div>

@@ -69,10 +69,13 @@ export default function Timeline({
   } | null>(null);
   const [playheadDragging, setPlayheadDragging] = useState(false);
 
-  // Smooth scrolling state
-  const scrollSmoothFactor = useMemo(() => {
+  // Smooth scrolling state - read directly in handlers for immediate updates
+  const getScrollSmoothFactor = () => {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollSmooth'); return v ? Number(v) : 50; } catch { return 50; }
-  }, []);
+  };
+  const getScrollAmount = () => {
+    try { const v = window.localStorage.getItem('juicecut.settings.scrollAmount'); return v ? Number(v) : 100; } catch { return 100; }
+  };
   const velocityRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const scrollElRef = useRef<HTMLElement | null>(null);
@@ -213,6 +216,7 @@ export default function Timeline({
         scrollElRef.current.scrollLeft += vel;
         // Friction: higher smooth factor = less friction = more momentum
         // Map 0-100 to friction 0.92-0.98
+        const scrollSmoothFactor = getScrollSmoothFactor();
         const friction = 0.92 + (scrollSmoothFactor / 100) * 0.06;
         velocityRef.current = vel * friction;
         rafRef.current = requestAnimationFrame(animate);
@@ -232,11 +236,14 @@ export default function Timeline({
         rafRef.current = null;
       }
     };
-  }, [scrollSmoothFactor]);
+  }, []);
 
   const handleWheel = useCallback((e: React.WheelEvent<HTMLElement>) => {
     const el = e.currentTarget as HTMLElement;
     scrollElRef.current = el;
+    // Read settings fresh each time for immediate response to changes
+    const scrollSmoothFactor = getScrollSmoothFactor();
+    const scrollAmount = getScrollAmount();
     // If Alt is pressed, zoom horizontally centered at cursor
     if (e.altKey) {
       e.preventDefault();
@@ -255,7 +262,8 @@ export default function Timeline({
 
     // Normal wheel: pan horizontally with momentum
     // Prefer deltaX when available (touchpad), otherwise use deltaY
-    const delta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
+    const rawDelta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
+    const delta = rawDelta * (scrollAmount / 100);
     if (delta !== 0) {
       e.preventDefault();
       if (scrollSmoothFactor === 0) {
@@ -271,7 +279,7 @@ export default function Timeline({
               const vel = velocityRef.current;
               if (Math.abs(vel) > 0.5 && scrollElRef.current) {
                 scrollElRef.current.scrollLeft += vel;
-                const friction = 0.92 + (scrollSmoothFactor / 100) * 0.06;
+                const friction = 0.92 + (getScrollSmoothFactor() / 100) * 0.06;
                 velocityRef.current = vel * friction;
                 rafRef.current = requestAnimationFrame(animate);
               } else {
@@ -284,7 +292,7 @@ export default function Timeline({
         }
       }
     }
-  }, [zoom, scrollSmoothFactor]);
+  }, [zoom]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
