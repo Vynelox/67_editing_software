@@ -162,6 +162,9 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
 
   const [dragPos, setDragPos] = useState<{ left: number; top: number } | null>(null);
   const dragStateRef = useRef<{ startX: number; startY: number; startLeft: number; startTop: number } | null>(null);
+  const skipBlurApplyRef = useRef(false);
+  const hexRef = useRef(hex);
+  useEffect(() => { hexRef.current = hex; }, [hex]);
 
   useEffect(() => {
     setHex(value || '#000000');
@@ -179,14 +182,14 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
 
       if (isInputFocused) {
         // If input was focused, apply current hex and unfocus
-        onChange(hex);
+        onChange(hexRef.current);
         setIsInputFocused(false);
         // If click was outside popover, still close it
         if (!insideTrigger && !insidePopover) {
           setOpen(false);
         }
       } else {
-        // If input was not focused, proceed with normal close logic
+        // If click was outside popover, proceed with normal close logic
         if (!insideTrigger && !insidePopover) setOpen(false);
       }
     }
@@ -453,20 +456,34 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
               setIsInputFocused(true);
               setPreviousHex(hex);
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur();
+              }
+            }}
             onBlur={() => {
               setIsInputFocused(false);
-              const normalized = /^#?[0-9a-fA-F]{3}$/.test(hex)
-                ? ('#' + hex.replace('#','').split('').map(c=>c+c).join(''))
-                : (hex.startsWith('#') ? hex : ('#'+hex));
-              if (/^#([0-9a-fA-F]{6})$/.test(normalized)) {
-                onChange(normalized);
-              } else {
-                onChange(value); // Revert to original if invalid
+              // If undo button triggered blur, skip applying
+              if (skipBlurApplyRef.current) {
+                skipBlurApplyRef.current = false;
+                return;
               }
-              // Re-sync internal state with parent value after blur
-              setHex(value);
-              const hs = hexToHsl(value);
-              setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l||0)*100);
+              const v = hex.trim();
+              let normalized: string;
+              if (/^#?[0-9a-fA-F]{3}$/.test(v)) {
+                // Expand 3-char hex shorthand
+                const raw = v.replace('#', '');
+                normalized = '#' + raw[0] + raw[0] + raw[1] + raw[1] + raw[2] + raw[2];
+              } else if (/^#?[0-9a-fA-F]{6}$/.test(v)) {
+                normalized = v.startsWith('#') ? v : '#' + v;
+              } else {
+                // Invalid hex - revert to original
+                normalized = value;
+              }
+              setHex(normalized);
+              onChange(normalized);
+              const hs = hexToHsl(normalized);
+              setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l || 0) * 100);
             }}
             style={{ paddingRight: isInputFocused ? 30 : 8, width: '100%', boxSizing: 'border-box' }} // Adjust padding when button is visible
           />
@@ -475,9 +492,13 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
               type="button"
               className="icon-btn"
               onClick={() => {
+                skipBlurApplyRef.current = true;
                 setHex(previousHex);
                 onChange(previousHex);
                 setIsInputFocused(false);
+                // Update HSL to match reverted color
+                const hs = hexToHsl(previousHex);
+                setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l || 0) * 100);
                 // Unfocus the input programmatically
                 if (document.activeElement instanceof HTMLElement) {
                   document.activeElement.blur();
