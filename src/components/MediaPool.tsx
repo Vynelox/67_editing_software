@@ -13,16 +13,6 @@ interface Props {
 export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onRemove }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files.length) onAdd(e.dataTransfer.files);
-  }, [onAdd]);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) {
       onAdd(e.target.files);
@@ -39,7 +29,7 @@ export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onR
   const formatDur = (frames: number) => `${(frames / 30).toFixed(1)}s`;
 
   return (
-    <div className="media-pool" onDrop={handleDrop} onDragOver={handleDragOver}>
+    <>
       <input
         type="file"
         ref={fileInputRef}
@@ -95,6 +85,6 @@ export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onR
           </div>
         ))}
       </div>
-    </div>
+    </>
   );
 }

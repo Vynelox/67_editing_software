@@ -226,6 +226,16 @@ function AppContent() {
     setMediaItems(newItems);
   }, [mediaItems]);
 
+  const handleDropMediaPool = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files.length) handleAddMedia(e.dataTransfer.files);
+  }, [handleAddMedia]);
+
+  const handleDragOverMediaPool = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+
   const handleRemoveMedia = useCallback((id: string) => {
     history.push(snapshot());
     const newItems = new Map(mediaItems);
@@ -488,7 +498,11 @@ function AppContent() {
           '--vsplit-width': leftCollapsed ? '0px' : '8px',
         } as React.CSSProperties}
       >
-        <div className="workspace-panel-mediapool">
+        <div 
+          className="workspace-panel-mediapool"
+          onDrop={handleDropMediaPool}
+          onDragOver={handleDragOverMediaPool}
+        >
           <div style={{ padding: 6, display: 'flex', alignItems: 'center' }}>
             <span className="panel-title">Media Pool</span>
           </div>
