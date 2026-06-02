@@ -144,6 +144,18 @@ function AppContent() {
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop)); } catch {}
   }, [playheadTop]);
+
+  // Listen for settings changes from the Settings modal
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.key === 'playheadTopPercent' && typeof detail.value === 'number') {
+        setPlayheadTop(detail.value);
+      }
+    };
+    window.addEventListener('juicecut-settings-changed', handler);
+    return () => window.removeEventListener('juicecut-settings-changed', handler);
+  }, []);
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {}
   }, [includeResizeInUndo]);

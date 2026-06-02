@@ -181,7 +181,12 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollAmount'); return v ? Number(v) : 100; } catch { return 100; }
   });
 
-  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop)); } catch {} }, [playheadTop]);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop));
+      window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playheadTopPercent', value: playheadTop } }));
+    } catch {}
+  }, [playheadTop]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {} }, [includeResizeInUndo]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollSmooth', String(scrollSmooth)); } catch {} }, [scrollSmooth]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollAmount', String(scrollAmount)); } catch {} }, [scrollAmount]);
