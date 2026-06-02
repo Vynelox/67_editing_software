@@ -19,8 +19,8 @@ function AppearanceControls({ onClose, onReopen }: { onClose: () => void; onReop
   const [subTab, setSubTab] = useState<'plain' | 'blend'>('plain');
 
   const colorFields: { varName: string; label: string }[] = [
-    { varName: '--bg-base', label: 'Viewer background' },
-    { varName: '--bg-panel', label: 'Timeline & Media Pool background' },
+    { varName: '--bg-base', label: 'Secondary background' },
+    { varName: '--bg-panel', label: 'Primary background' },
     { varName: '--bg-elevated', label: 'Panel elevated background' },
     { varName: '--bg-hover', label: 'Hover background' },
     { varName: '--border', label: 'Border / Grid line (dark)' },
