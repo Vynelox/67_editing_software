@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { Film, Music, Image as ImageIcon, Trash2 } from 'lucide-react';
 import type { MediaItem } from '../types';
 
@@ -11,6 +11,8 @@ interface Props {
 }
 
 export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onRemove }: Props) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files.length) onAdd(e.dataTransfer.files);
@@ -19,6 +21,13 @@ export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onR
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) {
+      onAdd(e.target.files);
+      e.target.value = '';
+    }
   };
 
   const TypeIcon = ({ type }: { type: MediaItem['type'] }) => {
@@ -31,11 +40,23 @@ export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onR
 
   return (
     <div className="media-pool" onDrop={handleDrop} onDragOver={handleDragOver}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".mp4,.mp3,.png,.jpg,.jpeg,.mkv,.mov,.avif,.webm,.ogg"
+        multiple
+        hidden
+        onChange={handleFileChange}
+      />
       <div className="media-list">
         {items.length === 0 && (
-          <div className="empty-drop">
+          <div 
+            className="empty-drop" 
+            onClick={() => fileInputRef.current?.click()}
+            style={{ cursor: 'pointer' }}
+          >
             <Film size={28} className="text-gray-600" />
-            <p>Drop media here or click +</p>
+            <p>Drop media here or click me</p>
           </div>
         )}
         {items.map(item => (

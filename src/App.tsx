@@ -5,7 +5,7 @@ import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
 import { OpenSettings } from './components/Settings';
 import Splitter from './components/Splitter';
-import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   type MediaItem, type TimelineClip, type Track,
   FPS, generateId, secondsToFrames
@@ -489,23 +489,8 @@ function AppContent() {
         } as React.CSSProperties}
       >
         <div className="workspace-panel-mediapool">
-          <div style={{ padding: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding: 6, display: 'flex', alignItems: 'center' }}>
             <span className="panel-title">Media Pool</span>
-            <label className="icon-btn" title="Import media" style={{ padding: 4 }}>
-              <Plus size={15} />
-              <input
-                type="file"
-                accept=".mp4,.mp3,.png,.jpg,.jpeg,.mkv,.mov,.avif,.webm,.ogg"
-                multiple
-                hidden
-                onChange={(e) => {
-                  if (e.target.files?.length) {
-                    handleAddMedia(e.target.files);
-                    e.target.value = '';
-                  }
-                }}
-              />
-            </label>
           </div>
           {!leftCollapsed && (
             <MediaPool
