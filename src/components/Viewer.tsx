@@ -123,7 +123,6 @@ export default function Viewer({
     <div className="viewer">
       <div className="viewer-header">
         <span className="panel-title">Viewer</span>
-        <span className="timecode">{formatTimecode(playhead)}</span>
         <button className="export-btn" onClick={onExport}>Export MP4</button>
       </div>
       <div className="viewer-canvas-wrap">
