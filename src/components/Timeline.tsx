@@ -346,7 +346,24 @@ export default function Timeline({
 
         <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto', flex: 1, height: '100%' }} onWheel={handleWheel}>
           {/* wheel handler attached via prop below for proper typing */}
-          <div className="tl-inner" style={{ width: totalWidth, position: 'relative', height: '100%' }}>
+          <div 
+            className="tl-inner" 
+            style={{ width: totalWidth, position: 'relative', height: '100%' }}
+            onMouseDown={(e) => {
+              const target = e.target as HTMLElement;
+              // Ignore clicks on clips, fade handles, join buttons, or the playhead itself
+              if (target.closest('.tl-clip') || target.closest('.fade-handle') || target.closest('.join-btn') || target.closest('.tl-playhead')) {
+                return;
+              }
+              e.preventDefault();
+              const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement;
+              const scrollX = scrollEl?.scrollLeft ?? 0;
+              const rect = containerRef.current!.getBoundingClientRect();
+              const x = e.clientX - rect.left - 60 + scrollX;
+              onSeek(Math.max(0, xToFrame(x, zoom)));
+              playheadDraggingRef.current = true;
+            }}
+          >
             <div className="tl-ruler" style={{ height: HEADER_H, width: totalWidth }}>
               {rulerTicks().map((t, i) => (
                 <div key={i} className="ruler-tick" style={{ left: t.x }}>
@@ -363,17 +380,6 @@ export default function Timeline({
                   style={{ height: TRACK_H, width: totalWidth }}
                   onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
                   onDrop={e => handleTrackDrop(e, tIdx)}
-                  onMouseDown={(e) => {
-                    if ((e.target as HTMLElement).classList.contains('tl-track')) {
-                      e.preventDefault();
-                      const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement;
-                      const scrollX = scrollEl?.scrollLeft ?? 0;
-                      const rect = containerRef.current!.getBoundingClientRect();
-                      const x = e.clientX - rect.left - 60 + scrollX;
-                      onSeek(xToFrame(x, zoom));
-                      playheadDraggingRef.current = true;
-                    }
-                  }}
                 >
                   {clips.filter(c => c.track === tIdx).map(clip => {
                     const x = frameToX(clip.startFrame, zoom);
