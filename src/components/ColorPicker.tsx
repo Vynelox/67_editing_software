@@ -239,19 +239,13 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
 
   function onHexChange(raw: string) {
     const v = raw.trim();
-    if (/^#?[0-9a-fA-F]{3}$/.test(v)) {
+    setHex(v);
+    // Only update color preview for valid 6-char hex during typing
+    // Don't auto-expand 3-char hex until blur to avoid premature filling
+    if (/^#?[0-9a-fA-F]{6}$/.test(v)) {
       const h = (v.startsWith('#')?v:'#'+v);
-      const full = h.length===4?('#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3]):h;
-      setHex(full);
-      const hs = hexToHsl(full);
-      setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l||0)*100);
-    } else if (/^#?[0-9a-fA-F]{6}$/.test(v)) {
-      const h = (v.startsWith('#')?v:'#'+v);
-      setHex(h);
       const hs = hexToHsl(h);
       setHue(hs.h || 0); setSat(hs.s || 0); setLight((hs.l||0)*100);
-    } else {
-      setHex(v);
     }
   }
 
