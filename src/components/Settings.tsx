@@ -186,6 +186,18 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollAmount'); return v ? Number(v) : 100; } catch { return 100; }
   });
 
+  // Logarithmic slider mapping for scroll amount (1% to 400%, middle ≈ 40%)
+  const SCROLL_AMOUNT_POWER = 3.355;
+  const scrollAmountToSlider = (value: number) => {
+    if (value <= 1) return 0;
+    if (value >= 400) return 1000;
+    return Math.round(1000 * Math.pow((value - 1) / 399, 1 / SCROLL_AMOUNT_POWER));
+  };
+  const sliderToScrollAmount = (sliderValue: number) => {
+    const ratio = Math.max(0, Math.min(1, sliderValue / 1000));
+    return Math.round(1 + 399 * Math.pow(ratio, SCROLL_AMOUNT_POWER));
+  };
+
   useEffect(() => {
     try {
       window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop));
@@ -240,7 +252,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
           <div className="settings-panel">
             {activeTab === 'appearance' && (
               <div className="settings-panel-content">
-                <AppearanceControls onClose={onClose} onReopen={() => {}} />
+                <AppearanceControls onClose={onClose ?? (() => {})} onReopen={() => {}} />
               </div>
             )}
 
@@ -294,15 +306,15 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <input
                     type="range"
                     className="settings-range-input"
-                    min={10}
-                    max={400}
-                    step={10}
-                    value={scrollAmount}
-                    onChange={e => setScrollAmount(Number(e.target.value))}
+                    min={0}
+                    max={1000}
+                    step={1}
+                    value={scrollAmountToSlider(scrollAmount)}
+                    onChange={e => setScrollAmount(sliderToScrollAmount(Number(e.target.value)))}
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
-                    <span>Slow</span>
-                    <span>Fast</span>
+                    <span>1%</span>
+                    <span>400%</span>
                   </div>
                 </div>
               </div>
