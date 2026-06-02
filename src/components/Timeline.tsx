@@ -368,8 +368,8 @@ export default function Timeline({
                       e.preventDefault();
                       const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement;
                       const scrollX = scrollEl?.scrollLeft ?? 0;
-                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                      const x = e.clientX - rect.left + scrollX;
+                      const rect = containerRef.current!.getBoundingClientRect();
+                      const x = e.clientX - rect.left - 60 + scrollX;
                       onSeek(xToFrame(x, zoom));
                       playheadDraggingRef.current = true;
                     }
