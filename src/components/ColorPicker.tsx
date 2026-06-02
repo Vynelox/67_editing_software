@@ -405,12 +405,16 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
             min={0}
             max={100}
             value={light}
-            onChange={e => {
+            onInput={e => {
+              const newLight = Number((e.target as HTMLInputElement).value);
               if (isInputFocused) {
                 onChange(hex);
                 setIsInputFocused(false);
               }
-              setLight(Number(e.target.value));
+              setLight(newLight);
+              const previewHex = hslToHex(hue, sat, newLight / 100);
+              setHex(previewHex);
+              onChange(previewHex);
             }}
             style={{
               width: '100%',
