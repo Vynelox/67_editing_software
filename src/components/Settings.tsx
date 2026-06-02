@@ -246,21 +246,25 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
 
             {activeTab === 'misc' && (
               <div className="settings-panel-content">
-                <label className="settings-field">
-                  Playneedle vertical offset (%)
+                <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Playneedle vertical offset (%)</span>
+                    <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12 }}>{playheadTop}%</span>
+                  </div>
                   <input
-                    type="number"
-                    className="settings-number-input"
+                    type="range"
+                    className="settings-range-input"
                     min={0}
                     max={100}
                     step={1}
                     value={playheadTop}
-                    onChange={e => {
-                      const v = Number(e.target.value);
-                      if (!Number.isNaN(v)) setPlayheadTop(Math.min(100, Math.max(0, v)));
-                    }}
+                    onChange={e => setPlayheadTop(Number(e.target.value))}
                   />
-                </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
+                    <span>Top</span>
+                    <span>Bottom</span>
+                  </div>
+                </div>
 
                 <label className="settings-checkbox-field">
                   <span>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
