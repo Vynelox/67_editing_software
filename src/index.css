@@ -1042,6 +1042,33 @@ input[type="color"] {
   cursor: pointer;
   accent-color: var(--accent-blue);
 }
+
+/* Color picker lightness slider - transparent circle with white ring and black outline */
+.color-lightness-slider {
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.color-lightness-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+.color-lightness-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
 .settings-range-input::-webkit-slider-thumb {
   appearance: none;
   width: 14px;

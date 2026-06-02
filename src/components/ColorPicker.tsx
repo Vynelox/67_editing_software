@@ -400,6 +400,7 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
 
         <div style={{ width: 220 }}>
           <input
+            className="color-lightness-slider"
             aria-label="Lightness"
             type="range"
             min={0}
