@@ -3,7 +3,7 @@ import ColorPicker from './ColorPicker';
 import { createRoot } from 'react-dom/client';
 import { OpenColorPicker } from './ColorPicker';
 
-type SettingsTab = 'appearance' | 'misc';
+type SettingsTab = 'appearance' | 'sliders' | 'checkboxes';
 
 interface Props {
   onClose?: () => void;
@@ -164,7 +164,12 @@ export default function Settings(props: Props) {
 }
 
 function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>(() => (initialPageData?.tab === 'appearance' ? 'appearance' : 'misc'));
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
+    if (initialPageData?.tab === 'appearance') return 'appearance';
+    if (initialPageData?.tab === 'sliders') return 'sliders';
+    if (initialPageData?.tab === 'checkboxes') return 'checkboxes';
+    return 'sliders';
+  });
   const [appearanceSubTab, setAppearanceSubTab] = useState<'plain' | 'blend'>(() => initialPageData?.subTab || 'plain');
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -218,10 +223,17 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
             </button>
             <button
               type="button"
-              className={`settings-tab${activeTab === 'misc' ? ' settings-tab--active' : ''}`}
-              onClick={() => setActiveTab('misc')}
+              className={`settings-tab${activeTab === 'sliders' ? ' settings-tab--active' : ''}`}
+              onClick={() => setActiveTab('sliders')}
             >
-              Misc
+              Sliders
+            </button>
+            <button
+              type="button"
+              className={`settings-tab${activeTab === 'checkboxes' ? ' settings-tab--active' : ''}`}
+              onClick={() => setActiveTab('checkboxes')}
+            >
+              Checkboxes
             </button>
           </nav>
 
@@ -249,7 +261,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               </div>
             )}
 
-            {activeTab === 'misc' && (
+            {activeTab === 'sliders' && (
               <div className="settings-panel-content">
                 <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -270,16 +282,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <span>Bottom</span>
                   </div>
                 </div>
-
-                <label className="settings-checkbox-field">
-                  <span>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
-                  <input
-                    type="checkbox"
-                    className="settings-checkbox"
-                    checked={includeResizeInUndo}
-                    onChange={e => setIncludeResizeInUndo(e.target.checked)}
-                  />
-                </label>
 
                 <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -320,6 +322,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <span>Fast</span>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'checkboxes' && (
+              <div className="settings-panel-content">
+                <label className="settings-checkbox-field">
+                  <span>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
+                  <input
+                    type="checkbox"
+                    className="settings-checkbox"
+                    checked={includeResizeInUndo}
+                    onChange={e => setIncludeResizeInUndo(e.target.checked)}
+                  />
+                </label>
               </div>
             )}
           </div>
