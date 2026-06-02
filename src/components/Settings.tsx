@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import ColorPicker from './ColorPicker';
 import { createRoot } from 'react-dom/client';
 import { OpenColorPicker } from './ColorPicker';
+import { RotateCcw } from 'lucide-react';
 
 type SettingsTab = 'appearance' | 'sliders' | 'checkboxes';
 
@@ -259,9 +260,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
             {activeTab === 'sliders' && (
               <div className="settings-panel-content">
                 <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Playneedle vertical offset (%)</span>
-                    <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12 }}>{playheadTop}%</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>Playneedle vertical<br />offset (%)</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{playheadTop}%</span>
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        onClick={() => setPlayheadTop(15)}
+                        title="Reset to default (15%)"
+                        style={{ padding: 4 }}
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
                   </div>
                   <input
                     type="range"
@@ -279,9 +291,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
 
                 <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Timeline scroll smooth factor</span>
-                    <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12 }}>{scrollSmooth}%</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>Timeline scroll<br />smooth factor</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{scrollSmooth}%</span>
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        onClick={() => setScrollSmooth(50)}
+                        title="Reset to default (50%)"
+                        style={{ padding: 4 }}
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
                   </div>
                   <input
                     type="range"
@@ -299,9 +322,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
 
                 <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Timeline scroll amount</span>
-                    <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12 }}>{scrollAmount}%</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>Timeline scroll<br />amount</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{scrollAmount}%</span>
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        onClick={() => setScrollAmount(100)}
+                        title="Reset to default (100%)"
+                        style={{ padding: 4 }}
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
                   </div>
                   <input
                     type="range"
@@ -322,15 +356,26 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
 
             {activeTab === 'checkboxes' && (
               <div className="settings-panel-content">
-                <label className="settings-checkbox-field">
-                  <span>Include splitter resize actions in Ctrl+Z/Ctrl+Y</span>
-                  <input
-                    type="checkbox"
-                    className="settings-checkbox"
-                    checked={includeResizeInUndo}
-                    onChange={e => setIncludeResizeInUndo(e.target.checked)}
-                  />
-                </label>
+                <div className="settings-field" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ flex: 1, lineHeight: 1.2 }}>Include splitter resize<br />actions in Ctrl+Z/Ctrl+Y</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      className="settings-checkbox"
+                      checked={includeResizeInUndo}
+                      onChange={e => setIncludeResizeInUndo(e.target.checked)}
+                    />
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      onClick={() => setIncludeResizeInUndo(true)}
+                      title="Reset to default (Checked)"
+                      style={{ padding: 4 }}
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
