@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Film, Music, Image as ImageIcon, Plus, Trash2 } from 'lucide-react';
+import { Film, Music, Image as ImageIcon, Trash2 } from 'lucide-react';
 import type { MediaItem } from '../types';
 
 interface Props {
@@ -10,16 +10,7 @@ interface Props {
   onRemove: (id: string) => void;
 }
 
-const ACCEPT = '.mp4,.mp3,.png,.jpg,.jpeg,.mkv,.mov,.avif,.webm,.ogg';
-
 export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onRemove }: Props) {
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) {
-      onAdd(e.target.files);
-      e.target.value = '';
-    }
-  }, [onAdd]);
-
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files.length) onAdd(e.dataTransfer.files);
@@ -40,13 +31,6 @@ export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onR
 
   return (
     <div className="media-pool" onDrop={handleDrop} onDragOver={handleDragOver}>
-      <div className="panel-header">
-        <span className="panel-title">Media Pool</span>
-        <label className="icon-btn" title="Import media">
-          <Plus size={15} />
-          <input type="file" accept={ACCEPT} multiple hidden onChange={handleFileInput} />
-        </label>
-      </div>
       <div className="media-list">
         {items.length === 0 && (
           <div className="empty-drop">

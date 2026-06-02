@@ -5,7 +5,7 @@ import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
 import { OpenSettings } from './components/Settings';
 import Splitter from './components/Splitter';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import {
   type MediaItem, type TimelineClip, type Track,
   FPS, generateId, secondsToFrames
@@ -489,25 +489,23 @@ function AppContent() {
         } as React.CSSProperties}
       >
         <div className="workspace-panel-mediapool">
-          <div style={{ padding: 6, display: 'flex', justifyContent: 'center' }}>
-            <button
-              className="icon-btn collapse-toggle"
-              title={leftCollapsed ? 'Expand media pool' : 'Collapse media pool'}
-              onClick={() => {
-                if (!leftCollapsed) {
-                  setSavedTimelineHeight(timelineHeight);
-                  const newH = Math.min(900, Math.max(120, Math.round(window.innerHeight * 0.4)));
-                  setTimelineHeight(newH);
-                  setLeftCollapsed(true);
-                } else {
-                  if (savedTimelineHeight !== null) setTimelineHeight(savedTimelineHeight);
-                  setSavedTimelineHeight(null);
-                  setLeftCollapsed(false);
-                }
-              }}
-            >
-              {leftCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-            </button>
+          <div style={{ padding: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="panel-title">Media Pool</span>
+            <label className="icon-btn" title="Import media" style={{ padding: 4 }}>
+              <Plus size={15} />
+              <input
+                type="file"
+                accept=".mp4,.mp3,.png,.jpg,.jpeg,.mkv,.mov,.avif,.webm,.ogg"
+                multiple
+                hidden
+                onChange={(e) => {
+                  if (e.target.files?.length) {
+                    handleAddMedia(e.target.files);
+                    e.target.value = '';
+                  }
+                }}
+              />
+            </label>
           </div>
           {!leftCollapsed && (
             <MediaPool
