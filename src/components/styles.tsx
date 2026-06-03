@@ -15,33 +15,87 @@ function normalizeColor(raw: string) {
   return '#000000';
 }
 
-export function StylesContent({ setShowStyle, setStylePage }: { setShowStyle: (v: boolean) => void; setStylePage: (v: string | null) => void }) {
-  const colorFields: { varName: string; label: string }[] = [
-    { varName: '--bg-panel', label: 'Primary background' },
-    { varName: '--bg-base', label: 'Secondary background' },
-    { varName: '--bg-viewer', label: 'Viewer background' },
-    { varName: '--bg-elevated', label: 'Panel elevated background' },
-    { varName: '--bg-hover', label: 'Hover background' },
-    { varName: '--border', label: 'Border / Grid line (dark)' },
-    { varName: '--border-mid', label: 'Border / Grid line (mid)' },
-    { varName: '--text-primary', label: 'Primary text' },
-    { varName: '--text-secondary', label: 'Secondary text' },
-    { varName: '--text-muted', label: 'Muted text' },
-    { varName: '--input-field', label: 'Input field primary' },
-    { varName: '--input-field-bg', label: 'Input field secondary' }
-  ];
+const colorFields: { varName: string; label: string }[] = [
+  { varName: '--bg-panel', label: 'Primary background' },
+  { varName: '--bg-base', label: 'Secondary background' },
+  { varName: '--bg-viewer', label: 'Viewer background' },
+  { varName: '--bg-elevated', label: 'Panel elevated background' },
+  { varName: '--bg-hover', label: 'Hover background' },
+  { varName: '--border', label: 'Border / Grid line (dark)' },
+  { varName: '--border-mid', label: 'Border / Grid line (mid)' },
+  { varName: '--text-primary', label: 'Primary text' },
+  { varName: '--text-secondary', label: 'Secondary text' },
+  { varName: '--text-muted', label: 'Muted text' },
+  { varName: '--input-field', label: 'Input field primary' },
+  { varName: '--input-field-bg', label: 'Input field secondary' }
+];
 
-  const [colors, setColors] = useState<Record<string, string>>({});
+const ogDarkColors: Record<string, string> = {
+  '--bg-panel': '#13141a',
+  '--bg-base': '#0c0d10',
+  '--bg-viewer': '#060608',
+  '--bg-elevated': '#1a1c24',
+  '--bg-hover': '#21242f',
+  '--border': '#262830',
+  '--border-mid': '#303340',
+  '--text-primary': '#e8eaf0',
+  '--text-secondary': '#8b8fa8',
+  '--text-muted': '#4a4d5e',
+  '--input-field': '#2c3349',
+  '--input-field-bg': '#16131a',
+};
 
-  useEffect(() => {
+const ogLightColors: Record<string, string> = {
+  '--bg-panel': '#f0f1f5',
+  '--bg-base': '#e8e9ed',
+  '--bg-viewer': '#d4d5d9',
+  '--bg-elevated': '#ffffff',
+  '--bg-hover': '#e2e4e8',
+  '--border': '#c5c7cc',
+  '--border-mid': '#d8dade',
+  '--text-primary': '#1a1c24',
+  '--text-secondary': '#4a4d5e',
+  '--text-muted': '#8b8fa8',
+  '--input-field': '#4a5568',
+  '--input-field-bg': '#e2e4e8',
+};
+
+const themeIcons: Record<string, string> = {
+  'og-dark': 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
+  'og-light': 'M12 3v18m9-9H3',
+};
+
+const themeLabels: Record<string, string> = {
+  'og-dark': 'og dark',
+  'og-light': 'og light',
+};
+
+function getThemeColors(themeName: string): Record<string, string> {
+  if (themeName === 'og-light') return ogLightColors;
+  return ogDarkColors;
+}
+
+export function StylesContent({ themeName, setShowStyle, setStylePage }: {
+  themeName: string;
+  setShowStyle: (v: boolean) => void;
+  setStylePage: (v: string | null) => void;
+}) {
+  const [colors, setColors] = useState<Record<string, string>>(() => {
     const styles = getComputedStyle(document.documentElement);
     const initial: Record<string, string> = {};
     colorFields.forEach(c => {
-      const raw = styles.getPropertyValue(c.varName).trim();
-      initial[c.varName] = normalizeColor(raw || '#000000');
+      initial[c.varName] = normalizeColor(styles.getPropertyValue(c.varName).trim() || '#000000');
     });
-    setColors(initial);
-  }, []);
+    return initial;
+  });
+
+  useEffect(() => {
+    const themeColors = getThemeColors(themeName);
+    colorFields.forEach(c => {
+      document.documentElement.style.setProperty(c.varName, themeColors[c.varName]);
+    });
+    setColors({ ...themeColors });
+  }, [themeName]);
 
   function updateColor(varName: string, hex: string) {
     document.documentElement.style.setProperty(varName, hex);
@@ -59,7 +113,7 @@ export function StylesContent({ setShowStyle, setStylePage }: { setShowStyle: (v
     });
     (window as any).__onColorPickerClose = () => {
       setShowStyle(true);
-      setStylePage('og-dark');
+      setStylePage(themeName);
     };
     (window as any).__colorPickerCleanup = () => {
       cleanup();
@@ -112,32 +166,35 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
               </svg>
             </button>
           )}
-          <span className="panel-title" style={{ fontSize: 12 }}>{stylePage ? `Styles / ${stylePage}` : 'Styles'}</span>
+          <span className="panel-title" style={{ fontSize: 12 }}>{stylePage ? `Styles / ${themeLabels[stylePage] || stylePage}` : 'Styles'}</span>
           <button className="icon-btn modal-close-btn" onClick={() => { setShowStyle(false); setStylePage(null); }} aria-label="Close style">✕</button>
         </div>
         {!stylePage && (
-          <div style={{ flex: 1, padding: 16, overflow: 'auto' }}>
-            <button
-              onClick={() => setStylePage('og-dark')}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                background: 'transparent', border: 'none',
-                borderRadius: 'var(--radius-md)', padding: '16px 20px',
-                cursor: 'pointer', color: 'var(--text-secondary)',
-                transition: 'background 0.12s',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-            >
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>og dark</span>
-            </button>
+          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {Object.entries(themeIcons).map(([key, path]) => (
+              <button
+                key={key}
+                onClick={() => setStylePage(key)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                  background: 'transparent', border: 'none',
+                  borderRadius: 'var(--radius-md)', padding: '16px 20px',
+                  cursor: 'pointer', color: 'var(--text-secondary)',
+                  transition: 'background 0.12s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                  <path d={path}/>
+                </svg>
+                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>{themeLabels[key]}</span>
+              </button>
+            ))}
           </div>
         )}
         {stylePage && (
-          <StylesContent setShowStyle={setShowStyle} setStylePage={setStylePage} />
+          <StylesContent themeName={stylePage} setShowStyle={setShowStyle} setStylePage={setStylePage} />
         )}
       </div>
     </div>
