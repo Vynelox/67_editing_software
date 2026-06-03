@@ -475,7 +475,6 @@ function AppContent() {
           </svg>
           <span>Juice Cut</span>
         </div>
-        <span className="app-sub">Browser Video Editor</span>
         <button
           className="icon-btn layout-toggle"
           onClick={() => setLayoutStacked(s => !s)}
