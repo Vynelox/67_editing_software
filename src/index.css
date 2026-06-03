@@ -620,13 +620,20 @@ html, body, #root {
   border: 2px solid rgba(255,255,255,0.3);
   cursor: pointer;
   pointer-events: all;
-  box-shadow: 0 0 0 3px var(--playhead-glow), 0 0 12px var(--playneedle);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--playneedle) 40%, transparent), 0 0 12px color-mix(in srgb, var(--playneedle) 60%, transparent);
   transition: transform 0.1s, box-shadow 0.1s;
   z-index: 41; /* ensure button above ruler but below torus */
 }
+.playhead-btn:focus,
+.playhead-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--playneedle) 40%, transparent), 0 0 12px color-mix(in srgb, var(--playneedle) 60%, transparent);
+}
+.playhead-btn::-moz-focus-inner { border: 0; }
 .playhead-btn:hover {
   transform: scale(1.2);
-  box-shadow: 0 0 0 5px var(--playhead-glow), 0 0 20px var(--playneedle);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--playneedle) 40%, transparent), 0 0 20px color-mix(in srgb, var(--playneedle) 60%, transparent);
 }
 
 .playhead-line {
@@ -636,7 +643,7 @@ html, body, #root {
   width: 1px;
   height: 100%;
   background: var(--playneedle);
-  box-shadow: 0 0 6px var(--playneedle), 0 0 2px var(--playhead-glow);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--playneedle) 60%, transparent), 0 0 2px color-mix(in srgb, var(--playneedle) 40%, transparent);
 }
 
 /* Torus Menu */

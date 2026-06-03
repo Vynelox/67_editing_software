@@ -45,7 +45,7 @@ export default function MediaPool({ items, selectedMediaId, onSelect, onAdd, onR
             onClick={() => fileInputRef.current?.click()}
             style={{ cursor: 'pointer' }}
           >
-            <Film size={28} className="text-gray-600" />
+            <Film size={28} style={{ color: 'var(--text-secondary)' }} />
             <p>Drop media here or click me</p>
           </div>
         )}
