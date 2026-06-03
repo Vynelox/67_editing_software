@@ -446,7 +446,7 @@ export default function Timeline({
           ))}
         </div>
 
-        <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto', flex: 1, height: '100%' }} onWheel={handleWheel}>
+        <div className="tl-scroll" style={{ position: 'relative', overflow: 'hidden auto', flex: 1, height: '100%' }} onWheel={handleWheel}>
           {/* wheel handler attached via prop below for proper typing */}
           <div 
             className="tl-inner" 
@@ -471,6 +471,13 @@ export default function Timeline({
                 <div key={i} className="ruler-tick" style={{ left: t.x }}>
                   <span className="ruler-label">{t.label}</span>
                 </div>
+              ))}
+            </div>
+
+            {/* Grid lines overlay that extends through the tracks area */}
+            <div className="tl-grid-overlay" style={{ position: 'absolute', top: HEADER_H, left: 0, width: totalWidth, height: `calc(100% - ${HEADER_H}px)`, pointerEvents: 'none', zIndex: 1 }}>
+              {rulerTicks().map((t, i) => (
+                <div key={i} className="ruler-tick" style={{ left: t.x }} />
               ))}
             </div>
 
