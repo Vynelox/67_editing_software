@@ -68,6 +68,7 @@ export default function Timeline({
     clipId: string; side: 'in' | 'out'; origFrames: number; mouseStartX: number;
   } | null>(null);
   const playheadDraggingRef = useRef(false);
+  const lastMouseClientX = useRef(0);
 
   // Smooth scrolling state - read directly in handlers for immediate updates
   const getScrollSmoothFactor = () => {
@@ -163,6 +164,7 @@ export default function Timeline({
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
+    lastMouseClientX.current = e.clientX;
     if (dragState) {
       const dx = e.clientX - dragState.mouseStartX;
       const deltaFrames = xToFrame(dx, zoom);
@@ -180,7 +182,7 @@ export default function Timeline({
       const rect = containerRef.current.getBoundingClientRect();
       const scrollEl = containerRef.current.querySelector('.tl-scroll') as HTMLElement;
       const scrollX = scrollEl?.scrollLeft ?? 0;
-      const x = e.clientX - rect.left - 60 + scrollX;
+      const x = lastMouseClientX.current - rect.left - 60 + scrollX;
       const frame = Math.max(0, xToFrame(x, zoom));
       onSeek(frame);
     }
@@ -209,6 +211,23 @@ export default function Timeline({
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [handleMouseMove, handleMouseUp]);
+
+  // Update playhead position on scroll while dragging
+  useEffect(() => {
+    const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement | null;
+    if (!scrollEl) return;
+    const handleScroll = () => {
+      if (playheadDraggingRef.current && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const scrollX = scrollEl.scrollLeft;
+        const x = lastMouseClientX.current - rect.left - 60 + scrollX;
+        const frame = Math.max(0, xToFrame(x, zoom));
+        onSeek(frame);
+      }
+    };
+    scrollEl.addEventListener('scroll', handleScroll);
+    return () => scrollEl.removeEventListener('scroll', handleScroll);
+  }, [zoom, onSeek]);
 
   // Momentum animation loop for smooth scrolling
   useEffect(() => {
