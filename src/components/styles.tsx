@@ -136,17 +136,15 @@ const forestColors: Record<string, string> = {
 };
 
 
-interface DisplayItem {
-  id: string;
-  label: string;
-  type: 'theme' | 'folder';
-  icon: string;
-  children?: string[]; // IDs of children items, only for 'folder' type
-}
 
 const folderIcon: string = 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2z';
 const ogDarkIcon: string = 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z';
 const ogLightIcon: string = 'M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z';
+const monokaiIcon: string = 'm8 6-6 6 6 6M16 6l6 6-6 6'; // Code brackets (Monokai is a code editor theme)
+const lavenderIcon: string = 'M12 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM12 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM12 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM5 5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM19 15a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM5 15a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM19 5a2 2 0 1 1 0 4 2 2 0 0 1 0-4z'; // Lavender flower (6-petal bloom)
+const cyberpunkIcon: string = 'M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3M6 6h12v12H6zM10 10h4v4h-4z'; // Microprocessor / chip (cyberpunk tech)
+const oakIcon: string = 'M5 8a7 3 0 0 1 14 0v10a7 3 0 0 1-14 0V8zM8 8a4 1.5 0 0 1 8 0 4 1.5 0 0 1-8 0zM10 8a2 0.7 0 0 1 4 0 2 0.7 0 0 1-4 0z'; // Tree stump (oak)
+const forestIcon: string = 'M12 2L7 9h3l-5 7h4l-4 5h12l-4-5h4l-5-7h3L12 2zM11 21h2'; // Pine tree (forest)
 
 interface DisplayItem {
   id: string;
@@ -156,22 +154,33 @@ interface DisplayItem {
   children?: string[]; // IDs of children items, only for 'folder' type
 }
 
-const allDisplayItems: Record<string, DisplayItem> = {
-  'og-dark': { id: 'og-dark', label: 'og dark', type: 'theme', icon: ogDarkIcon },
-  'og-light': { id: 'og-light', label: 'og light', type: 'theme', icon: ogLightIcon },
-  'monokai': { id: 'monokai', label: 'monokai', type: 'theme', icon: ogDarkIcon },
-  'lavender': { id: 'lavender', label: 'lavender', type: 'theme', icon: ogLightIcon },
-  'cyberpunk': { id: 'cyberpunk', label: 'cyberpunk', type: 'theme', icon: ogDarkIcon },
-  'oak': { id: 'oak', label: 'oak', type: 'theme', icon: ogDarkIcon },
-  'forest': { id: 'forest', label: 'forest', type: 'theme', icon: ogDarkIcon },
-  'plain-folder': { id: 'plain-folder', label: 'plain', type: 'folder', icon: folderIcon, children: ['og-dark', 'og-light', 'monokai', 'lavender', 'cyberpunk', 'oak', 'forest'] },
-  'vynelox-built-in-folder': { id: 'vynelox-built-in-folder', label: 'by Vynelox', type: 'folder', icon: folderIcon, children: ['plain-folder', 'morph-folder'] },
-  'morph-folder': { id: 'morph-folder', label: 'morph', type: 'folder', icon: folderIcon, children: [] },
-};
-
 const topLevelItems: string[] = ['vynelox-built-in-folder'];
 
-const parentMap: Record<string, string | null> = {};
+const allDisplayItems: Record<string, DisplayItem> = {
+  'vynelox-built-in-folder': {
+    id: 'vynelox-built-in-folder',
+    label: 'Vynelox built-in',
+    type: 'folder',
+    icon: folderIcon,
+    children: ['plain-folder']
+  },
+  'plain-folder': {
+    id: 'plain-folder',
+    label: 'plain',
+    type: 'folder',
+    icon: folderIcon,
+    children: ['og-dark', 'og-light', 'monokai', 'lavender', 'cyberpunk', 'oak', 'forest']
+  },
+  'og-dark': { id: 'og-dark', label: 'og dark', type: 'theme', icon: ogDarkIcon },
+  'og-light': { id: 'og-light', label: 'og light', type: 'theme', icon: ogLightIcon },
+  'monokai': { id: 'monokai', label: 'monokai', type: 'theme', icon: monokaiIcon },
+  'lavender': { id: 'lavender', label: 'lavender', type: 'theme', icon: lavenderIcon },
+  'cyberpunk': { id: 'cyberpunk', label: 'cyberpunk', type: 'theme', icon: cyberpunkIcon },
+  'oak': { id: 'oak', label: 'oak', type: 'theme', icon: oakIcon },
+  'forest': { id: 'forest', label: 'forest', type: 'theme', icon: forestIcon },
+};
+
+const parentMap: Record<string, string | undefined> = {};
 for (const itemId in allDisplayItems) {
   const item = allDisplayItems[itemId];
   if (item.type === 'folder' && item.children) {
@@ -319,7 +328,7 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
           <button className="icon-btn modal-close-btn" onClick={() => { setShowStyle(false); setStylePage(null); }} aria-label="Close style">✕</button>
         </div>
         {!stylePage && (
-          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 90px)', gap: '8px 12px', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
             {topLevelItems.map(itemId => {
               const item = allDisplayItems[itemId];
               if (!item) return null;
@@ -350,7 +359,7 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
           </div>
         )}
         {stylePage && allDisplayItems[stylePage]?.type === 'folder' && (
-          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 90px)', gap: '8px 12px', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
             {allDisplayItems[stylePage].children?.map(childId => {
               const childItem = allDisplayItems[childId];
               if (!childItem) return null;
