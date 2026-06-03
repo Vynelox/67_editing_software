@@ -614,6 +614,14 @@ function AppContent() {
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-box settings-modal" style={{ width: 480, height: '72vh', minHeight: '72vh', maxHeight: '72vh', overflow: 'hidden' }}>
             <div className="modal-header modal-header--centered">
+              {stylePage && (
+                <button className="icon-btn" onClick={() => setStylePage(null)} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, color: 'var(--text-secondary)' }} title="Back">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"/>
+                    <polyline points="12 19 5 12 12 5"/>
+                  </svg>
+                </button>
+              )}
               <span className="panel-title" style={{ fontSize: 12 }}>{stylePage ? `Styles / ${stylePage}` : 'Styles'}</span>
               <button className="icon-btn modal-close-btn" onClick={() => { setShowStyle(false); setStylePage(null); }} aria-label="Close style">✕</button>
             </div>
