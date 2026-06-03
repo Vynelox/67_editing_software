@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { OpenColorPicker } from './ColorPicker';
+import { colorFields, type ThemeColors } from './GlobalStyleSettings';
 
 function normalizeColor(raw: string) {
   if (!raw) return '#000000';
@@ -15,22 +16,7 @@ function normalizeColor(raw: string) {
   return '#000000';
 }
 
-const colorFields: { varName: string; label: string }[] = [
-  { varName: '--bg-panel', label: 'Primary background' },
-  { varName: '--bg-base', label: 'Secondary background' },
-  { varName: '--bg-viewer', label: 'Viewer background' },
-  { varName: '--bg-elevated', label: 'Panel elevated background' },
-  { varName: '--bg-hover', label: 'Hover background' },
-  { varName: '--border', label: 'Border / Grid line (dark)' },
-  { varName: '--border-mid', label: 'Border / Grid line (mid)' },
-  { varName: '--text-primary', label: 'Primary text' },
-  { varName: '--text-secondary', label: 'Secondary text' },
-  { varName: '--text-muted', label: 'Muted text' },
-  { varName: '--input-field', label: 'Input field primary' },
-  { varName: '--input-field-bg', label: 'Input field secondary' }
-];
-
-const ogDarkColors: Record<string, string> = {
+const ogDarkColors: ThemeColors = {
   '--bg-panel': '#13141a',
   '--bg-base': '#0c0d10',
   '--bg-viewer': '#060608',
@@ -45,7 +31,7 @@ const ogDarkColors: Record<string, string> = {
   '--input-field-bg': '#16131a',
 };
 
-const ogLightColors: Record<string, string> = {
+const ogLightColors: ThemeColors = {
   '--bg-panel': '#f0f1f5',
   '--bg-base': '#e8e9ed',
   '--bg-viewer': '#d4d5d9',
@@ -60,7 +46,7 @@ const ogLightColors: Record<string, string> = {
   '--input-field-bg': '#e2e4e8',
 };
 
-const monokaiColors: Record<string, string> = {
+const monokaiColors: ThemeColors = {
   '--bg-panel': '#272822',
   '--bg-base': '#1c1e19',
   '--bg-viewer': '#1c1e19',
@@ -75,7 +61,7 @@ const monokaiColors: Record<string, string> = {
   '--input-field-bg': '#3b3a32',
 };
 
-const lavenderColors: Record<string, string> = {
+const lavenderColors: ThemeColors = {
   '--bg-panel': '#2D1C4D',
   '--bg-base': '#1B0A3A',
   '--bg-viewer': '#15043A',
@@ -90,7 +76,7 @@ const lavenderColors: Record<string, string> = {
   '--input-field-bg': '#27184A',
 };
 
-const cyberpunkColors: Record<string, string> = {
+const cyberpunkColors: ThemeColors = {
   '--bg-panel': '#0D0221',
   '--bg-base': '#05010F',
   '--bg-viewer': '#000000',
@@ -105,7 +91,7 @@ const cyberpunkColors: Record<string, string> = {
   '--input-field-bg': '#0A0118',
 };
 
-const oakColors: Record<string, string> = {
+const oakColors: ThemeColors = {
   '--bg-panel': '#362E2E',
   '--bg-base': '#2A2222',
   '--bg-viewer': '#1F1717',
@@ -120,7 +106,7 @@ const oakColors: Record<string, string> = {
   '--input-field-bg': '#3F3737',
 };
 
-const forestColors: Record<string, string> = {
+const forestColors: ThemeColors = {
   '--bg-panel': '#1A332A',
   '--bg-base': '#0F261E',
   '--bg-viewer': '#0A1C15',
@@ -207,14 +193,18 @@ function getPathLabel(itemId: string | null): string {
   return 'Styles / ' + path.join(' / ');
 }
 
-function getThemeColors(themeName: string): Record<string, string> {
-  if (themeName === 'og-light') return ogLightColors;
-  if (themeName === 'monokai') return monokaiColors;
-  if (themeName === 'lavender') return lavenderColors;
-  if (themeName === 'cyberpunk') return cyberpunkColors;
-  if (themeName === 'oak') return oakColors;
-  if (themeName === 'forest') return forestColors;
-  return ogDarkColors;
+const themesByName: Record<string, ThemeColors> = {
+  'og-dark': ogDarkColors,
+  'og-light': ogLightColors,
+  'monokai': monokaiColors,
+  'lavender': lavenderColors,
+  'cyberpunk': cyberpunkColors,
+  'oak': oakColors,
+  'forest': forestColors,
+};
+
+function getThemeColors(themeName: string): ThemeColors {
+  return themesByName[themeName] ?? ogDarkColors;
 }
 
 export function StylesContent({ themeName, setShowStyle, setStylePage }: {
