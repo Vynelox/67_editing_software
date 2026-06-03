@@ -446,7 +446,7 @@ export default function Timeline({
           ))}
         </div>
 
-        <div className="tl-scroll" style={{ position: 'relative', overflow: 'hidden auto', flex: 1, height: '100%' }} onWheel={handleWheel}>
+        <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto hidden', flex: 1, height: '100%' }} onWheel={handleWheel}>
           {/* wheel handler attached via prop below for proper typing */}
           <div 
             className="tl-inner" 

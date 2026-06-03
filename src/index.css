@@ -450,7 +450,7 @@ html, body, #root {
 
 .tl-scroll {
   flex: 1;
-  overflow: hidden auto;
+  overflow: auto hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--border-mid) transparent;
 }
