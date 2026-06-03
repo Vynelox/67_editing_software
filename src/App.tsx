@@ -503,7 +503,7 @@ function AppContent() {
           onDrop={handleDropMediaPool}
           onDragOver={handleDragOverMediaPool}
         >
-          <div style={{ padding: 6, display: 'flex', alignItems: 'center' }}>
+          <div className="viewer-header">
             <span className="panel-title">Media Pool</span>
           </div>
           {!leftCollapsed && (
