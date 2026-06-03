@@ -52,8 +52,8 @@ export default function Splitter({ orientation, onChange, onDragEnd, thickness =
   };
 
   const style: React.CSSProperties = orientation === 'vertical'
-    ? { width: thickness, cursor: 'col-resize', background: background, flexShrink: 0 }
-    : { height: thickness, cursor: 'row-resize', background: background, flexShrink: 0 };
+    ? { width: thickness, cursor: 'col-resize', flexShrink: 0 }
+    : { height: thickness, cursor: 'row-resize', flexShrink: 0 };
 
   return <div role="separator" aria-orientation={orientation} onPointerDown={handleDown} style={style} />;
 }

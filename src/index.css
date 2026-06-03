@@ -448,6 +448,15 @@ html, body, #root {
   border-bottom: 1px solid var(--border);
 }
 
+/* Splitter / Resizer */
+[role="separator"] {
+  background: transparent;
+  transition: background 0.15s ease;
+}
+[role="separator"]:hover {
+  background: var(--bg-hover);
+}
+
 .tl-scroll {
   flex: 1;
   overflow: auto hidden;

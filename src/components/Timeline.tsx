@@ -107,6 +107,15 @@ export default function Timeline({
       const newScrollLeft = frameToX(zoomBeforeFrameRef.current, zoom) - zoomMouseXRef.current;
       el.scrollLeft = Math.max(0, newScrollLeft);
     }
+    // If playhead is being dragged (click held on timeline), update playhead to follow cursor
+    if (playheadDraggingRef.current && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const scrollEl = containerRef.current.querySelector('.tl-scroll') as HTMLElement;
+      const scrollX = scrollEl?.scrollLeft ?? 0;
+      const x = lastMouseClientX.current - rect.left - 60 + scrollX;
+      const frame = Math.max(0, xToFrame(x, zoom));
+      onSeek(frame);
+    }
   });
 
   // Start zoom animation when trigger changes (triggered from wheel handler)
