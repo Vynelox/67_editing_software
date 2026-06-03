@@ -101,7 +101,7 @@ function AppContent() {
   const [timelineHeight, setTimelineHeight] = useState<number>(() => {
     try { const v = window.localStorage.getItem('juicecut.layout.timelineHeight'); return v ? Number(v) : 220; } catch { return 220; }
   });
-  const [layoutStacked, setLayoutStacked] = useState(false);
+  const [showStyle, setShowStyle] = useState(false);
   useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftWidth', String(leftWidth)); } catch {} }, [leftWidth]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.layout.timelineHeight', String(timelineHeight)); } catch {} }, [timelineHeight]);
 
@@ -475,13 +475,7 @@ function AppContent() {
           </svg>
           <span>Juice Cut</span>
         </div>
-        <button
-          className="icon-btn layout-toggle"
-          onClick={() => setLayoutStacked(s => !s)}
-          title={layoutStacked ? 'Layout: wide timeline (bottom)' : 'Layout: stacked (timeline bottom-right)'}
-        >
-          ⊞
-        </button>
+        <button className="icon-btn" style={{ width: 30, height: 30 }} onClick={() => setShowStyle(true)} title="Style">💧</button>
         <button className="icon-btn" style={{ width: 30, height: 30 }} onClick={() => { try { OpenSettings({ tab: 'misc' }, null); } catch (e) {} }} title="Settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"/>
@@ -490,7 +484,7 @@ function AppContent() {
         </button>
       </header>
       <div
-        className={`workspace${layoutStacked ? ' workspace--stacked' : ''}`}
+        className="workspace"
         style={{
           '--timeline-height': `${timelineHeight}px`,
           '--left-width': `${leftCollapsed ? 36 : leftWidth}px`,
@@ -564,6 +558,16 @@ function AppContent() {
           totalFrames={totalFrames}
         />
       </div>
+      {showStyle && (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-box" style={{ width: 360 }}>
+            <div className="modal-header modal-header--centered">
+              <span className="panel-title" style={{ fontSize: 12 }}>Style</span>
+              <button className="icon-btn modal-close-btn" onClick={() => setShowStyle(false)} aria-label="Close style">✕</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Settings are mounted programmatically via OpenSettings(pageData, scroll) */}
       {rollClip && rollMedia && (
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
