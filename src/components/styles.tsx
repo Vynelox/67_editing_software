@@ -60,6 +60,82 @@ const ogLightColors: Record<string, string> = {
   '--input-field-bg': '#e2e4e8',
 };
 
+const monokaiColors: Record<string, string> = {
+  '--bg-panel': '#272822',
+  '--bg-base': '#1c1e19',
+  '--bg-viewer': '#1c1e19',
+  '--bg-elevated': '#3c3d38',
+  '--bg-hover': '#49483e',
+  '--border': '#414339',
+  '--border-mid': '#5a5c54',
+  '--text-primary': '#f8f8f2',
+  '--text-secondary': '#a6e22e',
+  '--text-muted': '#75715e',
+  '--input-field': '#66d9ef',
+  '--input-field-bg': '#3b3a32',
+};
+
+const lavenderColors: Record<string, string> = {
+  '--bg-panel': '#E6E6FA',
+  '--bg-base': '#D8BFD8',
+  '--bg-viewer': '#DDA0DD',
+  '--bg-elevated': '#FFF0F5',
+  '--bg-hover': '#E0BBE4',
+  '--border': '#957DAD',
+  '--border-mid': '#C3B1E1',
+  '--text-primary': '#4B0082',
+  '--text-secondary': '#6A5ACD',
+  '--text-muted': '#8A2BE2',
+  '--input-field': '#BA55D3',
+  '--input-field-bg': '#F5EEF8',
+};
+
+const cyberpunkColors: Record<string, string> = {
+  '--bg-panel': '#0A0A0A',
+  '--bg-base': '#1C1C1C',
+  '--bg-viewer': '#2C2C2C',
+  '--bg-elevated': '#001F3F',
+  '--bg-hover': '#003366',
+  '--border': '#00FFFF',
+  '--border-mid': '#FF00FF',
+  '--text-primary': '#00FF00',
+  '--text-secondary': '#FFD700',
+  '--text-muted': '#FFA500',
+  '--input-field': '#8A2BE2',
+  '--input-field-bg': '#0D0D0D',
+};
+
+const oakColors: Record<string, string> = {
+  '--bg-panel': '#362E2E',
+  '--bg-base': '#2A2222',
+  '--bg-viewer': '#1F1717',
+  '--bg-elevated': '#4C4242',
+  '--bg-hover': '#5D5050',
+  '--border': '#706060',
+  '--border-mid': '#857373',
+  '--text-primary': '#D4C4C4',
+  '--text-secondary': '#A99A9A',
+  '--text-muted': '#807070',
+  '--input-field': '#A0522D',
+  '--input-field-bg': '#3F3737',
+};
+
+const forestColors: Record<string, string> = {
+  '--bg-panel': '#1A332A',
+  '--bg-base': '#0F261E',
+  '--bg-viewer': '#0A1C15',
+  '--bg-elevated': '#2B4D40',
+  '--bg-hover': '#3C6656',
+  '--border': '#4A7A6C',
+  '--border-mid': '#609181',
+  '--text-primary': '#D8E8D8',
+  '--text-secondary': '#A7C2A7',
+  '--text-muted': '#7D9E7D',
+  '--input-field': '#5F9EA0',
+  '--input-field-bg': '#223D34',
+};
+
+
 interface DisplayItem {
   id: string;
   label: string;
@@ -83,8 +159,14 @@ interface DisplayItem {
 const allDisplayItems: Record<string, DisplayItem> = {
   'og-dark': { id: 'og-dark', label: 'og dark', type: 'theme', icon: ogDarkIcon },
   'og-light': { id: 'og-light', label: 'og light', type: 'theme', icon: ogLightIcon },
-  'plain-folder': { id: 'plain-folder', label: 'plain', type: 'folder', icon: folderIcon, children: ['og-dark', 'og-light'] },
-  'vynelox-built-in-folder': { id: 'vynelox-built-in-folder', label: 'by Vynelox (built in)', type: 'folder', icon: folderIcon, children: ['plain-folder'] },
+  'monokai': { id: 'monokai', label: 'monokai', type: 'theme', icon: ogDarkIcon },
+  'lavender': { id: 'lavender', label: 'lavender', type: 'theme', icon: ogLightIcon },
+  'cyberpunk': { id: 'cyberpunk', label: 'cyberpunk', type: 'theme', icon: ogDarkIcon },
+  'oak': { id: 'oak', label: 'oak', type: 'theme', icon: ogDarkIcon },
+  'forest': { id: 'forest', label: 'forest', type: 'theme', icon: ogDarkIcon },
+  'plain-folder': { id: 'plain-folder', label: 'plain', type: 'folder', icon: folderIcon, children: ['og-dark', 'og-light', 'monokai', 'lavender', 'cyberpunk', 'oak', 'forest'] },
+  'vynelox-built-in-folder': { id: 'vynelox-built-in-folder', label: 'by Vynelox', type: 'folder', icon: folderIcon, children: ['plain-folder', 'morph-folder'] },
+  'morph-folder': { id: 'morph-folder', label: 'morph', type: 'folder', icon: folderIcon, children: [] },
 };
 
 const topLevelItems: string[] = ['vynelox-built-in-folder'];
@@ -118,6 +200,11 @@ function getPathLabel(itemId: string | null): string {
 
 function getThemeColors(themeName: string): Record<string, string> {
   if (themeName === 'og-light') return ogLightColors;
+  if (themeName === 'monokai') return monokaiColors;
+  if (themeName === 'lavender') return lavenderColors;
+  if (themeName === 'cyberpunk') return cyberpunkColors;
+  if (themeName === 'oak') return oakColors;
+  if (themeName === 'forest') return forestColors;
   return ogDarkColors;
 }
 
