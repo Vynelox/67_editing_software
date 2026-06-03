@@ -102,6 +102,7 @@ function AppContent() {
     try { const v = window.localStorage.getItem('juicecut.layout.timelineHeight'); return v ? Number(v) : 220; } catch { return 220; }
   });
   const [showStyle, setShowStyle] = useState(false);
+  const [stylePage, setStylePage] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [exportVideo, setExportVideo] = useState(true);
   const [exportAudio, setExportAudio] = useState(true);
@@ -593,7 +594,7 @@ function AppContent() {
                   onChange={e => setExportAudio(e.target.checked)}
                 />
               </label>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input
                   type="text"
                   className="settings-number-input"
@@ -611,11 +612,38 @@ function AppContent() {
       )}
       {showStyle && (
         <div className="modal-overlay" role="dialog" aria-modal="true">
-          <div className="modal-box" style={{ width: 360 }}>
+          <div className="modal-box settings-modal" style={{ width: 480, height: '72vh', minHeight: '72vh', maxHeight: '72vh', overflow: 'hidden' }}>
             <div className="modal-header modal-header--centered">
-              <span className="panel-title" style={{ fontSize: 12 }}>Style</span>
-              <button className="icon-btn modal-close-btn" onClick={() => setShowStyle(false)} aria-label="Close style">✕</button>
+              <span className="panel-title" style={{ fontSize: 12 }}>{stylePage ? `Style / ${stylePage}` : 'Style'}</span>
+              <button className="icon-btn modal-close-btn" onClick={() => { setShowStyle(false); setStylePage(null); }} aria-label="Close style">✕</button>
             </div>
+            {!stylePage && (
+              <div style={{ flex: 1, padding: 16, overflow: 'auto' }}>
+                <button
+                  onClick={() => setStylePage('og-dark')}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                    background: 'var(--bg-elevated)', border: '1px solid var(--border-mid)',
+                    borderRadius: 'var(--radius-md)', padding: '16px 20px',
+                    cursor: 'pointer', color: 'var(--text-primary)',
+                    transition: 'background 0.12s, border-color 0.12s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-elevated)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-mid)'; }}
+                >
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20z"/>
+                  </svg>
+                  <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px' }}>og dark</span>
+                </button>
+              </div>
+            )}
+            {stylePage && (
+              <div style={{ flex: 1, padding: 16, overflow: 'auto' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Empty page</p>
+              </div>
+            )}
           </div>
         </div>
       )}
