@@ -102,6 +102,10 @@ function AppContent() {
     try { const v = window.localStorage.getItem('juicecut.layout.timelineHeight'); return v ? Number(v) : 220; } catch { return 220; }
   });
   const [showStyle, setShowStyle] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [exportVideo, setExportVideo] = useState(true);
+  const [exportAudio, setExportAudio] = useState(true);
+  const [exportPath, setExportPath] = useState('');
   useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftWidth', String(leftWidth)); } catch {} }, [leftWidth]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.layout.timelineHeight', String(timelineHeight)); } catch {} }, [timelineHeight]);
 
@@ -532,7 +536,7 @@ function AppContent() {
             totalFrames={totalFrames}
             onPlayPause={() => setPlaying(p => !p)}
             onSeek={setPlayhead}
-            onExport={handleExport}
+            onExport={() => setShowExport(true)}
           />
         </div>
 
@@ -563,6 +567,48 @@ function AppContent() {
           totalFrames={totalFrames}
         />
       </div>
+      {showExport && (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-box" style={{ width: 400 }}>
+            <div className="modal-header modal-header--centered">
+              <span className="panel-title" style={{ fontSize: 12 }}>Export</span>
+              <button className="icon-btn modal-close-btn" onClick={() => setShowExport(false)} aria-label="Close export">✕</button>
+            </div>
+            <div className="settings-panel-content">
+              <label className="settings-checkbox-field" style={{ cursor: 'pointer' }}>
+                <span>Export video</span>
+                <input
+                  type="checkbox"
+                  className="settings-checkbox"
+                  checked={exportVideo}
+                  onChange={e => setExportVideo(e.target.checked)}
+                />
+              </label>
+              <label className="settings-checkbox-field" style={{ cursor: 'pointer' }}>
+                <span>Export audio</span>
+                <input
+                  type="checkbox"
+                  className="settings-checkbox"
+                  checked={exportAudio}
+                  onChange={e => setExportAudio(e.target.checked)}
+                />
+              </label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  type="text"
+                  className="settings-number-input"
+                  style={{ flex: 1, marginLeft: 0 }}
+                  placeholder="Export path..."
+                  value={exportPath}
+                  onChange={e => setExportPath(e.target.value)}
+                />
+                <button className="btn-secondary" style={{ whiteSpace: 'nowrap', padding: '4px 12px' }}>Browse</button>
+              </div>
+              <button className="btn-primary" style={{ alignSelf: 'center', padding: '8px 32px', background: 'var(--input-field)' }}>Export</button>
+            </div>
+          </div>
+        </div>
+      )}
       {showStyle && (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-box" style={{ width: 360 }}>
