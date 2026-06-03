@@ -207,6 +207,15 @@ function getThemeColors(themeName: string): ThemeColors {
   return themesByName[themeName] ?? ogDarkColors;
 }
 
+// Applies a theme's colors to the document root. Used both when equipping a
+// theme from the folder view and when opening the color editor for it.
+function applyThemeToDocument(themeName: string) {
+  const themeColors = getThemeColors(themeName);
+  colorFields.forEach(c => {
+    document.documentElement.style.setProperty(c.varName, themeColors[c.varName]);
+  });
+}
+
 export function StylesContent({ themeName, setShowStyle, setStylePage }: {
   themeName: string;
   setShowStyle: (v: boolean) => void;
@@ -222,11 +231,8 @@ export function StylesContent({ themeName, setShowStyle, setStylePage }: {
   });
 
   useEffect(() => {
-    const themeColors = getThemeColors(themeName);
-    colorFields.forEach(c => {
-      document.documentElement.style.setProperty(c.varName, themeColors[c.varName]);
-    });
-    setColors({ ...themeColors });
+    applyThemeToDocument(themeName);
+    setColors({ ...getThemeColors(themeName) });
   }, [themeName]);
 
   function updateColor(varName: string, hex: string) {
@@ -363,9 +369,15 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
                     if (childItem.type === 'folder') {
                       setStylePage(childItem.id);
                     } else { // type === 'theme'
-                      setStylePage(childItem.id);
-                      setThemePage(childItem.id);
-                      setActiveTheme(childItem.id);
+                      if (activeTheme === childItem.id) {
+                        // The theme is already active: open the color editor for it
+                        setStylePage(childItem.id);
+                        setThemePage(childItem.id);
+                      } else {
+                        // The theme is not active yet: equip/activate it AND apply its colors to the editor
+                        setActiveTheme(childItem.id);
+                        applyThemeToDocument(childItem.id);
+                      }
                     }
                   }}
                   style={{
