@@ -480,7 +480,7 @@ html, body, #root {
   position: absolute;
   top: 0;
   height: 100%;
-  border-left: 1px solid var(--border-mid);
+  border-left: 1px solid var(--border);
   pointer-events: none;
 }
 
