@@ -4,6 +4,7 @@ import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
 import { OpenSettings } from './components/Settings';
+import { OpenColorPicker } from './components/ColorPicker';
 import Splitter from './components/Splitter';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
@@ -647,9 +648,7 @@ function AppContent() {
               </div>
             )}
             {stylePage && (
-              <div style={{ flex: 1, padding: 16, overflow: 'auto' }}>
-                <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Empty page</p>
-              </div>
+              <StylesContent setShowStyle={setShowStyle} setStylePage={setStylePage} />
             )}
           </div>
         </div>
@@ -658,6 +657,100 @@ function AppContent() {
       {rollClip && rollMedia && (
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
       )}
+    </div>
+  );
+}
+
+function StylesContent({ setShowStyle, setStylePage }: { setShowStyle: (v: boolean) => void; setStylePage: (v: string | null) => void }) {
+  const colorFields: { varName: string; label: string }[] = [
+    { varName: '--bg-panel', label: 'Primary background' },
+    { varName: '--bg-base', label: 'Secondary background' },
+    { varName: '--bg-viewer', label: 'Viewer background' },
+    { varName: '--bg-elevated', label: 'Panel elevated background' },
+    { varName: '--bg-hover', label: 'Hover background' },
+    { varName: '--border', label: 'Border / Grid line (dark)' },
+    { varName: '--border-mid', label: 'Border / Grid line (mid)' },
+    { varName: '--text-primary', label: 'Primary text' },
+    { varName: '--text-secondary', label: 'Secondary text' },
+    { varName: '--text-muted', label: 'Muted text' },
+    { varName: '--input-field', label: 'Input field primary' },
+    { varName: '--input-field-bg', label: 'Input field secondary' }
+  ];
+
+  const [colors, setColors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const styles = getComputedStyle(document.documentElement);
+    const initial: Record<string, string> = {};
+    colorFields.forEach(c => {
+      const raw = styles.getPropertyValue(c.varName).trim();
+      initial[c.varName] = normalizeColor(raw || '#000000');
+    });
+    setColors(initial);
+  }, []);
+
+  function normalizeColor(raw: string) {
+    if (!raw) return '#000000';
+    const v = raw.trim();
+    if (v.startsWith('#')) {
+      if (v.length === 4) return '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+      return v;
+    }
+    if (v.startsWith('rgb')) {
+      const nums = v.replace(/rgba?\(|\)/g, '').split(',').map(s => Number(s.trim()));
+      return '#' + nums.slice(0,3).map(n => n.toString(16).padStart(2,'0')).join('');
+    }
+    return '#000000';
+  }
+
+  function updateColor(varName: string, hex: string) {
+    document.documentElement.style.setProperty(varName, hex);
+    setColors(prev => ({ ...prev, [varName]: hex }));
+  }
+
+  function handleColorClick(varName: string, currentValue: string) {
+    const colorField = colorFields.find(c => c.varName === varName);
+    const colorLabel = colorField ? colorField.label : 'Color';
+    const tempData = { pageData: { tab: 'appearance', subTab: 'plain' }, scroll: null };
+    setShowStyle(false);
+    const cleanup = OpenColorPicker({
+      value: currentValue,
+      onChange: (hex: string) => updateColor(varName, hex),
+      targetElement: colorLabel
+    });
+    (window as any).__onColorPickerClose = () => {
+      if (tempData) {
+        setShowStyle(true);
+        setStylePage('og-dark');
+      }
+    };
+    (window as any).__colorPickerCleanup = () => {
+      cleanup();
+      if ((window as any).__onColorPickerClose) {
+        (window as any).__onColorPickerClose();
+        (window as any).__onColorPickerClose = null;
+      }
+    };
+  }
+
+  return (
+    <div style={{ flex: 1, padding: 12, overflow: 'auto' }}>
+      <div className="appearance-plain">
+        {colorFields.map(field => (
+          <div key={field.varName} className="color-field">
+            <div className="color-label">{field.label}</div>
+            <div className="color-controls">
+              <button
+                type="button"
+                className="color-swatch"
+                style={{ backgroundColor: colors[field.varName] || '#000000' }}
+                onClick={() => handleColorClick(field.varName, colors[field.varName] || '#000000')}
+                title="Click to pick a color"
+              />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
