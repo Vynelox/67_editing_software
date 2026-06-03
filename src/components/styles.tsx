@@ -62,7 +62,7 @@ const ogLightColors: Record<string, string> = {
 
 const themeIcons: Record<string, string> = {
   'og-dark': 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
-  'og-light': 'M12 3v18m9-9H3',
+  'og-light': 'M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z',
 };
 
 const themeLabels: Record<string, string> = {
@@ -152,6 +152,19 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
   stylePage: string | null;
   setStylePage: (v: string | null) => void;
 }) {
+  const [activeTheme, setActiveTheme] = useState<string>(() => {
+    try { return window.localStorage.getItem('juicecut.styles.activeTheme') || 'og-dark'; } catch { return 'og-dark'; }
+  });
+  const [themePage, setThemePage] = useState<string | null>(stylePage);
+
+  useEffect(() => {
+    setThemePage(stylePage);
+  }, [stylePage]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.styles.activeTheme', activeTheme); } catch {}
+  }, [activeTheme]);
+
   if (!showStyle) return null;
 
   return (
@@ -170,27 +183,32 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
           <button className="icon-btn modal-close-btn" onClick={() => { setShowStyle(false); setStylePage(null); }} aria-label="Close style">✕</button>
         </div>
         {!stylePage && (
-          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {Object.entries(themeIcons).map(([key, path]) => (
-              <button
-                key={key}
-                onClick={() => setStylePage(key)}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                  background: 'transparent', border: 'none',
-                  borderRadius: 'var(--radius-md)', padding: '16px 20px',
-                  cursor: 'pointer', color: 'var(--text-secondary)',
-                  transition: 'background 0.12s',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-              >
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-                  <path d={path}/>
-                </svg>
-                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>{themeLabels[key]}</span>
-              </button>
-            ))}
+          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+            {Object.entries(themeIcons).map(([key, path]) => {
+              const isActive = activeTheme === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => { setStylePage(key); setThemePage(key); setActiveTheme(key); }}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    background: isActive ? 'rgba(52, 211, 153, 0.2)' : 'transparent',
+                    border: isActive ? '1px solid var(--accent-green)' : '1px solid transparent',
+                    borderRadius: 'var(--radius-md)', padding: '12px 16px',
+                    cursor: 'pointer', color: isActive ? 'var(--accent-green)' : 'var(--text-secondary)',
+                    transition: 'background 0.12s, color 0.12s, border-color 0.12s',
+                    width: 90, height: 100, flexShrink: 0,
+                  }}
+                  onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                >
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={isActive ? 'var(--accent-green)' : 'var(--text-secondary)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: isActive ? 1 : 0.7, flexShrink: 0 }}>
+                    <path d={path}></path>
+                  </svg>
+                  <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', color: isActive ? 'var(--accent-green)' : 'var(--text-secondary)', textAlign: 'center' }}>{themeLabels[key]}</span>
+                </button>
+              );
+            })}
           </div>
         )}
         {stylePage && (
