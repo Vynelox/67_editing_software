@@ -29,6 +29,7 @@ const ogDarkColors: ThemeColors = {
   '--text-muted': '#4a4d5e',
   '--input-field': '#2c3349',
   '--input-field-bg': '#16131a',
+  '--playneedle': '#f5f5f5',
 };
 
 const ogLightColors: ThemeColors = {
@@ -44,6 +45,7 @@ const ogLightColors: ThemeColors = {
   '--text-muted': '#8b8fa8',
   '--input-field': '#4a5568',
   '--input-field-bg': '#e2e4e8',
+  '--playneedle': '#1a1c24',
 };
 
 const monokaiColors: ThemeColors = {
@@ -59,6 +61,7 @@ const monokaiColors: ThemeColors = {
   '--text-muted': '#75715e',
   '--input-field': '#66d9ef',
   '--input-field-bg': '#3b3a32',
+  '--playneedle': '#f92672',
 };
 
 const lavenderColors: ThemeColors = {
@@ -74,6 +77,7 @@ const lavenderColors: ThemeColors = {
   '--text-muted': '#8A7B9C',
   '--input-field': '#7953C2',
   '--input-field-bg': '#27184A',
+  '--playneedle': '#C4A8E8',
 };
 
 const cyberpunkColors: ThemeColors = {
@@ -89,6 +93,7 @@ const cyberpunkColors: ThemeColors = {
   '--text-muted': '#8A2BE2',
   '--input-field': '#FF00C8',
   '--input-field-bg': '#0A0118',
+  '--playneedle': '#00F0FF',
 };
 
 const oakColors: ThemeColors = {
@@ -104,6 +109,7 @@ const oakColors: ThemeColors = {
   '--text-muted': '#807070',
   '--input-field': '#A0522D',
   '--input-field-bg': '#3F3737',
+  '--playneedle': '#d2899d',
 };
 
 const forestColors: ThemeColors = {
@@ -119,6 +125,7 @@ const forestColors: ThemeColors = {
   '--text-muted': '#7D9E7D',
   '--input-field': '#5F9EA0',
   '--input-field-bg': '#223D34',
+  '--playneedle': '#61ff9f',
 };
 
 

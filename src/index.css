@@ -616,17 +616,17 @@ html, body, #root {
   left: -8px;
   width: 16px; height: 16px;
   border-radius: 50%;
-  background: var(--playhead-color);
+  background: var(--playneedle);
   border: 2px solid rgba(255,255,255,0.3);
   cursor: pointer;
   pointer-events: all;
-  box-shadow: 0 0 0 3px var(--playhead-glow), 0 0 12px var(--playhead-color);
+  box-shadow: 0 0 0 3px var(--playhead-glow), 0 0 12px var(--playneedle);
   transition: transform 0.1s, box-shadow 0.1s;
   z-index: 41; /* ensure button above ruler but below torus */
 }
 .playhead-btn:hover {
   transform: scale(1.2);
-  box-shadow: 0 0 0 5px var(--playhead-glow), 0 0 20px var(--playhead-color);
+  box-shadow: 0 0 0 5px var(--playhead-glow), 0 0 20px var(--playneedle);
 }
 
 .playhead-line {
@@ -635,8 +635,8 @@ html, body, #root {
   top: 0;
   width: 1px;
   height: 100%;
-  background: var(--playhead-color);
-  box-shadow: 0 0 6px var(--playhead-color), 0 0 2px var(--playhead-glow);
+  background: var(--playneedle);
+  box-shadow: 0 0 6px var(--playneedle), 0 0 2px var(--playhead-glow);
 }
 
 /* Torus Menu */

@@ -15,7 +15,8 @@ export type ColorVarName =
   | '--text-secondary'
   | '--text-muted'
   | '--input-field'
-  | '--input-field-bg';
+  | '--input-field-bg'
+  | '--playneedle';
 
 export type ThemeColors = Record<ColorVarName, string>;
 
@@ -40,4 +41,5 @@ export const colorFields: ColorField[] = [
   { varName: '--text-muted', label: 'Muted text' },
   { varName: '--input-field', label: 'Input field primary' },
   { varName: '--input-field-bg', label: 'Input field secondary' },
+  { varName: '--playneedle', label: 'Playneedle' },
 ];
