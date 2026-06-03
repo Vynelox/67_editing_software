@@ -77,9 +77,69 @@ export default function Timeline({
   const getScrollAmount = () => {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollAmount'); return v ? Number(v) : 100; } catch { return 100; }
   };
+  const getScrollZoomAmount = () => {
+    try { const v = window.localStorage.getItem('juicecut.settings.scrollZoomAmount'); return v ? Number(v) : 25; } catch { return 25; }
+  };
+  const getScrollZoomSmoothness = () => {
+    try { const v = window.localStorage.getItem('juicecut.settings.scrollZoomSmoothness'); return v ? Number(v) : 70; } catch { return 70; }
+  };
   const velocityRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const scrollElRef = useRef<HTMLElement | null>(null);
+  // Smooth zoom state
+  const zoomTargetRef = useRef<number>(1);
+  const zoomRafRef = useRef<number | null>(null);
+  const zoomScrollElRef = useRef<HTMLElement | null>(null);
+  const zoomMouseXRef = useRef<number>(0);
+  const zoomBeforeFrameRef = useRef<number>(0);
+  const [zoomAnimTrigger, setZoomAnimTrigger] = useState(0);
+
+  // Start zoom animation when trigger changes (triggered from wheel handler)
+  useEffect(() => {
+    if (zoomRafRef.current !== null) return;
+
+    const animateZoom = () => {
+      const currentZoom = zoom;
+      const targetZoom = zoomTargetRef.current;
+      const diff = targetZoom - currentZoom;
+
+      if (Math.abs(diff) < 0.001) {
+        setZoom(targetZoom);
+        zoomRafRef.current = null;
+        return;
+      }
+
+      // Smoothness controls the interpolation factor
+      // Map 0-100 to 0.05-0.3 for smooth easing
+      const smoothness = getScrollZoomSmoothness();
+      const t = smoothness === 0 ? 1 : 0.05 + (smoothness / 100) * 0.25;
+      const newZoom = currentZoom + diff * t;
+      const clampedZoom = Math.max(0.25, Math.min(4, newZoom));
+
+      setZoom(clampedZoom);
+
+      // Update scroll to keep the mouse position anchored to the same frame
+      if (zoomScrollElRef.current) {
+        const el = zoomScrollElRef.current;
+        const newScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - zoomMouseXRef.current;
+        el.scrollLeft = Math.max(0, newScrollLeft);
+      }
+
+      zoomRafRef.current = requestAnimationFrame(animateZoom);
+    };
+
+    // Check if we need to start animating
+    if (Math.abs(zoomTargetRef.current - zoom) > 0.001) {
+      zoomRafRef.current = requestAnimationFrame(animateZoom);
+    }
+
+    return () => {
+      if (zoomRafRef.current !== null) {
+        cancelAnimationFrame(zoomRafRef.current);
+        zoomRafRef.current = null;
+      }
+    };
+  }, [zoom, zoomAnimTrigger]);
 
   const totalWidth = Math.max(frameToX(totalFrames + 60 * FPS, zoom), 1200);
 
@@ -269,15 +329,26 @@ export default function Timeline({
     if (e.altKey) {
       e.preventDefault();
       velocityRef.current = 0; // Cancel momentum on zoom
+
+      // Calculate zoom amount based on setting (1-100 maps to 0.01-0.1 scale factor)
+      const zoomAmountSetting = getScrollZoomAmount();
+      const zoomScale = 1 + (zoomAmountSetting / 100) * 0.5; // 1.005 to 1.5 per scroll tick
+      const scale = e.deltaY < 0 ? zoomScale : 1 / zoomScale;
+
       const rect = el.getBoundingClientRect();
       const mouseX = e.clientX - rect.left + el.scrollLeft;
       const beforeFrame = xToFrame(mouseX, zoom);
-      const scale = e.deltaY < 0 ? 1.12 : 0.9;
-      const newZoom = Math.max(0.25, Math.min(4, zoom * scale));
-      setZoom(newZoom);
-      // keep cursor centered on the same frame
-      const newScrollLeft = frameToX(beforeFrame, newZoom) - (e.clientX - rect.left);
-      el.scrollLeft = Math.max(0, newScrollLeft);
+
+      const targetZoom = Math.max(0.25, Math.min(4, zoom * scale));
+
+      // Store zoom target and anchor info for smooth animation
+      zoomTargetRef.current = targetZoom;
+      zoomScrollElRef.current = el;
+      zoomMouseXRef.current = mouseX;
+      zoomBeforeFrameRef.current = beforeFrame;
+
+      // Trigger the animation loop by updating state
+      setZoomAnimTrigger(n => n + 1);
       return;
     }
 
@@ -323,6 +394,18 @@ export default function Timeline({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [selectedIds, onNudge]);
+
+  // Listen for settings changes to update zoom behavior in real-time
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      // Settings changed - if we have a pending zoom target, restart animation with new smoothness
+      if (Math.abs(zoomTargetRef.current - zoom) > 0.001 && zoomRafRef.current === null) {
+        // Animation will restart via the zoom dependency in the animation useEffect
+      }
+    };
+    window.addEventListener('juicecut-settings-changed', handleSettingsChange);
+    return () => window.removeEventListener('juicecut-settings-changed', handleSettingsChange);
+  }, [zoom]);
 
   const handleTrackDrop = (e: React.DragEvent, trackIdx: number) => {
     e.preventDefault();

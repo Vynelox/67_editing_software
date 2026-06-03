@@ -34,8 +34,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [scrollAmount, setScrollAmount] = useState<number>(() => {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollAmount'); return v ? Number(v) : 100; } catch { return 100; }
   });
+  const [scrollZoomAmount, setScrollZoomAmount] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.scrollZoomAmount'); return v ? Number(v) : 25; } catch { return 25; }
+  });
+  const [scrollZoomSmoothness, setScrollZoomSmoothness] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.scrollZoomSmoothness'); return v ? Number(v) : 70; } catch { return 70; }
+  });
 
-  // Logarithmic slider mapping for scroll amount (1% to 400%, middle ≈ 40%)
   const SCROLL_AMOUNT_POWER = 3.355;
   const scrollAmountToSlider = (value: number) => {
     if (value <= 1) return 0;
@@ -56,9 +61,10 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {} }, [includeResizeInUndo]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollSmooth', String(scrollSmooth)); } catch {} }, [scrollSmooth]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollAmount', String(scrollAmount)); } catch {} }, [scrollAmount]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollZoomAmount', String(scrollZoomAmount)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'scrollZoomAmount', value: scrollZoomAmount } })); } catch {} }, [scrollZoomAmount]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollZoomSmoothness', String(scrollZoomSmoothness)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'scrollZoomSmoothness', value: scrollZoomSmoothness } })); } catch {} }, [scrollZoomSmoothness]);
 
   useEffect(() => {
-    // restore scroll if requested
     if (initialScroll != null && panelRef.current) {
       const el = panelRef.current.querySelector('.settings-panel-content');
       if (el) el.scrollTop = initialScroll;
@@ -99,30 +105,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Playneedle vertical<br />offset (%)</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{playheadTop}%</span>
-                      <button
-                        type="button"
-                        className="icon-btn"
-                        onClick={() => setPlayheadTop(15)}
-                        title="Reset to default (15%)"
-                        style={{ padding: 4 }}
-                      >
+                      <button type="button" className="icon-btn" onClick={() => setPlayheadTop(15)} title="Reset to default (15%)" style={{ padding: 4 }}>
                         <RotateCcw size={14} />
                       </button>
                     </div>
                   </div>
-                  <input
-                    type="range"
-                    className="settings-range-input"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={playheadTop}
-                    onChange={e => setPlayheadTop(Number(e.target.value))}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
-                    <span>Top</span>
-                    <span>Bottom</span>
-                  </div>
+                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={playheadTop} onChange={e => setPlayheadTop(Number(e.target.value))} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}><span>Top</span><span>Bottom</span></div>
                 </div>
 
                 <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
@@ -130,30 +119,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Timeline scroll<br />smooth factor</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{scrollSmooth}%</span>
-                      <button
-                        type="button"
-                        className="icon-btn"
-                        onClick={() => setScrollSmooth(50)}
-                        title="Reset to default (50%)"
-                        style={{ padding: 4 }}
-                      >
+                      <button type="button" className="icon-btn" onClick={() => setScrollSmooth(50)} title="Reset to default (50%)" style={{ padding: 4 }}>
                         <RotateCcw size={14} />
                       </button>
                     </div>
                   </div>
-                  <input
-                    type="range"
-                    className="settings-range-input"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={scrollSmooth}
-                    onChange={e => setScrollSmooth(Number(e.target.value))}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
-                    <span>Snappy</span>
-                    <span>Smooth</span>
-                  </div>
+                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={scrollSmooth} onChange={e => setScrollSmooth(Number(e.target.value))} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}><span>Snappy</span><span>Smooth</span></div>
                 </div>
 
                 <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
@@ -161,30 +133,41 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Timeline scroll<br />amount</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{scrollAmount}%</span>
-                      <button
-                        type="button"
-                        className="icon-btn"
-                        onClick={() => setScrollAmount(100)}
-                        title="Reset to default (100%)"
-                        style={{ padding: 4 }}
-                      >
+                      <button type="button" className="icon-btn" onClick={() => setScrollAmount(100)} title="Reset to default (100%)" style={{ padding: 4 }}>
                         <RotateCcw size={14} />
                       </button>
                     </div>
                   </div>
-                  <input
-                    type="range"
-                    className="settings-range-input"
-                    min={0}
-                    max={1000}
-                    step={1}
-                    value={scrollAmountToSlider(scrollAmount)}
-                    onChange={e => setScrollAmount(sliderToScrollAmount(Number(e.target.value)))}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
-                    <span>1%</span>
-                    <span>400%</span>
+                  <input type="range" className="settings-range-input" min={0} max={1000} step={1} value={scrollAmountToSlider(scrollAmount)} onChange={e => setScrollAmount(sliderToScrollAmount(Number(e.target.value)))} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}><span>1%</span><span>400%</span></div>
+                </div>
+
+                <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>Scroll zoom<br />amount</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{scrollZoomAmount}</span>
+                      <button type="button" className="icon-btn" onClick={() => setScrollZoomAmount(25)} title="Reset to default (25)" style={{ padding: 4 }}>
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
                   </div>
+                  <input type="range" className="settings-range-input" min={1} max={100} step={1} value={scrollZoomAmount} onChange={e => setScrollZoomAmount(Number(e.target.value))} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}><span>Slow</span><span>Fast</span></div>
+                </div>
+
+                <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>Scroll zoom<br />smoothness</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{scrollZoomSmoothness}%</span>
+                      <button type="button" className="icon-btn" onClick={() => setScrollZoomSmoothness(70)} title="Reset to default (70%)" style={{ padding: 4 }}>
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={scrollZoomSmoothness} onChange={e => setScrollZoomSmoothness(Number(e.target.value))} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}><span>Snappy</span><span>Smooth</span></div>
                 </div>
               </div>
             )}
@@ -220,7 +203,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   );
 }
 
-// Programmatic opener: mounts Settings into document.body
 export function OpenSettings(pageData?: any, scroll?: number | null) {
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -230,21 +212,14 @@ export function OpenSettings(pageData?: any, scroll?: number | null) {
     if (container.parentNode) container.parentNode.removeChild(container);
   };
   root.render(<SettingsShell initialPageData={pageData} initialScroll={scroll ?? null} onClose={cleanup} />);
-  // expose cleanup to caller
   return cleanup;
 }
 
-// Programmatic closer: closes the settings modal
 export function closeSettings() {
   const existing = document.querySelector('.modal-overlay.settings-modal');
-  if (existing && existing.parentNode) {
-    existing.parentNode.removeChild(existing);
-  }
+  if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
 }
 
-// Global callback for when color picker closes and settings should reopen
 (window as any).__onColorPickerClose = null;
-
-// attach to window for convenience
 try { (window as any).OpenSettings = OpenSettings; } catch (e) {}
 try { (window as any).closeSettings = closeSettings; } catch (e) {}
