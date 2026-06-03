@@ -614,7 +614,7 @@ function AppContent() {
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-box settings-modal" style={{ width: 480, height: '72vh', minHeight: '72vh', maxHeight: '72vh', overflow: 'hidden' }}>
             <div className="modal-header modal-header--centered">
-              <span className="panel-title" style={{ fontSize: 12 }}>{stylePage ? `Style / ${stylePage}` : 'Style'}</span>
+              <span className="panel-title" style={{ fontSize: 12 }}>{stylePage ? `Styles / ${stylePage}` : 'Styles'}</span>
               <button className="icon-btn modal-close-btn" onClick={() => { setShowStyle(false); setStylePage(null); }} aria-label="Close style">✕</button>
             </div>
             {!stylePage && (
@@ -623,19 +623,18 @@ function AppContent() {
                   onClick={() => setStylePage('og-dark')}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                    background: 'var(--bg-elevated)', border: '1px solid var(--border-mid)',
+                    background: 'transparent', border: 'none',
                     borderRadius: 'var(--radius-md)', padding: '16px 20px',
-                    cursor: 'pointer', color: 'var(--text-primary)',
-                    transition: 'background 0.12s, border-color 0.12s',
+                    cursor: 'pointer', color: 'var(--text-secondary)',
+                    transition: 'background 0.12s',
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-elevated)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-mid)'; }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                 >
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20z"/>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                   </svg>
-                  <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px' }}>og dark</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>og dark</span>
                 </button>
               </div>
             )}
