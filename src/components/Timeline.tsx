@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import { useRef, useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { Film, Music } from 'lucide-react';
 import type { TimelineClip, Track, MediaItem } from '../types';
 import { FPS, formatTimecode } from '../types';
@@ -92,54 +92,62 @@ export default function Timeline({
   const zoomScrollElRef = useRef<HTMLElement | null>(null);
   const zoomMouseXRef = useRef<number>(0);
   const zoomBeforeFrameRef = useRef<number>(0);
+  const zoomCurrentRef = useRef<number>(1);
+  const zoomAnimatingRef = useRef(false);
   const [zoomAnimTrigger, setZoomAnimTrigger] = useState(0);
+
+  // Keep zoomCurrentRef in sync with zoom state
+  useEffect(() => { zoomCurrentRef.current = zoom; }, [zoom]);
+
+  // After each zoom re-render, adjust scroll to keep playhead centered
+  useLayoutEffect(() => {
+    if (!zoomAnimatingRef.current) return;
+    if (zoomScrollElRef.current) {
+      const el = zoomScrollElRef.current;
+      const newScrollLeft = frameToX(zoomBeforeFrameRef.current, zoom) - zoomMouseXRef.current;
+      el.scrollLeft = Math.max(0, newScrollLeft);
+    }
+  });
 
   // Start zoom animation when trigger changes (triggered from wheel handler)
   useEffect(() => {
+    // Only start if not already running
     if (zoomRafRef.current !== null) return;
 
     const animateZoom = () => {
-      const currentZoom = zoom;
+      const currentZoom = zoomCurrentRef.current;
       const targetZoom = zoomTargetRef.current;
       const diff = targetZoom - currentZoom;
 
       if (Math.abs(diff) < 0.001) {
+        zoomCurrentRef.current = targetZoom;
+        zoomAnimatingRef.current = false;
         setZoom(targetZoom);
         zoomRafRef.current = null;
         return;
       }
 
       // Smoothness controls the interpolation factor
-      // Map 0-100 to 0.05-0.3 for smooth easing
       const smoothness = getScrollZoomSmoothness();
       const t = smoothness === 0 ? 1 : 0.05 + (smoothness / 100) * 0.25;
       const newZoom = currentZoom + diff * t;
       const clampedZoom = Math.max(0.25, Math.min(4, newZoom));
 
+      // Update the ref immediately so the next frame reads the correct value
+      zoomCurrentRef.current = clampedZoom;
+      zoomAnimatingRef.current = true;
       setZoom(clampedZoom);
-
-      // Update scroll to keep the mouse position anchored to the same frame
-      if (zoomScrollElRef.current) {
-        const el = zoomScrollElRef.current;
-        const newScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - zoomMouseXRef.current;
-        el.scrollLeft = Math.max(0, newScrollLeft);
-      }
+      // Scroll is updated in useLayoutEffect after DOM re-render
 
       zoomRafRef.current = requestAnimationFrame(animateZoom);
     };
 
     // Check if we need to start animating
-    if (Math.abs(zoomTargetRef.current - zoom) > 0.001) {
+    if (Math.abs(zoomTargetRef.current - zoomCurrentRef.current) > 0.001) {
       zoomRafRef.current = requestAnimationFrame(animateZoom);
     }
-
-    return () => {
-      if (zoomRafRef.current !== null) {
-        cancelAnimationFrame(zoomRafRef.current);
-        zoomRafRef.current = null;
-      }
-    };
-  }, [zoom, zoomAnimTrigger]);
+    // Intentionally no cleanup - the animation manages itself via refs
+  }, [zoomAnimTrigger]);
 
   const totalWidth = Math.max(frameToX(totalFrames + 60 * FPS, zoom), 1200);
 
@@ -325,7 +333,7 @@ export default function Timeline({
     // Read settings fresh each time for immediate response to changes
     const scrollSmoothFactor = getScrollSmoothFactor();
     const scrollAmount = getScrollAmount();
-    // If Alt is pressed, zoom horizontally centered at cursor
+    // If Alt is pressed, zoom horizontally centered at playhead
     if (e.altKey) {
       e.preventDefault();
       velocityRef.current = 0; // Cancel momentum on zoom
@@ -335,16 +343,18 @@ export default function Timeline({
       const zoomScale = 1 + (zoomAmountSetting / 100) * 0.5; // 1.005 to 1.5 per scroll tick
       const scale = e.deltaY < 0 ? zoomScale : 1 / zoomScale;
 
+      // Anchor zoom at playhead position
+      const playheadPixelX = frameToX(playhead, zoom);
       const rect = el.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left + el.scrollLeft;
-      const beforeFrame = xToFrame(mouseX, zoom);
+      const viewportCenterX = el.clientWidth / 2;
+      const beforeFrame = playhead;
 
       const targetZoom = Math.max(0.25, Math.min(4, zoom * scale));
 
       // Store zoom target and anchor info for smooth animation
       zoomTargetRef.current = targetZoom;
       zoomScrollElRef.current = el;
-      zoomMouseXRef.current = mouseX;
+      zoomMouseXRef.current = viewportCenterX;
       zoomBeforeFrameRef.current = beforeFrame;
 
       // Trigger the animation loop by updating state
@@ -394,6 +404,21 @@ export default function Timeline({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [selectedIds, onNudge]);
+
+  // Native wheel listener to prevent default scroll when alt is held (React onWheel is passive)
+  useEffect(() => {
+    const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement | null;
+    if (!scrollEl) return;
+    const handler = (e: WheelEvent) => {
+      if (e.altKey) {
+        e.preventDefault();
+        // Cancel any momentum scrolling
+        velocityRef.current = 0;
+      }
+    };
+    scrollEl.addEventListener('wheel', handler, { passive: false });
+    return () => scrollEl.removeEventListener('wheel', handler);
+  }, []);
 
   // Listen for settings changes to update zoom behavior in real-time
   useEffect(() => {
