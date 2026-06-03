@@ -349,7 +349,7 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
           </div>
         )}
         {stylePage && allDisplayItems[stylePage]?.type === 'folder' && (
-          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 90px)', gap: '8px 12px', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+          <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 90px)', gap: '4px 12px', alignItems: 'start', alignContent: 'start', justifyContent: 'start' }}>
             {allDisplayItems[stylePage].children?.map(childId => {
               const childItem = allDisplayItems[childId];
               if (!childItem) return null;
