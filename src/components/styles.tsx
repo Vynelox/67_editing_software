@@ -76,18 +76,18 @@ const monokaiColors: Record<string, string> = {
 };
 
 const lavenderColors: Record<string, string> = {
-  '--bg-panel': '#E6E6FA',
-  '--bg-base': '#D8BFD8',
-  '--bg-viewer': '#DDA0DD',
-  '--bg-elevated': '#FFF0F5',
-  '--bg-hover': '#E0BBE4',
-  '--border': '#957DAD',
-  '--border-mid': '#C3B1E1',
-  '--text-primary': '#4B0082',
-  '--text-secondary': '#6A5ACD',
-  '--text-muted': '#8A2BE2',
-  '--input-field': '#BA55D3',
-  '--input-field-bg': '#F5EEF8',
+  '--bg-panel': '#2D1C4D',
+  '--bg-base': '#1B0A3A',
+  '--bg-viewer': '#15043A',
+  '--bg-elevated': '#392358',
+  '--bg-hover': '#432A66',
+  '--border': '#684A9C',
+  '--border-mid': '#7E5DBA',
+  '--text-primary': '#E5DEF1',
+  '--text-secondary': '#B1A3D0',
+  '--text-muted': '#8A7B9C',
+  '--input-field': '#7953C2',
+  '--input-field-bg': '#27184A',
 };
 
 const cyberpunkColors: Record<string, string> = {
