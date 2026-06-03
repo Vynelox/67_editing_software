@@ -475,7 +475,12 @@ function AppContent() {
           </svg>
           <span>Juice Cut</span>
         </div>
-        <button className="icon-btn" style={{ width: 30, height: 30 }} onClick={() => setShowStyle(true)} title="Style">💧</button>
+        <div style={{ marginLeft: 'auto' }} />
+        <button className="icon-btn" style={{ width: 30, height: 30 }} onClick={() => setShowStyle(true)} title="Style">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2C12 2 5 10 5 15c0 3.866 3.134 7 7 7s7-3.134 7-7c0-5-7-13-7-13z"/>
+          </svg>
+        </button>
         <button className="icon-btn" style={{ width: 30, height: 30 }} onClick={() => { try { OpenSettings({ tab: 'misc' }, null); } catch (e) {} }} title="Settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"/>
