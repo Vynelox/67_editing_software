@@ -433,19 +433,23 @@ html, body, #root {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding-top: 32px; /* reserve space for ruler/header */
-  justify-content: center; /* center labels block to match centered tracks */
+  padding-top: 32px; /* match ruler height */
+  padding-bottom: 9px; /* match scrollbar height so centering space is identical */
+  align-items: stretch;
+  justify-content: center;
 }
 
 .tl-label {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   padding: 0 10px;
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 500;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 /* Splitter / Resizer */
@@ -481,8 +485,8 @@ html, body, #root {
 .tl-tracks-wrap {
   display: flex;
   flex-direction: column;
-  justify-content: center; /* center the stack of tracks vertically */
   height: 100%;
+  justify-content: center;
 }
 
 .ruler-tick {
@@ -508,6 +512,9 @@ html, body, #root {
   border-bottom: 1px solid var(--border);
   background: transparent;
   transition: background-color 0.1s;
+  /* Match label height for alignment */
+  height: var(--track-height, 32px);
+  flex-shrink: 0;
 }
 .tl-track:hover { background-color: rgba(255,255,255,0.01); }
 
