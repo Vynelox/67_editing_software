@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 import type { MediaItem, TimelineClip } from '../types';
 import { formatTimecode, FPS } from '../types';
@@ -119,6 +119,33 @@ export default function Viewer({
     onSeek(Math.round(ratio * totalFrames));
   };
 
+  const [controlsType, setControlsType] = useState<string>(() => {
+    try { return window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'; } catch { return 'compact'; }
+  });
+
+  useEffect(() => {
+    const handler = () => {
+      try { setControlsType(window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'); } catch {}
+    };
+    window.addEventListener('juicecut-settings-changed', handler);
+    return () => window.removeEventListener('juicecut-settings-changed', handler);
+  }, []);
+
+  const scrubBar = (height: number) => (
+    <div onClick={handleScrub} style={{ flex:1, position:'relative', height, borderRadius:2, background:'var(--border-mid)', cursor:'pointer' }}>
+      <div style={{ position:'absolute', left:0, top:0, height:'100%', width:`${progress}%`, background:'var(--input-field)', borderRadius:2 }} />
+      <div style={{ position:'absolute', top:'50%', left:`${progress}%`, transform:'translate(-50%,-50%)', width:8, height:8, borderRadius:'50%', background:'var(--text-primary)', boxShadow:'0 0 0 2px var(--bg-panel)', pointerEvents:'none' }} />
+    </div>
+  );
+
+  const skipBtn = (onClick: () => void, title: string, icon: React.ReactNode, size: number) => (
+    <button onClick={onClick} title={title}
+      style={{ display:'flex', alignItems:'center', justifyContent:'center', width:size, height:size, borderRadius:4, background:'transparent', border:'none', color:'var(--text-secondary)', cursor:'pointer', flexShrink:0 }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background='var(--bg-hover)'; (e.currentTarget as HTMLElement).style.color='var(--text-primary)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background='transparent'; (e.currentTarget as HTMLElement).style.color='var(--text-secondary)'; }}
+    >{icon}</button>
+  );
+
   return (
     <div className="viewer">
       <div className="viewer-header">
@@ -135,22 +162,40 @@ export default function Viewer({
       <div className="viewer-canvas-wrap">
         <canvas ref={canvasRef} width={854} height={480} className="viewer-canvas" />
       </div>
-      <div className="viewer-controls">
-        <button className="ctrl-btn" onClick={() => onSeek(0)} title="Go to start">
-          <SkipBack size={16} />
-        </button>
-        <button className="ctrl-btn play-btn" onClick={onPlayPause} title={playing ? 'Pause' : 'Play'}>
-          {playing ? <Pause size={18} /> : <Play size={18} />}
-        </button>
-        <button className="ctrl-btn" onClick={() => onSeek(totalFrames)} title="Go to end">
-          <SkipForward size={16} />
-        </button>
-        <div className="scrub-bar" onClick={handleScrub}>
-          <div className="scrub-progress" style={{ width: `${progress}%` }} />
-          <div className="scrub-thumb" style={{ left: `${progress}%` }} />
+
+      {controlsType === 'compact' ? (
+        <div style={{ display:'flex', alignItems:'center', gap:6, padding:'0 10px', height:32, background:'var(--bg-panel)', borderTop:'1px solid var(--border)', flexShrink:0 }}>
+          {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={12} />, 22)}
+          <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'}
+            style={{ display:'flex', alignItems:'center', justifyContent:'center', width:26, height:26, borderRadius:6, background:'var(--input-field)', border:'1px solid var(--border-mid)', color:'var(--text-primary)', cursor:'pointer', flexShrink:0, transition:'filter 0.12s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter='brightness(1.2)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter='none'; }}
+          >{playing ? <Pause size={13} /> : <Play size={13} />}</button>
+          {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={12} />, 22)}
+          {scrubBar(3)}
+          <span style={{ fontFamily:'monospace', fontSize:10, color:'var(--text-muted)', letterSpacing:1, flexShrink:0 }}>{formatTimecode(playhead)}</span>
+          <Volume2 size={12} style={{ color:'var(--text-muted)', flexShrink:0 }} />
         </div>
-        <Volume2 size={14} className="text-gray-500" />
-      </div>
+      ) : (
+        <div style={{ display:'flex', flexDirection:'column', gap:8, padding:'8px 14px 10px', background:'var(--bg-panel)', borderTop:'1px solid var(--border)', flexShrink:0 }}>
+          {scrubBar(4)}
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ fontFamily:'monospace', fontSize:11, color:'var(--text-muted)', letterSpacing:1, minWidth:64 }}>{formatTimecode(playhead)}</span>
+            <div style={{ flex:1, display:'flex', justifyContent:'center', alignItems:'center', gap:2 }}>
+              {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={14} />, 28)}
+              <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'}
+                style={{ display:'flex', alignItems:'center', justifyContent:'center', width:36, height:36, borderRadius:10, background:'var(--input-field)', border:'1px solid var(--border-mid)', color:'var(--text-primary)', cursor:'pointer', transition:'filter 0.12s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter='brightness(1.2)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter='none'; }}
+              >{playing ? <Pause size={16} /> : <Play size={16} />}</button>
+              {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={14} />, 28)}
+            </div>
+            <div style={{ minWidth:64, display:'flex', justifyContent:'flex-end' }}>
+              <Volume2 size={14} style={{ color:'var(--text-muted)' }} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

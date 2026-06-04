@@ -4,7 +4,7 @@ import { RotateCcw, Plus } from 'lucide-react';
 import type { ShortcutAction } from './shortcuts';
 import { getShortcutKeys as scGetKeys, updateShortcuts as scUpdate, resetDefaultShortcuts as scReset } from './shortcuts';
 
-type SettingsTab = "sliders" | "checkboxes" | "shortcuts";
+type SettingsTab = "sliders" | "checkboxes" | "shortcuts" | "multiselects";
 
 interface Props {
   onClose?: () => void;
@@ -76,6 +76,9 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [scrollZoomSmoothness, setScrollZoomSmoothness] = useState<number>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.scrollZoomSmoothness"); return v ? Number(v) : 70; } catch { return 70; }
   });
+  const [viewerControlsType, setViewerControlsType] = useState<string>(() => {
+    try { return window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'; } catch { return 'compact'; }
+  });
   const [shortcuts, setShortcuts] = useState<Record<ShortcutAction, string[][]>>(loadAllShortcuts);
   const [editingChip, setEditingChip] = useState<{ action: ShortcutAction; index: number } | null>(null);
   const chipRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -104,6 +107,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollAmount", String(scrollAmount)); } catch {} }, [scrollAmount]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomAmount", String(scrollZoomAmount)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomAmount", value: scrollZoomAmount } })); } catch {} }, [scrollZoomAmount]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomSmoothness", String(scrollZoomSmoothness)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomSmoothness", value: scrollZoomSmoothness } })); } catch {} }, [scrollZoomSmoothness]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.viewerControlsType', viewerControlsType); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'viewerControlsType', value: viewerControlsType } })); } catch {} }, [viewerControlsType]);
 
   useEffect(() => {
     if (initialScroll != null && panelRef.current) {
@@ -198,6 +202,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               onClick={() => setActiveTab("checkboxes")}
             >
               Checkboxes
+            </button>
+            <button
+              type="button"
+              className={"settings-tab" + (activeTab === "multiselects" ? " settings-tab--active" : "")}
+              onClick={() => setActiveTab("multiselects")}
+            >
+              Multiselects
             </button>
           </nav>
 
@@ -312,6 +323,39 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input type="checkbox" className="settings-checkbox" checked={centerPlayneedle} onChange={e => setCenterPlayneedle(e.target.checked)} />
                     <button type="button" className="icon-btn" onClick={() => setCenterPlayneedle(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "multiselects" && (
+              <div className="settings-panel-content">
+                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+                  <span style={{ lineHeight: 1.2 }}>Viewer controls type</span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {(['compact', 'centered'] as const).map(opt => {
+                      const active = viewerControlsType === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setViewerControlsType(opt)}
+                          style={{
+                            padding: "5px 14px",
+                            borderRadius: "var(--radius-sm)",
+                            border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)",
+                            background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)",
+                            color: active ? "var(--accent-blue)" : "var(--text-secondary)",
+                            fontSize: 12,
+                            fontWeight: active ? 600 : 400,
+                            cursor: "pointer",
+                            transition: "all 0.12s",
+                          }}
+                        >
+                          {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
