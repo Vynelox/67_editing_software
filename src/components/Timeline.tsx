@@ -1,10 +1,11 @@
-import { useRef, useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useRef, useState, useCallback, useEffect, useLayoutEffect } from 'react';
 import { Film, Music } from 'lucide-react';
 import type { TimelineClip, Track, MediaItem } from '../types';
 import { FPS, formatTimecode } from '../types';
 import TorusMenu from './TorusMenu';
 import Waveform from './Waveform';
 import ThumbnailRoll from './ThumbnailRoll';
+import { isWheelShortcutMatch } from './shortcuts';
 
 interface Props {
   clips: TimelineClip[];
@@ -101,7 +102,7 @@ export default function Timeline({
   const zoomAnimatingRef = useRef(false);
   const [zoomAnimTrigger, setZoomAnimTrigger] = useState(0);
   const scrollTargetRef = useRef<number | null>(null);
-  const zoomMouseXTargetRef = useRef<number>(0); // for smooth centering: mouseX lerps toward center
+  const zoomMouseXTargetRef = useRef<number>(0);
 
   // Keep zoomCurrentRef and zoomTargetRef in sync with zoom state
   useEffect(() => {
@@ -109,8 +110,6 @@ export default function Timeline({
     if (!zoomAnimatingRef.current) zoomTargetRef.current = zoom;
   }, [zoom]);
 
-  // After React re-renders from a zoom animation frame, correct scrollLeft to keep the anchor in place.
-  // This runs after every render but is gated so it only acts on zoom-animation-triggered renders.
   const pendingScrollCorrection = useRef<{ el: HTMLElement; scrollLeft: number } | null>(null);
   useLayoutEffect(() => {
     if (!pendingScrollCorrection.current) return;
@@ -141,10 +140,7 @@ export default function Timeline({
 
         let targetScrollLeft: number;
         if (centerPlayneedle) {
-          // Perfectly centered on playhead — no lerp, no offset, just direct math.
-          // The smooth travel to center is handled by lerping mouseX offset separately.
           const centeredScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - el.clientWidth / 2;
-          // zoomMouseXRef starts at (playheadViewportX - center) offset and lerps to 0
           const scrollSmoothness = getScrollSmoothFactor();
           const st = scrollSmoothness === 0 ? 1 : 0.02 + (1 - scrollSmoothness / 100) * 0.18;
           zoomMouseXRef.current = zoomMouseXRef.current + (0 - zoomMouseXRef.current) * st;
@@ -208,7 +204,6 @@ export default function Timeline({
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     setTorusTarget(target);
-    // position in viewport coordinates so menu can be fixed and escape stacking contexts
     const playheadEl = containerRef.current?.querySelector('.tl-playhead') as HTMLElement | null;
     const playheadH = playheadEl?.clientHeight ?? 0;
     const pct = typeof playheadTop === 'number' ? Math.min(100, Math.max(0, playheadTop)) : DEFAULT_PLAYHEAD_TOP_PCT;
@@ -324,8 +319,6 @@ export default function Timeline({
       const vel = velocityRef.current;
       if (Math.abs(vel) > 0.5 && scrollElRef.current) {
         scrollElRef.current.scrollLeft += vel;
-        // Friction: higher smooth factor = less friction = more momentum
-        // Map 0-100 to friction 0.92-0.98
         const scrollSmoothFactor = getScrollSmoothFactor();
         const friction = 0.92 + (scrollSmoothFactor / 100) * 0.06;
         velocityRef.current = vel * friction;
@@ -371,7 +364,8 @@ export default function Timeline({
       const scrollSmoothFactor = getScrollSmoothFactor();
       const scrollAmount = getScrollAmount();
 
-      if (e.altKey) {
+      // Use centralized shortcut check instead of hardcoded e.altKey
+      if (isWheelShortcutMatch('timelineZoomToggle', e)) {
         e.preventDefault();
         velocityRef.current = 0;
 
@@ -385,7 +379,6 @@ export default function Timeline({
         if (!zoomAnimatingRef.current) {
           if (centerPlayneedle) {
             zoomBeforeFrameRef.current = playheadRef.current;
-            // zoomMouseXRef = initial offset: positive means playhead is left of center (view needs to scroll right)
             const playheadViewportX = frameToX(playheadRef.current, zoomCurrentRef.current) - el.scrollLeft;
             zoomMouseXRef.current = el.clientWidth / 2 - playheadViewportX;
             zoomMouseXTargetRef.current = 0;
@@ -453,7 +446,6 @@ export default function Timeline({
   // Listen for settings changes to update zoom behavior in real-time
   useEffect(() => {
     const handleSettingsChange = () => {
-      // Settings changed - if we have a pending zoom target, restart animation with new smoothness
       if (Math.abs(zoomTargetRef.current - zoom) > 0.001 && zoomRafRef.current === null) {
         // Animation will restart via the zoom dependency in the animation useEffect
       }
@@ -502,13 +494,11 @@ export default function Timeline({
         </div>
 
         <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto hidden', flex: 1, height: '100%' }} onWheel={handleWheel}>
-          {/* wheel handler attached via prop below for proper typing */}
           <div 
             className="tl-inner" 
             style={{ width: totalWidth, position: 'relative', height: '100%' }}
             onMouseDown={(e) => {
               const target = e.target as HTMLElement;
-              // Ignore clicks on clips, fade handles, join buttons, or the playhead itself
               if (target.closest('.tl-clip') || target.closest('.fade-handle') || target.closest('.join-btn') || target.closest('.tl-playhead')) {
                 return;
               }
@@ -529,7 +519,6 @@ export default function Timeline({
               ))}
             </div>
 
-            {/* Grid lines overlay that extends through the tracks area */}
             <div className="tl-grid-overlay" style={{ position: 'absolute', top: HEADER_H, left: 0, width: totalWidth, height: `calc(100% - ${HEADER_H}px)`, pointerEvents: 'none', zIndex: 1 }}>
               {rulerTicks().map((t, i) => (
                 <div key={i} className="ruler-tick" style={{ left: t.x }} />
