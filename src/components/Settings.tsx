@@ -28,6 +28,12 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [includeResizeInUndo, setIncludeResizeInUndo] = useState<boolean>(() => {
     try { const v = window.localStorage.getItem('juicecut.settings.includeResizeInUndo'); return v === null ? true : v === 'true'; } catch { return true; }
   });
+  const [cancelZoomOnScroll, setCancelZoomOnScroll] = useState<boolean>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.cancelZoomOnScroll'); return v === null ? true : v === 'true'; } catch { return true; }
+  });
+  const [centerPlayneedle, setCenterPlayneedle] = useState<boolean>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? false : v === 'true'; } catch { return false; }
+  });
   const [scrollSmooth, setScrollSmooth] = useState<number>(() => {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollSmooth'); return v ? Number(v) : 50; } catch { return 50; }
   });
@@ -59,6 +65,8 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     } catch {}
   }, [playheadTop]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {} }, [includeResizeInUndo]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.cancelZoomOnScroll', cancelZoomOnScroll ? 'true' : 'false'); } catch {} }, [cancelZoomOnScroll]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.centerPlayneedle', centerPlayneedle ? 'true' : 'false'); } catch {} }, [centerPlayneedle]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollSmooth', String(scrollSmooth)); } catch {} }, [scrollSmooth]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollAmount', String(scrollAmount)); } catch {} }, [scrollAmount]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.scrollZoomAmount', String(scrollZoomAmount)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'scrollZoomAmount', value: scrollZoomAmount } })); } catch {} }, [scrollZoomAmount]);
@@ -192,6 +200,22 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     >
                       <RotateCcw size={14} />
                     </button>
+                  </div>
+                </div>
+
+                <div className="settings-field" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ flex: 1, lineHeight: 1.2 }}>Cancel smooth zoom when<br />scrolling timeline</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input type="checkbox" className="settings-checkbox" checked={cancelZoomOnScroll} onChange={e => setCancelZoomOnScroll(e.target.checked)} />
+                    <button type="button" className="icon-btn" onClick={() => setCancelZoomOnScroll(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                  </div>
+                </div>
+
+                <div className="settings-field" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ flex: 1, lineHeight: 1.2 }}>Center playneedle<br />when zooming</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input type="checkbox" className="settings-checkbox" checked={centerPlayneedle} onChange={e => setCenterPlayneedle(e.target.checked)} />
+                    <button type="button" className="icon-btn" onClick={() => setCenterPlayneedle(false)} title="Reset to default (Unchecked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                   </div>
                 </div>
               </div>

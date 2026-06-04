@@ -69,6 +69,8 @@ export default function Timeline({
   } | null>(null);
   const playheadDraggingRef = useRef(false);
   const lastMouseClientX = useRef(0);
+  const playheadRef = useRef(playhead);
+  useEffect(() => { playheadRef.current = playhead; }, [playhead]);
 
   // Smooth scrolling state - read directly in handlers for immediate updates
   const getScrollSmoothFactor = () => {
@@ -83,6 +85,9 @@ export default function Timeline({
   const getScrollZoomSmoothness = () => {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollZoomSmoothness'); return v ? Number(v) : 70; } catch { return 70; }
   };
+  const getCancelZoomOnScroll = () => {
+    try { const v = window.localStorage.getItem('juicecut.settings.cancelZoomOnScroll'); return v === null ? true : v === 'true'; } catch { return true; }
+  };
   const velocityRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const scrollElRef = useRef<HTMLElement | null>(null);
@@ -95,71 +100,74 @@ export default function Timeline({
   const zoomCurrentRef = useRef<number>(1);
   const zoomAnimatingRef = useRef(false);
   const [zoomAnimTrigger, setZoomAnimTrigger] = useState(0);
+  const scrollTargetRef = useRef<number | null>(null);
+  const zoomMouseXTargetRef = useRef<number>(0); // for smooth centering: mouseX lerps toward center
 
   // Keep zoomCurrentRef and zoomTargetRef in sync with zoom state
   useEffect(() => {
     zoomCurrentRef.current = zoom;
-    // Only sync target if not currently animating, to avoid clobbering mid-flight targets
     if (!zoomAnimatingRef.current) zoomTargetRef.current = zoom;
   }, [zoom]);
 
-  // After each zoom re-render, adjust scroll to keep playhead centered
+  // After React re-renders from a zoom animation frame, correct scrollLeft to keep the anchor in place.
+  // This runs after every render but is gated so it only acts on zoom-animation-triggered renders.
+  const pendingScrollCorrection = useRef<{ el: HTMLElement; scrollLeft: number } | null>(null);
   useLayoutEffect(() => {
-    if (!zoomAnimatingRef.current) return;
-    if (zoomScrollElRef.current) {
-      const el = zoomScrollElRef.current;
-      const newScrollLeft = frameToX(zoomBeforeFrameRef.current, zoom) - zoomMouseXRef.current;
-      el.scrollLeft = Math.max(0, newScrollLeft);
-    }
-    // If playhead is being dragged (click held on timeline), update playhead to follow cursor
-    if (playheadDraggingRef.current && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const scrollEl = containerRef.current.querySelector('.tl-scroll') as HTMLElement;
-      const scrollX = scrollEl?.scrollLeft ?? 0;
-      const x = lastMouseClientX.current - rect.left - 60 + scrollX;
-      const frame = Math.max(0, xToFrame(x, zoom));
-      onSeek(frame);
-    }
+    if (!pendingScrollCorrection.current) return;
+    const { el, scrollLeft } = pendingScrollCorrection.current;
+    pendingScrollCorrection.current = null;
+    el.scrollLeft = scrollLeft;
   });
 
-  // Start zoom animation when trigger changes (triggered from wheel handler)
+  // Start zoom animation when trigger changes
   useEffect(() => {
-    // Only start if not already running
     if (zoomRafRef.current !== null) return;
 
     const animateZoom = () => {
       const currentZoom = zoomCurrentRef.current;
       const targetZoom = zoomTargetRef.current;
       const diff = targetZoom - currentZoom;
+      const smoothness = getScrollZoomSmoothness();
+      const t = smoothness === 0 ? 1 : Math.pow(1 - smoothness / 100, 2) * 0.96 + 0.04;
+      const done = Math.abs(diff) < 0.0001;
+      const clampedZoom = done ? targetZoom : Math.max(0.25, Math.min(4, currentZoom + diff * t));
 
-      if (Math.abs(diff) < 0.0001) {
-        zoomCurrentRef.current = targetZoom;
-        zoomAnimatingRef.current = false;
-        setZoom(targetZoom);
-        zoomRafRef.current = null;
-        return;
+      zoomCurrentRef.current = clampedZoom;
+      zoomAnimatingRef.current = !done;
+
+      if (zoomScrollElRef.current) {
+        const el = zoomScrollElRef.current;
+        const centerPlayneedle = (() => { try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? false : v === 'true'; } catch { return false; } })();
+
+        let targetScrollLeft: number;
+        if (centerPlayneedle) {
+          // Perfectly centered on playhead — no lerp, no offset, just direct math.
+          // The smooth travel to center is handled by lerping mouseX offset separately.
+          const centeredScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - el.clientWidth / 2;
+          // zoomMouseXRef starts at (playheadViewportX - center) offset and lerps to 0
+          const scrollSmoothness = getScrollSmoothFactor();
+          const st = scrollSmoothness === 0 ? 1 : 0.02 + (1 - scrollSmoothness / 100) * 0.18;
+          zoomMouseXRef.current = zoomMouseXRef.current + (0 - zoomMouseXRef.current) * st;
+          targetScrollLeft = Math.max(0, centeredScrollLeft - zoomMouseXRef.current);
+        } else {
+          targetScrollLeft = Math.max(0, frameToX(zoomBeforeFrameRef.current, clampedZoom) - zoomMouseXRef.current);
+        }
+
+        pendingScrollCorrection.current = { el, scrollLeft: targetScrollLeft };
       }
 
-      const smoothness = getScrollZoomSmoothness();
-      // 0% = instant (t=1), 100% = very smooth (t=0.04)
-      const t = smoothness === 0 ? 1 : Math.pow(1 - smoothness / 100, 2) * 0.96 + 0.04;
-      const newZoom = currentZoom + diff * t;
-      const clampedZoom = Math.max(0.25, Math.min(4, newZoom));
-
-      // Update the ref immediately so the next frame reads the correct value
-      zoomCurrentRef.current = clampedZoom;
-      zoomAnimatingRef.current = true;
       setZoom(clampedZoom);
-      // Scroll is updated in useLayoutEffect after DOM re-render
 
-      zoomRafRef.current = requestAnimationFrame(animateZoom);
+      if (done) {
+        zoomRafRef.current = null;
+      } else {
+        zoomRafRef.current = requestAnimationFrame(animateZoom);
+      }
     };
 
-    // Check if we need to start animating
     if (Math.abs(zoomTargetRef.current - zoomCurrentRef.current) > 0.001) {
       zoomRafRef.current = requestAnimationFrame(animateZoom);
     }
-    // Intentionally no cleanup - the animation manages itself via refs
   }, [zoomAnimTrigger]);
 
   const totalWidth = Math.max(frameToX(totalFrames + 60 * FPS, zoom), 1200);
@@ -340,70 +348,9 @@ export default function Timeline({
     };
   }, []);
 
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLElement>) => {
-    const el = e.currentTarget as HTMLElement;
-    scrollElRef.current = el;
-    // Read settings fresh each time for immediate response to changes
-    const scrollSmoothFactor = getScrollSmoothFactor();
-    const scrollAmount = getScrollAmount();
-    // If Alt is pressed, zoom horizontally centered at playhead
-    if (e.altKey) {
-      e.preventDefault();
-      velocityRef.current = 0; // Cancel momentum on zoom
-
-      const zoomAmountSetting = getScrollZoomAmount();
-      const zoomScale = 1 + zoomAmountSetting / 100;
-      const scale = e.deltaY < 0 ? zoomScale : 1 / zoomScale;
-
-      const viewportCenterX = el.clientWidth / 2;
-      const beforeFrame = playhead;
-
-      // Apply scale to the committed target so each tick adds exactly the right percentage.
-      const targetZoom = Math.max(0.25, Math.min(4, zoomTargetRef.current * scale));
-
-      zoomTargetRef.current = targetZoom;
-      zoomScrollElRef.current = el;
-      zoomMouseXRef.current = viewportCenterX;
-      zoomBeforeFrameRef.current = beforeFrame;
-
-      // Trigger the animation loop by updating state
-      setZoomAnimTrigger(n => n + 1);
-      return;
-    }
-
-    // Normal wheel: pan horizontally with momentum
-    // Prefer deltaX when available (touchpad), otherwise use deltaY
-    const rawDelta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
-    const delta = rawDelta * (scrollAmount / 100);
-    if (delta !== 0) {
-      e.preventDefault();
-      if (scrollSmoothFactor === 0) {
-        // No smoothing: direct scroll
-        el.scrollLeft += delta;
-      } else {
-        // Add velocity for momentum scrolling
-        velocityRef.current += delta * 0.5;
-        // Start animation if not running
-        if (rafRef.current === null) {
-          rafRef.current = requestAnimationFrame(() => {
-            const animate = () => {
-              const vel = velocityRef.current;
-              if (Math.abs(vel) > 0.5 && scrollElRef.current) {
-                scrollElRef.current.scrollLeft += vel;
-                const friction = 0.92 + (getScrollSmoothFactor() / 100) * 0.06;
-                velocityRef.current = vel * friction;
-                rafRef.current = requestAnimationFrame(animate);
-              } else {
-                velocityRef.current = 0;
-                rafRef.current = null;
-              }
-            };
-            animate();
-          });
-        }
-      }
-    }
-  }, [zoom]);
+  const handleWheel = useCallback((_e: React.WheelEvent<HTMLElement>) => {
+    // All wheel handling is done in the native listener below
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -414,15 +361,89 @@ export default function Timeline({
     return () => window.removeEventListener('keydown', handler);
   }, [selectedIds, onNudge]);
 
-  // Native wheel listener to prevent default scroll when alt is held (React onWheel is passive)
+  // Single non-passive native wheel listener handles everything so preventDefault is always honoured
   useEffect(() => {
     const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement | null;
     if (!scrollEl) return;
     const handler = (e: WheelEvent) => {
+      const el = scrollEl;
+      scrollElRef.current = el;
+      const scrollSmoothFactor = getScrollSmoothFactor();
+      const scrollAmount = getScrollAmount();
+
       if (e.altKey) {
         e.preventDefault();
-        // Cancel any momentum scrolling
         velocityRef.current = 0;
+
+        const zoomAmountSetting = getScrollZoomAmount();
+        const zoomScale = 1 + zoomAmountSetting / 100;
+        const scale = e.deltaY < 0 ? zoomScale : 1 / zoomScale;
+        const targetZoom = Math.max(0.25, Math.min(4, zoomTargetRef.current * scale));
+
+        const centerPlayneedle = (() => { try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? false : v === 'true'; } catch { return false; } })();
+
+        if (!zoomAnimatingRef.current) {
+          if (centerPlayneedle) {
+            zoomBeforeFrameRef.current = playheadRef.current;
+            // zoomMouseXRef = initial offset: positive means playhead is left of center (view needs to scroll right)
+            const playheadViewportX = frameToX(playheadRef.current, zoomCurrentRef.current) - el.scrollLeft;
+            zoomMouseXRef.current = el.clientWidth / 2 - playheadViewportX;
+            zoomMouseXTargetRef.current = 0;
+          } else {
+            const rect = el.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            zoomBeforeFrameRef.current = xToFrame(el.scrollLeft + mouseX, zoomCurrentRef.current);
+            zoomMouseXRef.current = mouseX;
+            zoomMouseXTargetRef.current = mouseX;
+          }
+        }
+
+        zoomTargetRef.current = targetZoom;
+        zoomScrollElRef.current = el;
+        setZoomAnimTrigger(n => n + 1);
+        return;
+      }
+
+      // Horizontal pan
+      const rawDelta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
+      const delta = rawDelta * (scrollAmount / 100);
+      if (delta === 0) return;
+      e.preventDefault();
+
+      if (zoomAnimatingRef.current) {
+        if (getCancelZoomOnScroll()) {
+          if (zoomRafRef.current !== null) { cancelAnimationFrame(zoomRafRef.current); zoomRafRef.current = null; }
+          pendingScrollCorrection.current = null;
+          zoomScrollElRef.current = null;
+          scrollTargetRef.current = null;
+          zoomCurrentRef.current = zoomTargetRef.current;
+          zoomAnimatingRef.current = false;
+          setZoom(zoomTargetRef.current);
+        } else {
+          pendingScrollCorrection.current = null;
+          zoomScrollElRef.current = null;
+          scrollTargetRef.current = null;
+        }
+      }
+
+      if (scrollSmoothFactor === 0) {
+        el.scrollLeft += delta;
+      } else {
+        velocityRef.current += delta * 0.5;
+        if (rafRef.current === null) {
+          rafRef.current = requestAnimationFrame(function animate() {
+            const vel = velocityRef.current;
+            if (Math.abs(vel) > 0.5 && scrollElRef.current) {
+              scrollElRef.current.scrollLeft += vel;
+              const friction = 0.92 + (getScrollSmoothFactor() / 100) * 0.06;
+              velocityRef.current = vel * friction;
+              rafRef.current = requestAnimationFrame(animate);
+            } else {
+              velocityRef.current = 0;
+              rafRef.current = null;
+            }
+          });
+        }
       }
     };
     scrollEl.addEventListener('wheel', handler, { passive: false });
