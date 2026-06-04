@@ -136,9 +136,9 @@ export default function Timeline({
         return;
       }
 
-      // Smoothness controls the interpolation factor
       const smoothness = getScrollZoomSmoothness();
-      const t = smoothness === 0 ? 1 : 0.05 + (smoothness / 100) * 0.25;
+      // 0% = instant (t=1), 100% = very smooth (t=0.04)
+      const t = smoothness === 0 ? 1 : Math.pow(1 - smoothness / 100, 2) * 0.96 + 0.04;
       const newZoom = currentZoom + diff * t;
       const clampedZoom = Math.max(0.25, Math.min(4, newZoom));
 
@@ -347,9 +347,9 @@ export default function Timeline({
       e.preventDefault();
       velocityRef.current = 0; // Cancel momentum on zoom
 
-      // Calculate zoom amount based on setting (1-100 maps to 0.01-0.1 scale factor)
       const zoomAmountSetting = getScrollZoomAmount();
-      const zoomScale = 1 + (zoomAmountSetting / 100) * 0.5; // 1.005 to 1.5 per scroll tick
+      // 1 → 1.02 (barely moves), 100 → 2.0 (doubles per tick), power curve for fine control at low end
+      const zoomScale = 1 + 0.02 * Math.pow(zoomAmountSetting / 100, 1.5) * 50;
       const scale = e.deltaY < 0 ? zoomScale : 1 / zoomScale;
 
       // Anchor zoom at playhead position
