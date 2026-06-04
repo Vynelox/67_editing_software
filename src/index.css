@@ -452,6 +452,14 @@ html, body, #root {
   flex-shrink: 0;
 }
 
+.tl-label:first-child {
+  border-top: 1px solid var(--border);
+}
+
+.tl-track:first-child {
+  border-top: 1px solid var(--border);
+}
+
 /* Splitter / Resizer */
 [role="separator"] {
   background: transparent;
