@@ -1,13 +1,55 @@
 import { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Plus } from 'lucide-react';
 
-type SettingsTab = 'sliders' | 'checkboxes';
+type SettingsTab = 'sliders' | 'checkboxes' | 'shortcuts';
 
 interface Props {
   onClose?: () => void;
   initialPageData?: any;
   initialScroll?: number | null;
+}
+
+type ShortcutAction = 'undo' | 'redo' | 'timelineZoomToggle';
+
+const DEFAULT_SHORTCUTS: Record<ShortcutAction, string[][]> = {
+  undo: [['ctrl', 'z']],
+  redo: [['ctrl', 'shift', 'z'], ['ctrl', 'y'], ['ctrl', 'alt', 'z']],
+  timelineZoomToggle: [['alt']],
+};
+
+const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
+  undo: 'Undo',
+  redo: 'Redo',
+  timelineZoomToggle: 'Timeline horizontal zoom toggle',
+};
+
+function loadShortcuts(): Record<ShortcutAction, string[][]> {
+  try {
+    const raw = window.localStorage.getItem('juicecut.settings.keyboardShortcuts');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+}
+
+function saveShortcuts(shortcuts: Record<ShortcutAction, string[][]>) {
+  try {
+    window.localStorage.setItem('juicecut.settings.keyboardShortcuts', JSON.stringify(shortcuts));
+    window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'keyboardShortcuts', value: shortcuts } }));
+  } catch {}
+}
+
+function formatKeys(keys: string[]): string {
+  const sorted = [...keys].sort((a, b) => {
+    const order = ['ctrl', 'shift', 'alt', 'meta'];
+    const ia = order.indexOf(a.toLowerCase());
+    const ib = order.indexOf(b.toLowerCase());
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+    return a.localeCompare(b);
+  });
+  return sorted.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(' + ');
 }
 
 export default function Settings(props: Props) {
@@ -18,6 +60,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
     if (initialPageData?.tab === 'sliders') return 'sliders';
     if (initialPageData?.tab === 'checkboxes') return 'checkboxes';
+    if (initialPageData?.tab === 'shortcuts') return 'shortcuts';
     return 'sliders';
   });
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -46,6 +89,8 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [scrollZoomSmoothness, setScrollZoomSmoothness] = useState<number>(() => {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollZoomSmoothness'); return v ? Number(v) : 70; } catch { return 70; }
   });
+  const [shortcuts, setShortcuts] = useState<Record<ShortcutAction, string[][]>>(loadShortcuts);
+  const [editingChip, setEditingChip] = useState<{ action: ShortcutAction; index: number } | null>(null);
 
   const SCROLL_AMOUNT_POWER = 3.355;
   const scrollAmountToSlider = (value: number) => {
@@ -79,6 +124,58 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     }
   }, []);
 
+  const updateShortcuts = (next: Record<ShortcutAction, string[][]>) => {
+    setShortcuts(next);
+    saveShortcuts(next);
+  };
+
+  const addCombination = (action: ShortcutAction) => {
+    const next = { ...shortcuts, [action]: [...shortcuts[action], []] };
+    updateShortcuts(next);
+    setEditingChip({ action, index: next[action].length - 1 });
+  };
+
+  const removeCombination = (action: ShortcutAction, index: number) => {
+    const arr = shortcuts[action].filter((_, i) => i !== index);
+    const next = { ...shortcuts, [action]: arr.length > 0 ? arr : [[]] };
+    updateShortcuts(next);
+    setEditingChip(null);
+  };
+
+  const updateCombination = (action: ShortcutAction, index: number, keys: string[]) => {
+    const arr = [...shortcuts[action]];
+    arr[index] = keys;
+    const next = { ...shortcuts, [action]: arr };
+    updateShortcuts(next);
+    setEditingChip(null);
+  };
+
+  const resetShortcuts = (action: ShortcutAction) => {
+    const next = { ...shortcuts, [action]: JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS[action])) };
+    updateShortcuts(next);
+    setEditingChip(null);
+  };
+
+  const handleChipKeyDown = (e: React.KeyboardEvent, action: ShortcutAction, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const keys: string[] = [];
+    if (e.ctrlKey || e.metaKey) keys.push('ctrl');
+    if (e.shiftKey) keys.push('shift');
+    if (e.altKey) keys.push('alt');
+
+    const key = e.key.toLowerCase();
+    const isModifier = key === 'control' || key === 'shift' || key === 'alt' || key === 'meta';
+    if (!isModifier) {
+      keys.push(key === ' ' ? 'space' : key);
+    }
+
+    if (keys.length > 0) {
+      updateCombination(action, index, keys);
+    }
+  };
+
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="modal-box settings-modal">
@@ -102,6 +199,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               onClick={() => setActiveTab('checkboxes')}
             >
               Checkboxes
+            </button>
+            <button
+              type="button"
+              className={`settings-tab${activeTab === 'shortcuts' ? ' settings-tab--active' : ''}`}
+              onClick={() => setActiveTab('shortcuts')}
+            >
+              Shortcuts
             </button>
           </nav>
 
@@ -218,6 +322,110 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <button type="button" className="icon-btn" onClick={() => setCenterPlayneedle(false)} title="Reset to default (Unchecked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'shortcuts' && (
+              <div className="settings-panel-content">
+                {(Object.keys(DEFAULT_SHORTCUTS) as ShortcutAction[]).map(action => (
+                  <div
+                    key={action}
+                    className="settings-field"
+                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <span style={{ lineHeight: 1.2 }}>{SHORTCUT_LABELS[action]}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          onClick={() => addCombination(action)}
+                          title="Add shortcut combination"
+                          style={{ padding: 4 }}
+                        >
+                          <Plus size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          onClick={() => resetShortcuts(action)}
+                          title="Reset to default shortcuts"
+                          style={{ padding: 4 }}
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {shortcuts[action].map((keys, idx) => {
+                        const isEditing = editingChip?.action === action && editingChip?.index === idx;
+                        return (
+                          <div
+                            key={idx}
+                            tabIndex={0}
+                            onFocus={() => setEditingChip({ action, index: idx })}
+                            onBlur={() => {
+                              setTimeout(() => setEditingChip(null), 150);
+                            }}
+                            onKeyDown={(e) => handleChipKeyDown(e, action, idx)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              background: isEditing ? 'var(--bg-hover)' : 'var(--bg-elevated)',
+                              border: isEditing ? '1px solid var(--accent-blue)' : '1px solid var(--border-mid)',
+                              borderRadius: 'var(--radius-sm)',
+                              padding: '3px 8px',
+                              cursor: 'pointer',
+                              outline: 'none',
+                              transition: 'border-color 0.12s, background 0.12s',
+                              minHeight: 28,
+                            }}
+                            title={
+                              isEditing
+                                ? 'Press keys to assign...'
+                                : keys.length === 0
+                                  ? 'Click then press keys to assign'
+                                  : 'Click then press new keys to reassign'
+                            }
+                          >
+                            <span style={{
+                              fontSize: 12,
+                              color: keys.length > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
+                              fontFamily: 'monospace',
+                            }}>
+                              {isEditing && keys.length === 0
+                                ? '...'
+                                : keys.length > 0
+                                  ? formatKeys(keys)
+                                  : 'None'}
+                            </span>
+                            {shortcuts[action].length > 1 && (
+                              <button
+                                type="button"
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--text-muted)',
+                                  cursor: 'pointer',
+                                  padding: '0 2px',
+                                  fontSize: 13,
+                                  lineHeight: 1,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                }}
+                                onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }}
+                                title="Remove this combination"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
