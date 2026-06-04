@@ -216,7 +216,7 @@ function getThemeColors(themeName: string): ThemeColors {
 
 // Applies a theme's colors to the document root. Used both when equipping a
 // theme from the folder view and when opening the color editor for it.
-function applyThemeToDocument(themeName: string) {
+export function applyThemeToDocument(themeName: string) {
   const themeColors = getThemeColors(themeName);
   colorFields.forEach(c => {
     document.documentElement.style.setProperty(c.varName, themeColors[c.varName]);

@@ -136,7 +136,7 @@ export default function Timeline({
 
       if (zoomScrollElRef.current) {
         const el = zoomScrollElRef.current;
-        const centerPlayneedle = (() => { try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? false : v === 'true'; } catch { return false; } })();
+        const centerPlayneedle = (() => { try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? true : v === 'true'; } catch { return true; } })();
 
         let targetScrollLeft: number;
         if (centerPlayneedle) {
@@ -374,7 +374,7 @@ export default function Timeline({
         const scale = e.deltaY < 0 ? zoomScale : 1 / zoomScale;
         const targetZoom = Math.max(0.25, Math.min(4, zoomTargetRef.current * scale));
 
-        const centerPlayneedle = (() => { try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? false : v === 'true'; } catch { return false; } })();
+        const centerPlayneedle = (() => { try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? true : v === 'true'; } catch { return true; } })();
 
         if (!zoomAnimatingRef.current) {
           if (centerPlayneedle) {

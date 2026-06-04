@@ -62,7 +62,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     try { const v = window.localStorage.getItem("juicecut.settings.cancelZoomOnScroll"); return v === null ? true : v === "true"; } catch { return true; }
   });
   const [centerPlayneedle, setCenterPlayneedle] = useState<boolean>(() => {
-    try { const v = window.localStorage.getItem("juicecut.settings.centerPlayneedle"); return v === null ? false : v === "true"; } catch { return false; }
+    try { const v = window.localStorage.getItem("juicecut.settings.centerPlayneedle"); return v === null ? true : v === "true"; } catch { return true; }
   });
   const [scrollSmooth, setScrollSmooth] = useState<number>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.scrollSmooth"); return v ? Number(v) : 50; } catch { return 50; }
@@ -78,6 +78,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   });
   const [shortcuts, setShortcuts] = useState<Record<ShortcutAction, string[][]>>(loadAllShortcuts);
   const [editingChip, setEditingChip] = useState<{ action: ShortcutAction; index: number } | null>(null);
+  const chipRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const SCROLL_AMOUNT_POWER = 3.355;
   const scrollAmountToSlider = (value: number) => {
@@ -115,7 +116,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     const next = { ...shortcuts, [action]: [...shortcuts[action], []] };
     setShortcuts(next);
     scUpdate(next);
-    setEditingChip({ action, index: next[action].length - 1 });
+    const newIndex = next[action].length - 1;
+    setEditingChip({ action, index: newIndex });
+    // Focus the new chip after render
+    setTimeout(() => {
+      const key = `${action}-${newIndex}`;
+      chipRefs.current[key]?.focus();
+    }, 0);
   };
 
   const removeCombination = (action: ShortcutAction, index: number) => {
@@ -173,6 +180,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
           <nav className="settings-tabs" aria-label="Settings sections">
             <button
               type="button"
+              className={"settings-tab" + (activeTab === "shortcuts" ? " settings-tab--active" : "")}
+              onClick={() => setActiveTab("shortcuts")}
+            >
+              Keyboard
+            </button>
+            <button
+              type="button"
               className={"settings-tab" + (activeTab === "sliders" ? " settings-tab--active" : "")}
               onClick={() => setActiveTab("sliders")}
             >
@@ -184,13 +198,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               onClick={() => setActiveTab("checkboxes")}
             >
               Checkboxes
-            </button>
-            <button
-              type="button"
-              className={"settings-tab" + (activeTab === "shortcuts" ? " settings-tab--active" : "")}
-              onClick={() => setActiveTab("shortcuts")}
-            >
-              Shortcuts
             </button>
           </nav>
 
@@ -304,7 +311,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <span style={{ flex: 1, lineHeight: 1.2 }}>Center playneedle<br />when zooming</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input type="checkbox" className="settings-checkbox" checked={centerPlayneedle} onChange={e => setCenterPlayneedle(e.target.checked)} />
-                    <button type="button" className="icon-btn" onClick={() => setCenterPlayneedle(false)} title="Reset to default (Unchecked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                    <button type="button" className="icon-btn" onClick={() => setCenterPlayneedle(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                   </div>
                 </div>
               </div>
@@ -347,6 +354,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                         return (
                           <div
                             key={idx}
+                            ref={el => { chipRefs.current[`${action}-${idx}`] = el; }}
                             tabIndex={0}
                             onFocus={() => setEditingChip({ action, index: idx })}
                             onBlur={() => {

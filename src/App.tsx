@@ -4,7 +4,7 @@ import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
 import { OpenSettings } from './components/Settings';
-import { StylesModal } from './components/styles';
+import { StylesModal, applyThemeToDocument } from './components/styles';
 import Splitter from './components/Splitter';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
@@ -104,6 +104,15 @@ function AppContent() {
   });
   const [showStyle, setShowStyle] = useState(false);
   const [stylePage, setStylePage] = useState<string | null>(null);
+
+  // Apply saved theme on mount
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('juicecut.styles.activeTheme');
+      if (!saved) window.localStorage.setItem('juicecut.styles.activeTheme', 'og-dark');
+      applyThemeToDocument(saved || 'og-dark');
+    } catch {}
+  }, []);
   const [showExport, setShowExport] = useState(false);
   const [exportVideo, setExportVideo] = useState(true);
   const [exportAudio, setExportAudio] = useState(true);
