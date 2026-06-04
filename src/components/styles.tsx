@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { OpenColorPicker } from './ColorPicker';
 import { colorFields, type ThemeColors } from './GlobalStyleSettings';
 
@@ -24,6 +24,7 @@ const ogDarkColors: ThemeColors = {
   '--bg-hover': '#21242f',
   '--border': '#262830',
   '--border-mid': '#303340',
+  '--splitter': '#08090d',
   '--text-primary': '#e8eaf0',
   '--text-secondary': '#8b8fa8',
   '--text-muted': '#4a4d5e',
@@ -41,6 +42,7 @@ const ogLightColors: ThemeColors = {
   '--bg-hover': '#e2e4e8',
   '--border': '#c5c7cc',
   '--border-mid': '#d8dade',
+  '--splitter': '#c8c9cd',
   '--text-primary': '#1a1c24',
   '--text-secondary': '#4a4d5e',
   '--text-muted': '#8b8fa8',
@@ -58,6 +60,7 @@ const monokaiColors: ThemeColors = {
   '--bg-hover': '#49483e',
   '--border': '#414339',
   '--border-mid': '#5a5c54',
+  '--splitter': '#161815',
   '--text-primary': '#f8f8f2',
   '--text-secondary': '#a6e22e',
   '--text-muted': '#75715e',
@@ -75,6 +78,7 @@ const lavenderColors: ThemeColors = {
   '--bg-hover': '#432A66',
   '--border': '#684A9C',
   '--border-mid': '#7E5DBA',
+  '--splitter': '#15082f',
   '--text-primary': '#E5DEF1',
   '--text-secondary': '#B1A3D0',
   '--text-muted': '#8A7B9C',
@@ -92,6 +96,7 @@ const cyberpunkColors: ThemeColors = {
   '--bg-hover': '#240650',
   '--border': '#FF00C8',
   '--border-mid': '#00F0FF',
+  '--splitter': '#1a0035',
   '--text-primary': '#F5F5FF',
   '--text-secondary': '#00F0FF',
   '--text-muted': '#8A2BE2',
@@ -109,6 +114,7 @@ const oakColors: ThemeColors = {
   '--bg-hover': '#5D5050',
   '--border': '#706060',
   '--border-mid': '#857373',
+  '--splitter': '#231c1c',
   '--text-primary': '#D4C4C4',
   '--text-secondary': '#A99A9A',
   '--text-muted': '#807070',
@@ -126,6 +132,7 @@ const forestColors: ThemeColors = {
   '--bg-hover': '#3C6656',
   '--border': '#4A7A6C',
   '--border-mid': '#609181',
+  '--splitter': '#0b1f1a',
   '--text-primary': '#D8E8D8',
   '--text-secondary': '#A7C2A7',
   '--text-muted': '#7D9E7D',

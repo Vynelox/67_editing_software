@@ -11,6 +11,7 @@ export type ColorVarName =
   | '--bg-hover'
   | '--border'
   | '--border-mid'
+  | '--splitter'
   | '--text-primary'
   | '--text-secondary'
   | '--text-muted'
@@ -38,6 +39,7 @@ export const colorFields: ColorField[] = [
   { varName: '--bg-hover', label: 'Hover background' },
   { varName: '--border', label: 'Border / Grid line (dark)' },
   { varName: '--border-mid', label: 'Border / Grid line (mid)' },
+  { varName: '--splitter', label: 'Splitters' },
   { varName: '--text-primary', label: 'Primary text' },
   { varName: '--text-secondary', label: 'Secondary text' },
   { varName: '--text-muted', label: 'Muted text' },

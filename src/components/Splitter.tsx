@@ -1,19 +1,17 @@
-import React, { useRef, useEffect } from 'react';
+﻿import React, { useRef, useEffect } from 'react';
 
 interface Props {
   orientation: 'vertical' | 'horizontal';
-  onChange: (delta: number) => void; // delta in px
+  onChange: (delta: number) => void;
   onDragEnd?: () => void;
   thickness?: number;
-  background?: string;
 }
 
-export default function Splitter({ orientation, onChange, onDragEnd, thickness = 8, background = 'transparent' }: Props) {
+export default function Splitter({ orientation, onChange, onDragEnd, thickness = 8 }: Props) {
   const startRef = useRef(0);
   const draggingRef = useRef(false);
 
   useEffect(() => {
-    // cleanup on unmount
     return () => {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
@@ -25,7 +23,6 @@ export default function Splitter({ orientation, onChange, onDragEnd, thickness =
     const pos = orientation === 'vertical' ? e.clientX : e.clientY;
     const delta = pos - startRef.current;
     startRef.current = pos;
-    // For horizontal splitter, delta should move timeline height in the same direction as pointer (down increases height)
     onChange(delta);
   };
 
@@ -46,7 +43,6 @@ export default function Splitter({ orientation, onChange, onDragEnd, thickness =
     startRef.current = orientation === 'vertical' ? e.clientX : e.clientY;
     document.body.style.cursor = orientation === 'vertical' ? 'col-resize' : 'row-resize';
     document.body.style.userSelect = 'none';
-    // attach document-level pointer listeners
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
   };

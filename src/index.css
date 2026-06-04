@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -10,6 +10,7 @@
   --bg-viewer:    #060608;
   --border:       #262830;
   --border-mid:   #303340;
+  --splitter:     #2a2d3a;
   --text-primary:   #e8eaf0;
   --text-secondary: #8b8fa8;
   --text-muted:     #4a4d5e;
@@ -464,7 +465,7 @@ html, body, #root {
 
 /* Splitter / Resizer */
 [role="separator"] {
-  background: transparent;
+  background: var(--splitter, #2a2d3a);
   transition: background 0.15s ease;
 }
 [role="separator"]:hover {
@@ -1202,3 +1203,7 @@ input[type="color"] {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a3d50; }
+
+
+
+
