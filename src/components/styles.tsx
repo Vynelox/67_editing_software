@@ -112,7 +112,7 @@ const oakColors: ThemeColors = {
   '--text-primary': '#D4C4C4',
   '--text-secondary': '#A99A9A',
   '--text-muted': '#807070',
-  '--input-field': '#A0522D',
+  '--input-field': '#b0796d',
   '--input-field-bg': '#3F3737',
   '--playneedle': '#d2899d',
   '--video-bg': '#150e0e',
