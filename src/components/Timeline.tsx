@@ -96,8 +96,12 @@ export default function Timeline({
   const zoomAnimatingRef = useRef(false);
   const [zoomAnimTrigger, setZoomAnimTrigger] = useState(0);
 
-  // Keep zoomCurrentRef in sync with zoom state
-  useEffect(() => { zoomCurrentRef.current = zoom; }, [zoom]);
+  // Keep zoomCurrentRef and zoomTargetRef in sync with zoom state
+  useEffect(() => {
+    zoomCurrentRef.current = zoom;
+    // Only sync target if not currently animating, to avoid clobbering mid-flight targets
+    if (!zoomAnimatingRef.current) zoomTargetRef.current = zoom;
+  }, [zoom]);
 
   // After each zoom re-render, adjust scroll to keep playhead centered
   useLayoutEffect(() => {
@@ -128,7 +132,7 @@ export default function Timeline({
       const targetZoom = zoomTargetRef.current;
       const diff = targetZoom - currentZoom;
 
-      if (Math.abs(diff) < 0.001) {
+      if (Math.abs(diff) < 0.0001) {
         zoomCurrentRef.current = targetZoom;
         zoomAnimatingRef.current = false;
         setZoom(targetZoom);
@@ -348,19 +352,15 @@ export default function Timeline({
       velocityRef.current = 0; // Cancel momentum on zoom
 
       const zoomAmountSetting = getScrollZoomAmount();
-      // 1 → 1.02 (barely moves), 100 → 2.0 (doubles per tick), power curve for fine control at low end
-      const zoomScale = 1 + 0.02 * Math.pow(zoomAmountSetting / 100, 1.5) * 50;
+      const zoomScale = 1 + zoomAmountSetting / 100;
       const scale = e.deltaY < 0 ? zoomScale : 1 / zoomScale;
 
-      // Anchor zoom at playhead position
-      const playheadPixelX = frameToX(playhead, zoom);
-      const rect = el.getBoundingClientRect();
       const viewportCenterX = el.clientWidth / 2;
       const beforeFrame = playhead;
 
-      const targetZoom = Math.max(0.25, Math.min(4, zoom * scale));
+      // Apply scale to the committed target so each tick adds exactly the right percentage.
+      const targetZoom = Math.max(0.25, Math.min(4, zoomTargetRef.current * scale));
 
-      // Store zoom target and anchor info for smooth animation
       zoomTargetRef.current = targetZoom;
       zoomScrollElRef.current = el;
       zoomMouseXRef.current = viewportCenterX;
