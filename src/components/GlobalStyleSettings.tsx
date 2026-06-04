@@ -16,7 +16,8 @@ export type ColorVarName =
   | '--text-muted'
   | '--input-field'
   | '--input-field-bg'
-  | '--playneedle';
+  | '--playneedle'
+  | '--video-bg';
 
 export type ThemeColors = Record<ColorVarName, string>;
 
@@ -32,6 +33,7 @@ export const colorFields: ColorField[] = [
   { varName: '--bg-panel', label: 'Primary background' },
   { varName: '--bg-base', label: 'Secondary background' },
   { varName: '--bg-viewer', label: 'Viewer background' },
+  { varName: '--video-bg', label: 'Video background / transparent pixels' },
   { varName: '--bg-elevated', label: 'Panel elevated background' },
   { varName: '--bg-hover', label: 'Hover background' },
   { varName: '--border', label: 'Border / Grid line (dark)' },

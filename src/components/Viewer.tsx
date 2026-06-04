@@ -27,7 +27,7 @@ export default function Viewer({
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#0a0a0a';
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--video-bg').trim() || '#0a0a0a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const videoClips = clips
@@ -36,12 +36,8 @@ export default function Viewer({
       .sort((a, b) => a.startFrame - b.startFrame);
 
     if (videoClips.length === 0) {
-      ctx.fillStyle = '#1a1a2e';
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--video-bg').trim() || '#0a0a0a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#444';
-      ctx.font = '14px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('No video at playhead', canvas.width / 2, canvas.height / 2);
       return;
     }
 
@@ -95,7 +91,7 @@ export default function Viewer({
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#0a0a0a';
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--video-bg').trim() || '#0a0a0a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.globalAlpha = alpha;
       const ar = videoEl.videoWidth / videoEl.videoHeight || 16 / 9;
@@ -110,6 +106,13 @@ export default function Viewer({
     if (videoEl.readyState >= 2) draw();
     else videoEl.addEventListener('loadeddata', draw, { once: true });
   }, [playhead, clips, mediaItems, drawFrame]);
+
+  // Redraw when --video-bg CSS variable changes (e.g. from color picker)
+  useEffect(() => {
+    const observer = new MutationObserver(() => drawFrame());
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+    return () => observer.disconnect();
+  }, [drawFrame]);
 
   const progress = totalFrames > 0 ? (playhead / totalFrames) * 100 : 0;
 
