@@ -79,6 +79,9 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [viewerControlsType, setViewerControlsType] = useState<string>(() => {
     try { return window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'; } catch { return 'compact'; }
   });
+  const [elevatedPanelDarken, setElevatedPanelDarken] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.elevatedPanelDarkenAmount"); return v ? Number(v) : 50; } catch { return 50; }
+  });
   const [shortcuts, setShortcuts] = useState<Record<ShortcutAction, string[][]>>(loadAllShortcuts);
   const [editingChip, setEditingChip] = useState<{ action: ShortcutAction; index: number } | null>(null);
   const chipRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -108,6 +111,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomAmount", String(scrollZoomAmount)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomAmount", value: scrollZoomAmount } })); } catch {} }, [scrollZoomAmount]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomSmoothness", String(scrollZoomSmoothness)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomSmoothness", value: scrollZoomSmoothness } })); } catch {} }, [scrollZoomSmoothness]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.viewerControlsType', viewerControlsType); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'viewerControlsType', value: viewerControlsType } })); } catch {} }, [viewerControlsType]);
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelDarkenAmount", String(elevatedPanelDarken)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelDarkenAmount", value: elevatedPanelDarken } })); } catch {} }, [elevatedPanelDarken]);
 
   useEffect(() => {
     if (initialScroll != null && panelRef.current) {
@@ -283,6 +287,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   </div>
                   <input type="range" className="settings-range-input" min={0} max={100} step={1} value={scrollZoomSmoothness} onChange={e => setScrollZoomSmoothness(Number(e.target.value))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Snappy</span><span>Smooth</span></div>
+                </div>
+
+                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>Elevated panel background<br />darken amount</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{elevatedPanelDarken}%</span>
+                      <button type="button" className="icon-btn" onClick={() => setElevatedPanelDarken(50)} title="Reset to default (50%)" style={{ padding: 4 }}>
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={elevatedPanelDarken} onChange={e => { setElevatedPanelDarken(Number(e.target.value)); }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>White</span><span>Black</span></div>
                 </div>
               </div>
             )}
@@ -492,3 +510,5 @@ export function closeSettings() {
 (window as any).__onColorPickerClose = null;
 try { (window as any).OpenSettings = OpenSettings; } catch (e) {}
 try { (window as any).closeSettings = closeSettings; } catch (e) {}
+
+

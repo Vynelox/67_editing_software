@@ -113,6 +113,30 @@ function AppContent() {
       applyThemeToDocument(saved || 'og-dark');
     } catch {}
   }, []);
+
+  // Apply saved elevatedPanelDarkenAmount on mount
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem('juicecut.settings.elevatedPanelDarkenAmount');
+      if (v) {
+        const pct = Number(v);
+        if (!Number.isNaN(pct) && pct >= 0 && pct <= 100) {
+          let overlayColor: string;
+          if (pct <= 50) {
+            const factor = pct / 50; // 0..1
+            // 0% -> white (rgba(255,255,255,1)), 50% -> transparent (rgba(255,255,255,0))
+            const a = 1 - factor;
+            overlayColor = `rgba(255,255,255,${a.toFixed(3)})`;
+          } else {
+            const factor = (pct - 50) / 50; // 0..1
+            // 50% -> transparent (rgba(0,0,0,0)), 100% -> black (rgba(0,0,0,1))
+            overlayColor = `rgba(0,0,0,${factor.toFixed(3)})`;
+          }
+          document.documentElement.style.setProperty('--modal-overlay-bg', overlayColor);
+        }
+      }
+    } catch {}
+  }, []);
   const [showExport, setShowExport] = useState(false);
   const [exportVideo, setExportVideo] = useState(true);
   const [exportAudio, setExportAudio] = useState(true);
@@ -166,6 +190,21 @@ function AppContent() {
       const detail = (e as CustomEvent).detail;
       if (detail?.key === 'playheadTopPercent' && typeof detail.value === 'number') {
         setPlayheadTop(detail.value);
+      }
+      if (detail?.key === 'elevatedPanelDarkenAmount' && typeof detail.value === 'number') {
+        const pct = detail.value;
+        let overlayColor: string;
+        if (pct <= 50) {
+          const factor = pct / 50; // 0..1
+          // 0% -> white (rgba(255,255,255,1)), 50% -> transparent (rgba(255,255,255,0))
+          const a = 1 - factor;
+          overlayColor = `rgba(255,255,255,${a.toFixed(3)})`;
+        } else {
+          const factor = (pct - 50) / 50; // 0..1
+          // 50% -> transparent (rgba(0,0,0,0)), 100% -> black (rgba(0,0,0,1))
+          overlayColor = `rgba(0,0,0,${factor.toFixed(3)})`;
+        }
+        document.documentElement.style.setProperty('--modal-overlay-bg', overlayColor);
       }
     };
     window.addEventListener('juicecut-settings-changed', handler);

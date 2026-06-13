@@ -53,3 +53,4 @@ export default function Splitter({ orientation, onChange, onDragEnd, thickness =
 
   return <div role="separator" aria-orientation={orientation} onPointerDown={handleDown} style={style} />;
 }
+
