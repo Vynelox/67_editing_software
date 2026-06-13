@@ -189,7 +189,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
       <div className="modal-box settings-modal">
         <div className="modal-header modal-header--centered">
           <span className="panel-title settings-title">Settings</span>
-          <button className="icon-btn modal-close-btn" onClick={() => { onClose?.(); }} aria-label="Close settings">X</button>
+          <button className="icon-btn modal-close-btn" onClick={() => { onClose?.(); }} aria-label="Close settings">✕</button>
         </div>
 
         <div className="settings-body" ref={panelRef}>

@@ -1058,7 +1058,7 @@ input[type="color"] {
   height: 16px;
   flex-shrink: 0;
   margin: 0;
-  background: var(--input-field);
+  background: var(--input-field-bg);
   border: 1px solid var(--border-mid);
   border-radius: var(--radius-sm);
   cursor: pointer;
