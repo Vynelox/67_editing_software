@@ -125,10 +125,21 @@ export default function Viewer({
   const [controlsType, setControlsType] = useState<string>(() => {
     try { return window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'; } catch { return 'compact'; }
   });
+  const [timecodePanel, setTimecodePanel] = useState<string>(() => {
+    try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; }
+  });
 
   useEffect(() => {
     const handler = () => {
       try { setControlsType(window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'); } catch {}
+    };
+    window.addEventListener('juicecut-settings-changed', handler);
+    return () => window.removeEventListener('juicecut-settings-changed', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      try { setTimecodePanel(window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'); } catch {}
     };
     window.addEventListener('juicecut-settings-changed', handler);
     return () => window.removeEventListener('juicecut-settings-changed', handler);
@@ -176,14 +187,20 @@ export default function Viewer({
           >{playing ? <Pause size={13} /> : <Play size={13} />}</button>
           {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={12} />, 22)}
           {scrubBar(3)}
-          <span style={{ fontFamily:'monospace', fontSize:10, color:'var(--text-muted)', letterSpacing:1, flexShrink:0 }}>{formatTimecode(playhead)}</span>
+          {timecodePanel === 'viewer' || timecodePanel === 'both' ? (
+            <span style={{ fontFamily:'monospace', fontSize:10, color:'var(--text-muted)', letterSpacing:1, flexShrink:0 }}>{formatTimecode(playhead)}</span>
+          ) : null}
           <Volume2 size={12} style={{ color:'var(--text-muted)', flexShrink:0 }} />
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:8, padding:'8px 14px 10px', background:'var(--bg-panel)', borderTop:'1px solid var(--border)', flexShrink:0 }}>
           {scrubBar(4)}
           <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <span style={{ fontFamily:'monospace', fontSize:11, color:'var(--text-muted)', letterSpacing:1, minWidth:64 }}>{formatTimecode(playhead)}</span>
+            {timecodePanel === 'viewer' || timecodePanel === 'both' ? (
+              <span style={{ fontFamily:'monospace', fontSize:11, color:'var(--text-muted)', letterSpacing:1, minWidth:64 }}>{formatTimecode(playhead)}</span>
+            ) : (
+              <span style={{ minWidth:64 }} />
+            )}
             <div style={{ flex:1, display:'flex', justifyContent:'center', alignItems:'center', gap:2 }}>
               {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={14} />, 28)}
               <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'}

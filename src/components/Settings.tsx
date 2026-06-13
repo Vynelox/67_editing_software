@@ -79,6 +79,9 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [viewerControlsType, setViewerControlsType] = useState<string>(() => {
     try { return window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'; } catch { return 'compact'; }
   });
+  const [timecodePanel, setTimecodePanel] = useState<string>(() => {
+    try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; }
+  });
   const [elevatedPanelDarken, setElevatedPanelDarken] = useState<number>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.elevatedPanelDarkenAmount"); return v ? Number(v) : 50; } catch { return 50; }
   });
@@ -114,6 +117,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomAmount", String(scrollZoomAmount)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomAmount", value: scrollZoomAmount } })); } catch {} }, [scrollZoomAmount]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomSmoothness", String(scrollZoomSmoothness)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomSmoothness", value: scrollZoomSmoothness } })); } catch {} }, [scrollZoomSmoothness]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.viewerControlsType', viewerControlsType); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'viewerControlsType', value: viewerControlsType } })); } catch {} }, [viewerControlsType]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.timecodePanel', timecodePanel); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'timecodePanel', value: timecodePanel } })); } catch {} }, [timecodePanel]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelDarkenAmount", String(elevatedPanelDarken)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelDarkenAmount", value: elevatedPanelDarken } })); } catch {} }, [elevatedPanelDarken]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelBlurAmount", String(elevatedPanelBlur)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelBlurAmount", value: elevatedPanelBlur } })); } catch {} }, [elevatedPanelBlur]);
 
@@ -376,6 +380,35 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                           key={opt}
                           type="button"
                           onClick={() => setViewerControlsType(opt)}
+                          style={{
+                            padding: "5px 14px",
+                            borderRadius: "var(--radius-sm)",
+                            border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)",
+                            background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)",
+                            color: active ? "var(--accent-blue)" : "var(--text-secondary)",
+                            fontSize: 12,
+                            fontWeight: active ? 600 : 400,
+                            cursor: "pointer",
+                            transition: "all 0.12s",
+                          }}
+                        >
+                          {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+                  <span style={{ lineHeight: 1.2 }}>Timecode display</span>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {(['timeline', 'viewer', 'both', 'none'] as const).map(opt => {
+                      const active = timecodePanel === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setTimecodePanel(opt)}
                           style={{
                             padding: "5px 14px",
                             borderRadius: "var(--radius-sm)",

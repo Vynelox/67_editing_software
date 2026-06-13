@@ -89,6 +89,9 @@ export default function Timeline({
   const getCancelZoomOnScroll = () => {
     try { const v = window.localStorage.getItem('juicecut.settings.cancelZoomOnScroll'); return v === null ? true : v === 'true'; } catch { return true; }
   };
+  const getTimecodePanel = () => {
+    try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; }
+  };
   const velocityRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const scrollElRef = useRef<HTMLElement | null>(null);
@@ -480,7 +483,9 @@ export default function Timeline({
           <span className="zoom-label">{Math.round(zoom * 100)}%</span>
           <button className="icon-btn" onClick={() => setZoom(z => Math.min(4, z + 0.25))}>+</button>
         </div>
-        <span className="timecode">{formatTimecode(playhead)}</span>
+        {getTimecodePanel() === 'timeline' || getTimecodePanel() === 'both' ? (
+          <span className="timecode">{formatTimecode(playhead)}</span>
+        ) : null}
       </div>
 
       <div className="tl-main">
