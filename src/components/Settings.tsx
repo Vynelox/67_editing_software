@@ -82,6 +82,9 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [elevatedPanelDarken, setElevatedPanelDarken] = useState<number>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.elevatedPanelDarkenAmount"); return v ? Number(v) : 50; } catch { return 50; }
   });
+  const [elevatedPanelBlur, setElevatedPanelBlur] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.elevatedPanelBlurAmount"); return v ? Number(v) : 0; } catch { return 0; }
+  });
   const [shortcuts, setShortcuts] = useState<Record<ShortcutAction, string[][]>>(loadAllShortcuts);
   const [editingChip, setEditingChip] = useState<{ action: ShortcutAction; index: number } | null>(null);
   const chipRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -112,6 +115,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomSmoothness", String(scrollZoomSmoothness)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomSmoothness", value: scrollZoomSmoothness } })); } catch {} }, [scrollZoomSmoothness]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.viewerControlsType', viewerControlsType); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'viewerControlsType', value: viewerControlsType } })); } catch {} }, [viewerControlsType]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelDarkenAmount", String(elevatedPanelDarken)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelDarkenAmount", value: elevatedPanelDarken } })); } catch {} }, [elevatedPanelDarken]);
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelBlurAmount", String(elevatedPanelBlur)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelBlurAmount", value: elevatedPanelBlur } })); } catch {} }, [elevatedPanelBlur]);
 
   useEffect(() => {
     if (initialScroll != null && panelRef.current) {
@@ -301,6 +305,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   </div>
                   <input type="range" className="settings-range-input" min={0} max={100} step={1} value={elevatedPanelDarken} onChange={e => { setElevatedPanelDarken(Number(e.target.value)); }} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>White</span><span>Black</span></div>
+                </div>
+
+                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>Elevated panel background<br />blur amount</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{elevatedPanelBlur}%</span>
+                      <button type="button" className="icon-btn" onClick={() => setElevatedPanelBlur(0)} title="Reset to default (0%)" style={{ padding: 4 }}>
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={elevatedPanelBlur} onChange={e => { setElevatedPanelBlur(Number(e.target.value)); }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>No blur</span><span>Max blur</span></div>
                 </div>
               </div>
             )}

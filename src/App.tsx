@@ -137,6 +137,21 @@ function AppContent() {
       }
     } catch {}
   }, []);
+
+  // Apply saved elevatedPanelBlurAmount on mount
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem('juicecut.settings.elevatedPanelBlurAmount');
+      if (v) {
+        const pct = Number(v);
+        if (!Number.isNaN(pct) && pct >= 0 && pct <= 100) {
+          // 0% → 0px blur, 100% → 50px blur (enough to average the entire background)
+          const blurPx = (pct / 100) * 50;
+          document.documentElement.style.setProperty('--modal-overlay-blur', `${blurPx}px`);
+        }
+      }
+    } catch {}
+  }, []);
   const [showExport, setShowExport] = useState(false);
   const [exportVideo, setExportVideo] = useState(true);
   const [exportAudio, setExportAudio] = useState(true);
@@ -205,6 +220,11 @@ function AppContent() {
           overlayColor = `rgba(0,0,0,${factor.toFixed(3)})`;
         }
         document.documentElement.style.setProperty('--modal-overlay-bg', overlayColor);
+      }
+      if (detail?.key === 'elevatedPanelBlurAmount' && typeof detail.value === 'number') {
+        const pct = detail.value;
+        const blurPx = (pct / 100) * 50;
+        document.documentElement.style.setProperty('--modal-overlay-blur', `${blurPx}px`);
       }
     };
     window.addEventListener('juicecut-settings-changed', handler);
