@@ -6,6 +6,7 @@ import RollDialog from './components/RollDialog';
 import { OpenSettings } from './components/Settings';
 import { StylesModal, applyThemeToDocument } from './components/styles';
 import Splitter from './components/Splitter';
+import DraggableModal from './components/DraggableModal';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   type MediaItem, type TimelineClip, type Track,
@@ -135,13 +136,11 @@ function AppContent() {
         if (!Number.isNaN(pct) && pct >= 0 && pct <= 100) {
           let overlayColor: string;
           if (pct <= 50) {
-            const factor = pct / 50; // 0..1
-            // 0% -> white (rgba(255,255,255,1)), 50% -> transparent (rgba(255,255,255,0))
+            const factor = pct / 50;
             const a = 1 - factor;
             overlayColor = `rgba(255,255,255,${a.toFixed(3)})`;
           } else {
-            const factor = (pct - 50) / 50; // 0..1
-            // 50% -> transparent (rgba(0,0,0,0)), 100% -> black (rgba(0,0,0,1))
+            const factor = (pct - 50) / 50;
             overlayColor = `rgba(0,0,0,${factor.toFixed(3)})`;
           }
           document.documentElement.style.setProperty('--modal-overlay-bg', overlayColor);
@@ -157,7 +156,6 @@ function AppContent() {
       if (v) {
         const pct = Number(v);
         if (!Number.isNaN(pct) && pct >= 0 && pct <= 100) {
-          // 0% → 0px blur, 100% → 50px blur (enough to average the entire background)
           const blurPx = (pct / 100) * 50;
           document.documentElement.style.setProperty('--modal-overlay-blur', `${blurPx}px`);
         }
@@ -204,8 +202,6 @@ function AppContent() {
     }
   }, [setClips, setMediaItems, setSelectedIds, setPlayhead, playheadTop, includeResizeInUndo, leftWidthPct, timelineHeightPct]);
 
-  // settings are opened via OpenSettings()
-
   // layout (persisted)
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop)); } catch {}
@@ -222,13 +218,11 @@ function AppContent() {
         const pct = detail.value;
         let overlayColor: string;
         if (pct <= 50) {
-          const factor = pct / 50; // 0..1
-          // 0% -> white (rgba(255,255,255,1)), 50% -> transparent (rgba(255,255,255,0))
+          const factor = pct / 50;
           const a = 1 - factor;
           overlayColor = `rgba(255,255,255,${a.toFixed(3)})`;
         } else {
-          const factor = (pct - 50) / 50; // 0..1
-          // 50% -> transparent (rgba(0,0,0,0)), 100% -> black (rgba(0,0,0,1))
+          const factor = (pct - 50) / 50;
           overlayColor = `rgba(0,0,0,${factor.toFixed(3)})`;
         }
         document.documentElement.style.setProperty('--modal-overlay-bg', overlayColor);
@@ -250,21 +244,9 @@ function AppContent() {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      // Prevent Ctrl+A from selecting text (except in input fields, handled above)
-      if (e.ctrlKey && e.key.toLowerCase() === 'a') {
-        e.preventDefault();
-        return;
-      }
-      // Undo: Ctrl+Z (no modifiers)
-      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        history.undo(snapshot(), restore);
-      }
-      // Redo: Ctrl+Shift+Z, Ctrl+Alt+Z, Ctrl+Y
-      if (e.ctrlKey && ((e.shiftKey && e.key.toLowerCase() === 'z') || (e.altKey && e.key.toLowerCase() === 'z') || (e.key.toLowerCase() === 'y' && !e.altKey && !e.shiftKey))) {
-        e.preventDefault();
-        history.redo(snapshot(), restore);
-      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'a') { e.preventDefault(); return; }
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') { e.preventDefault(); history.undo(snapshot(), restore); }
+      if (e.ctrlKey && ((e.shiftKey && e.key.toLowerCase() === 'z') || (e.altKey && e.key.toLowerCase() === 'z') || (e.key.toLowerCase() === 'y' && !e.altKey && !e.shiftKey))) { e.preventDefault(); history.redo(snapshot(), restore); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -273,10 +255,7 @@ function AppContent() {
   useEffect(() => {
     if (playing) {
       playIntervalRef.current = setInterval(() => {
-        setPlayhead(p => {
-          if (p >= totalFrames) { setPlaying(false); return p; }
-          return p + 1;
-        });
+        setPlayhead(p => { if (p >= totalFrames) { setPlaying(false); return p; } return p + 1; });
       }, 1000 / FPS);
     } else {
       if (playIntervalRef.current) clearInterval(playIntervalRef.current);
@@ -312,15 +291,8 @@ function AppContent() {
     setMediaItems(newItems);
   }, [mediaItems]);
 
-  const handleDropMediaPool = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files.length) handleAddMedia(e.dataTransfer.files);
-  }, [handleAddMedia]);
-
-  const handleDragOverMediaPool = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  }, []);
+  const handleDropMediaPool = useCallback((e: React.DragEvent) => { e.preventDefault(); if (e.dataTransfer.files.length) handleAddMedia(e.dataTransfer.files); }, [handleAddMedia]);
+  const handleDragOverMediaPool = useCallback((e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }, []);
 
   const handleRemoveMedia = useCallback((id: string) => {
     history.push(snapshot());
@@ -341,20 +313,12 @@ function AppContent() {
     if (trackObj.type === 'video' && media.type === 'audio') return;
     if (trackObj.type === 'audio' && (media.type === 'video' || media.type === 'image')) return;
     const endFrame = startFrame + media.duration;
-    const newClip: TimelineClip = {
-      id: generateId(), mediaId, track, startFrame, endFrame,
-      srcIn: 0, srcOut: media.duration,
-      fades: { in: 0, out: 0 },
-      name: media.name, type: media.type,
-    };
+    const newClip: TimelineClip = { id: generateId(), mediaId, track, startFrame, endFrame, srcIn: 0, srcOut: media.duration, fades: { in: 0, out: 0 }, name: media.name, type: media.type };
     setClips(prev => [...prev, newClip]);
   }, [mediaItems]);
 
   const handleSelectClip = useCallback((id: string, multi: boolean) => {
-    setSelectedIds(prev => {
-      if (multi) return prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      return prev.includes(id) && prev.length === 1 ? prev : [id];
-    });
+    setSelectedIds(prev => { if (multi) return prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]; return prev.includes(id) && prev.length === 1 ? prev : [id]; });
   }, []);
 
   const handleNudge = useCallback((ids: string[], delta: number) => {
@@ -365,12 +329,7 @@ function AppContent() {
         if (!movers.has(clip.id)) return clip;
         const newStart = Math.max(0, clip.startFrame + delta);
         const len = clip.endFrame - clip.startFrame;
-        const wouldOverlap = prev.some(other =>
-          !movers.has(other.id) &&
-          other.track === clip.track &&
-          newStart < other.endFrame &&
-          newStart + len > other.startFrame
-        );
+        const wouldOverlap = prev.some(other => !movers.has(other.id) && other.track === clip.track && newStart < other.endFrame && newStart + len > other.startFrame);
         if (wouldOverlap) return clip;
         return { ...clip, startFrame: newStart, endFrame: newStart + len };
       });
@@ -383,14 +342,8 @@ function AppContent() {
       const clip = prev.find(c => c.id === clipId);
       if (!clip || frame <= clip.startFrame || frame >= clip.endFrame) return prev;
       const relFrame = frame - clip.startFrame;
-      const part1: TimelineClip = {
-        ...clip, endFrame: frame, srcOut: clip.srcIn + relFrame,
-        fades: { ...clip.fades, out: 0 },
-      };
-      const part2: TimelineClip = {
-        ...clip, id: generateId(), startFrame: frame,
-        srcIn: clip.srcIn + relFrame, fades: { ...clip.fades, in: 0 },
-      };
+      const part1: TimelineClip = { ...clip, endFrame: frame, srcOut: clip.srcIn + relFrame, fades: { ...clip.fades, out: 0 } };
+      const part2: TimelineClip = { ...clip, id: generateId(), startFrame: frame, srcIn: clip.srcIn + relFrame, fades: { ...clip.fades, in: 0 } };
       return prev.map(c => c.id === clipId ? part1 : c).concat(part2);
     });
   }, [history, snapshot]);
@@ -404,9 +357,7 @@ function AppContent() {
       const gap = clip.endFrame - newEnd;
       return prev.map(c => {
         if (c.id === clipId) return { ...c, endFrame: newEnd, srcOut: c.srcIn + (newEnd - c.startFrame) };
-        if (ripple && c.track === clip.track && c.startFrame >= clip.endFrame) {
-          return { ...c, startFrame: c.startFrame - gap, endFrame: c.endFrame - gap };
-        }
+        if (ripple && c.track === clip.track && c.startFrame >= clip.endFrame) return { ...c, startFrame: c.startFrame - gap, endFrame: c.endFrame - gap };
         return c;
       });
     });
@@ -420,9 +371,7 @@ function AppContent() {
       const gap = frame - clip.startFrame;
       return prev.map(c => {
         if (c.id === clipId) return { ...c, startFrame: frame, srcIn: c.srcIn + gap };
-        if (ripple && c.track === clip.track && c.startFrame < clip.startFrame) {
-          return { ...c, startFrame: Math.max(0, c.startFrame - gap), endFrame: Math.max(0, c.endFrame - gap) };
-        }
+        if (ripple && c.track === clip.track && c.startFrame < clip.startFrame) return { ...c, startFrame: Math.max(0, c.startFrame - gap), endFrame: Math.max(0, c.endFrame - gap) };
         return c;
       });
     });
@@ -434,28 +383,17 @@ function AppContent() {
       const a = prev.find(c => c.id === clipAId);
       const b = prev.find(c => c.id === clipBId);
       if (!a || !b || a.mediaId !== b.mediaId) return prev;
-      const merged: TimelineClip = {
-        ...a, endFrame: b.endFrame, srcOut: b.srcOut,
-        fades: { in: a.fades.in, out: b.fades.out },
-      };
+      const merged: TimelineClip = { ...a, endFrame: b.endFrame, srcOut: b.srcOut, fades: { in: a.fades.in, out: b.fades.out } };
       return prev.filter(c => c.id !== clipAId && c.id !== clipBId).concat(merged);
     });
   }, [history, snapshot]);
 
   const handleFadeChange = useCallback((clipId: string, side: 'in' | 'out', frames: number) => {
     history.push(snapshot());
-    setClips(prev => prev.map(c => {
-      if (c.id !== clipId) return c;
-      const maxFade = Math.floor((c.endFrame - c.startFrame) / 2);
-      const clamped = Math.min(Math.max(0, frames), maxFade);
-      return { ...c, fades: { ...c.fades, [side]: clamped } };
-    }));
+    setClips(prev => prev.map(c => { if (c.id !== clipId) return c; const maxFade = Math.floor((c.endFrame - c.startFrame) / 2); return { ...c, fades: { ...c.fades, [side]: Math.min(Math.max(0, frames), maxFade) } }; }));
   }, [history, snapshot]);
 
-  const handleStepEdge = useCallback((
-    clipId: string | null, cutBetween: [string, string] | null,
-    direction: number, ripple: boolean
-  ) => {
+  const handleStepEdge = useCallback((clipId: string | null, cutBetween: [string, string] | null, direction: number, ripple: boolean) => {
     history.push(snapshot());
     setClips(prev => {
       if (cutBetween) {
@@ -463,21 +401,11 @@ function AppContent() {
         return prev.map(c => {
           if (c.id === aId) return { ...c, endFrame: c.endFrame + direction, srcOut: c.srcOut + direction };
           if (!ripple && c.id === bId) return { ...c, startFrame: c.startFrame + direction, srcIn: c.srcIn + direction };
-          if (ripple && c.id !== aId) {
-            const bClip = prev.find(x => x.id === bId);
-            if (bClip && c.track === bClip.track && c.startFrame >= bClip.startFrame) {
-              return { ...c, startFrame: c.startFrame + direction, endFrame: c.endFrame + direction };
-            }
-          }
+          if (ripple && c.id !== aId) { const bClip = prev.find(x => x.id === bId); if (bClip && c.track === bClip.track && c.startFrame >= bClip.startFrame) return { ...c, startFrame: c.startFrame + direction, endFrame: c.endFrame + direction }; }
           return c;
         });
       }
-      if (clipId) {
-        return prev.map(c => {
-          if (c.id !== clipId) return c;
-          return { ...c, endFrame: c.endFrame + direction, srcOut: c.srcOut + direction };
-        });
-      }
+      if (clipId) return prev.map(c => { if (c.id !== clipId) return c; return { ...c, endFrame: c.endFrame + direction, srcOut: c.srcOut + direction }; });
       return prev;
     });
   }, [history, snapshot]);
@@ -488,24 +416,17 @@ function AppContent() {
   }, [history, snapshot]);
 
   const handleExport = useCallback(async () => {
-    const videoClips = clips.filter(c => c.type === 'video' && c.track === 0)
-      .sort((a, b) => a.startFrame - b.startFrame);
+    const videoClips = clips.filter(c => c.type === 'video' && c.track === 0).sort((a, b) => a.startFrame - b.startFrame);
     if (videoClips.length === 0) { alert('No video clips on track V1 to export.'); return; }
     const canvas = document.createElement('canvas');
     canvas.width = 854; canvas.height = 480;
     const ctx = canvas.getContext('2d')!;
     const stream = canvas.captureStream(FPS);
     let recorder: MediaRecorder;
-    try { recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' }); }
-    catch { recorder = new MediaRecorder(stream); }
+    try { recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' }); } catch { recorder = new MediaRecorder(stream); }
     const chunks: BlobPart[] = [];
     recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'export.webm'; a.click();
-      URL.revokeObjectURL(url);
-    };
+    recorder.onstop = () => { const blob = new Blob(chunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'export.webm'; a.click(); URL.revokeObjectURL(url); };
     recorder.start();
     let frame = 0;
     const renderFrame = () => {
@@ -527,8 +448,7 @@ function AppContent() {
             const ar = videoEl.videoWidth / videoEl.videoHeight || 16 / 9;
             const cAr = 854 / 480;
             let w = 854, h = 480, x = 0, y = 0;
-            if (ar > cAr) { h = 854 / ar; y = (480 - h) / 2; }
-            else { w = 480 * ar; x = (854 - w) / 2; }
+            if (ar > cAr) { h = 854 / ar; y = (480 - h) / 2; } else { w = 480 * ar; x = (854 - w) / 2; }
             ctx.drawImage(videoEl, x, y, w, h); ctx.globalAlpha = 1;
           }
         }
@@ -582,22 +502,12 @@ function AppContent() {
           '--vsplit-width': leftCollapsed ? '0px' : '8px',
         } as React.CSSProperties}
       >
-        <div 
-          className="workspace-panel-mediapool"
-          onDrop={handleDropMediaPool}
-          onDragOver={handleDragOverMediaPool}
-        >
+        <div className="workspace-panel-mediapool" onDrop={handleDropMediaPool} onDragOver={handleDragOverMediaPool}>
           <div className="viewer-header">
             <span className="panel-title">Media Pool</span>
           </div>
           {!leftCollapsed && (
-            <MediaPool
-              items={Array.from(mediaItems.values())}
-              selectedMediaId={selectedMediaId}
-              onSelect={setSelectedMediaId}
-              onAdd={handleAddMedia}
-              onRemove={handleRemoveMedia}
-            />
+            <MediaPool items={Array.from(mediaItems.values())} selectedMediaId={selectedMediaId} onSelect={setSelectedMediaId} onAdd={handleAddMedia} onRemove={handleRemoveMedia} />
           )}
         </div>
 
@@ -613,16 +523,7 @@ function AppContent() {
         )}
 
         <div className="workspace-panel-viewer">
-          <Viewer
-            clips={clips}
-            mediaItems={mediaItems}
-            playhead={playhead}
-            playing={playing}
-            totalFrames={totalFrames}
-            onPlayPause={() => setPlaying(p => !p)}
-            onSeek={setPlayhead}
-            onExport={() => setShowExport(true)}
-          />
+          <Viewer clips={clips} mediaItems={mediaItems} playhead={playhead} playing={playing} totalFrames={totalFrames} onPlayPause={() => setPlaying(p => !p)} onSeek={setPlayhead} onExport={() => setShowExport(true)} />
         </div>
 
         <div className="workspace-hsplit">
@@ -634,71 +535,33 @@ function AppContent() {
           }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
         </div>
 
-        <Timeline
-          clips={clips}
-          tracks={TRACKS}
-          mediaItems={mediaItems}
-          playhead={playhead}
-          playheadTop={playheadTop}
-          selectedIds={selectedIds}
-          onSeek={setPlayhead}
-          onDropMedia={handleDropMedia}
-          onSelectClip={handleSelectClip}
-          onSplitClip={handleSplitClip}
-          onTrimLatter={handleTrimLatter}
-          onTrimFormer={handleTrimFormer}
-          onNudge={handleNudge}
-          onJoin={handleJoin}
-          onFadeChange={handleFadeChange}
-          onRoll={setRollClipId}
-          onStepEdge={handleStepEdge}
-          totalFrames={totalFrames}
-        />
+        <Timeline clips={clips} tracks={TRACKS} mediaItems={mediaItems} playhead={playhead} playheadTop={playheadTop} selectedIds={selectedIds} onSeek={setPlayhead} onDropMedia={handleDropMedia} onSelectClip={handleSelectClip} onSplitClip={handleSplitClip} onTrimLatter={handleTrimLatter} onTrimFormer={handleTrimFormer} onNudge={handleNudge} onJoin={handleJoin} onFadeChange={handleFadeChange} onRoll={setRollClipId} onStepEdge={handleStepEdge} totalFrames={totalFrames} />
       </div>
       {showExport && (
-        <div className="modal-overlay" role="dialog" aria-modal="true">
-          <div className="modal-box" style={{ width: 400 }}>
-            <div className="modal-header modal-header--centered">
-              <span className="panel-title" style={{ fontSize: 12 }}>Export</span>
-              <button className="icon-btn modal-close-btn" onClick={() => setShowExport(false)} aria-label="Close export">✕</button>
-            </div>
+        <DraggableModal
+          title="Export"
+          onClose={() => setShowExport(false)}
+          style={{ width: 400 }}
+          body={
             <div className="settings-panel-content">
               <label className="settings-checkbox-field" style={{ cursor: 'pointer' }}>
                 <span>Export video</span>
-                <input
-                  type="checkbox"
-                  className="settings-checkbox"
-                  checked={exportVideo}
-                  onChange={e => setExportVideo(e.target.checked)}
-                />
+                <input type="checkbox" className="settings-checkbox" checked={exportVideo} onChange={e => setExportVideo(e.target.checked)} />
               </label>
               <label className="settings-checkbox-field" style={{ cursor: 'pointer' }}>
                 <span>Export audio</span>
-                <input
-                  type="checkbox"
-                  className="settings-checkbox"
-                  checked={exportAudio}
-                  onChange={e => setExportAudio(e.target.checked)}
-                />
+                <input type="checkbox" className="settings-checkbox" checked={exportAudio} onChange={e => setExportAudio(e.target.checked)} />
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="text"
-                  className="settings-number-input"
-                  style={{ flex: 1, marginLeft: 0 }}
-                  placeholder="Export path..."
-                  value={exportPath}
-                  onChange={e => setExportPath(e.target.value)}
-                />
+                <input type="text" className="settings-number-input" style={{ flex: 1, marginLeft: 0 }} placeholder="Export path..." value={exportPath} onChange={e => setExportPath(e.target.value)} />
                 <button className="btn-secondary" style={{ whiteSpace: 'nowrap', padding: '4px 12px' }}>Browse</button>
               </div>
               <button className="btn-primary" style={{ alignSelf: 'center', padding: '8px 32px', background: 'var(--input-field)' }}>Export</button>
             </div>
-          </div>
-        </div>
+          }
+        />
       )}
       <StylesModal showStyle={showStyle} setShowStyle={setShowStyle} stylePage={stylePage} setStylePage={setStylePage} />
-      {/* Settings are mounted programmatically via OpenSettings(pageData, scroll) */}
       {rollClip && rollMedia && (
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
       )}

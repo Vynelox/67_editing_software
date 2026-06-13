@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { RotateCcw, Plus } from 'lucide-react';
 import type { ShortcutAction } from './shortcuts';
 import { getShortcutKeys as scGetKeys, updateShortcuts as scUpdate, resetDefaultShortcuts as scReset } from './shortcuts';
+import DraggableModal from './DraggableModal';
 
 type SettingsTab = "sliders" | "checkboxes" | "shortcuts" | "multiselects";
 
@@ -144,7 +145,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     scUpdate(next);
     const newIndex = next[action].length - 1;
     setEditingChip({ action, index: newIndex });
-    // Focus the new chip after render
     setTimeout(() => {
       const key = `${action}-${newIndex}`;
       chipRefs.current[key]?.focus();
@@ -177,63 +177,33 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const handleChipKeyDown = (e: React.KeyboardEvent, action: ShortcutAction, index: number) => {
     e.preventDefault();
     e.stopPropagation();
-
     const keys: string[] = [];
     if (e.ctrlKey || e.metaKey) keys.push("ctrl");
     if (e.shiftKey) keys.push("shift");
     if (e.altKey) keys.push("alt");
-
     const key = e.key.toLowerCase();
     const isModifier = key === "control" || key === "shift" || key === "alt" || key === "meta";
     if (!isModifier) {
       keys.push(key === " " ? "space" : key);
     }
-
     if (keys.length > 0) {
       updateCombination(action, index, keys);
     }
   };
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true">
-      <div className="modal-box settings-modal">
-        <div className="modal-header modal-header--centered">
-          <span className="panel-title settings-title">Settings</span>
-          <button className="icon-btn modal-close-btn" onClick={() => { onClose?.(); }} aria-label="Close settings">✕</button>
-        </div>
-
+    <DraggableModal
+      title="Settings"
+      onClose={() => { onClose?.(); }}
+      className="settings-modal"
+      body={
         <div className="settings-body" ref={panelRef}>
           <nav className="settings-tabs" aria-label="Settings sections">
-            <button
-              type="button"
-              className={"settings-tab" + (activeTab === "shortcuts" ? " settings-tab--active" : "")}
-              onClick={() => setActiveTab("shortcuts")}
-            >
-              Keyboard
-            </button>
-            <button
-              type="button"
-              className={"settings-tab" + (activeTab === "sliders" ? " settings-tab--active" : "")}
-              onClick={() => setActiveTab("sliders")}
-            >
-              Sliders
-            </button>
-            <button
-              type="button"
-              className={"settings-tab" + (activeTab === "checkboxes" ? " settings-tab--active" : "")}
-              onClick={() => setActiveTab("checkboxes")}
-            >
-              Checkboxes
-            </button>
-            <button
-              type="button"
-              className={"settings-tab" + (activeTab === "multiselects" ? " settings-tab--active" : "")}
-              onClick={() => setActiveTab("multiselects")}
-            >
-              Multiselects
-            </button>
+            <button type="button" className={"settings-tab" + (activeTab === "shortcuts" ? " settings-tab--active" : "")} onClick={() => setActiveTab("shortcuts")}>Keyboard</button>
+            <button type="button" className={"settings-tab" + (activeTab === "sliders" ? " settings-tab--active" : "")} onClick={() => setActiveTab("sliders")}>Sliders</button>
+            <button type="button" className={"settings-tab" + (activeTab === "checkboxes" ? " settings-tab--active" : "")} onClick={() => setActiveTab("checkboxes")}>Checkboxes</button>
+            <button type="button" className={"settings-tab" + (activeTab === "multiselects" ? " settings-tab--active" : "")} onClick={() => setActiveTab("multiselects")}>Multiselects</button>
           </nav>
-
           <div className="settings-panel">
             {activeTab === "sliders" && (
               <div className="settings-panel-content">
@@ -242,107 +212,84 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <span style={{ flex: 1, lineHeight: 1.2 }}>GUI scale</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{guiScale}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setGuiScale(100)} title="Reset to default (100%)" style={{ padding: 4 }}>
-                        <RotateCcw size={14} />
-                      </button>
+                      <button type="button" className="icon-btn" onClick={() => setGuiScale(100)} title="Reset to default (100%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
                   <input type="range" className="settings-range-input" min={50} max={200} step={5} value={guiScale} onChange={e => setGuiScale(Number(e.target.value))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>50%</span><span>200%</span></div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Playneedle vertical<br />offset (%)</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{playheadTop}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setPlayheadTop(15)} title="Reset to default (15%)" style={{ padding: 4 }}>
-                        <RotateCcw size={14} />
-                      </button>
+                      <button type="button" className="icon-btn" onClick={() => setPlayheadTop(15)} title="Reset to default (15%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
                   <input type="range" className="settings-range-input" min={0} max={100} step={1} value={playheadTop} onChange={e => setPlayheadTop(Number(e.target.value))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Top</span><span>Bottom</span></div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Timeline scroll<br />smooth factor</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{scrollSmooth}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setScrollSmooth(50)} title="Reset to default (50%)" style={{ padding: 4 }}>
-                        <RotateCcw size={14} />
-                      </button>
+                      <button type="button" className="icon-btn" onClick={() => setScrollSmooth(50)} title="Reset to default (50%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
                   <input type="range" className="settings-range-input" min={0} max={100} step={1} value={scrollSmooth} onChange={e => setScrollSmooth(Number(e.target.value))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Snappy</span><span>Smooth</span></div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Timeline scroll<br />amount</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{scrollAmount}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setScrollAmount(100)} title="Reset to default (100%)" style={{ padding: 4 }}>
-                        <RotateCcw size={14} />
-                      </button>
+                      <button type="button" className="icon-btn" onClick={() => setScrollAmount(100)} title="Reset to default (100%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
                   <input type="range" className="settings-range-input" min={0} max={1000} step={1} value={scrollAmountToSlider(scrollAmount)} onChange={e => setScrollAmount(sliderToScrollAmount(Number(e.target.value)))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>1%</span><span>400%</span></div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Scroll zoom<br />amount</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{scrollZoomAmount}</span>
-                      <button type="button" className="icon-btn" onClick={() => setScrollZoomAmount(25)} title="Reset to default (25)" style={{ padding: 4 }}>
-                        <RotateCcw size={14} />
-                      </button>
+                      <button type="button" className="icon-btn" onClick={() => setScrollZoomAmount(25)} title="Reset to default (25)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
                   <input type="range" className="settings-range-input" min={1} max={100} step={1} value={scrollZoomAmount} onChange={e => setScrollZoomAmount(Number(e.target.value))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Slow</span><span>Fast</span></div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Scroll zoom<br />smoothness</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{scrollZoomSmoothness}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setScrollZoomSmoothness(70)} title="Reset to default (70%)" style={{ padding: 4 }}>
-                        <RotateCcw size={14} />
-                      </button>
+                      <button type="button" className="icon-btn" onClick={() => setScrollZoomSmoothness(70)} title="Reset to default (70%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
                   <input type="range" className="settings-range-input" min={0} max={100} step={1} value={scrollZoomSmoothness} onChange={e => setScrollZoomSmoothness(Number(e.target.value))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Snappy</span><span>Smooth</span></div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Elevated panel background<br />darken amount</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{elevatedPanelDarken}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setElevatedPanelDarken(50)} title="Reset to default (50%)" style={{ padding: 4 }}>
-                        <RotateCcw size={14} />
-                      </button>
+                      <button type="button" className="icon-btn" onClick={() => setElevatedPanelDarken(50)} title="Reset to default (50%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
                   <input type="range" className="settings-range-input" min={0} max={100} step={1} value={elevatedPanelDarken} onChange={e => { setElevatedPanelDarken(Number(e.target.value)); }} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>White</span><span>Black</span></div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Elevated panel background<br />blur amount</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{elevatedPanelBlur}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setElevatedPanelBlur(0)} title="Reset to default (0%)" style={{ padding: 4 }}>
-                        <RotateCcw size={14} />
-                      </button>
+                      <button type="button" className="icon-btn" onClick={() => setElevatedPanelBlur(0)} title="Reset to default (0%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
                   <input type="range" className="settings-range-input" min={0} max={100} step={1} value={elevatedPanelBlur} onChange={e => { setElevatedPanelBlur(Number(e.target.value)); }} />
@@ -350,30 +297,15 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
               </div>
             )}
-
             {activeTab === "checkboxes" && (
               <div className="settings-panel-content">
                 <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                   <span style={{ flex: 1, lineHeight: 1.2 }}>Include splitter resize<br />actions in Ctrl+Z/Ctrl+Y</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input
-                      type="checkbox"
-                      className="settings-checkbox"
-                      checked={includeResizeInUndo}
-                      onChange={e => setIncludeResizeInUndo(e.target.checked)}
-                    />
-                    <button
-                      type="button"
-                      className="icon-btn"
-                      onClick={() => setIncludeResizeInUndo(true)}
-                      title="Reset to default (Checked)"
-                      style={{ padding: 4 }}
-                    >
-                      <RotateCcw size={14} />
-                    </button>
+                    <input type="checkbox" className="settings-checkbox" checked={includeResizeInUndo} onChange={e => setIncludeResizeInUndo(e.target.checked)} />
+                    <button type="button" className="icon-btn" onClick={() => setIncludeResizeInUndo(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                   </div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                   <span style={{ flex: 1, lineHeight: 1.2 }}>Cancel smooth zoom when<br />scrolling timeline</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -381,7 +313,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <button type="button" className="icon-btn" onClick={() => setCancelZoomOnScroll(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                   </div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                   <span style={{ flex: 1, lineHeight: 1.2 }}>Center playneedle<br />when zooming</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -391,7 +322,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
               </div>
             )}
-
             {activeTab === "multiselects" && (
               <div className="settings-panel-content">
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
@@ -400,51 +330,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     {(['compact', 'centered'] as const).map(opt => {
                       const active = viewerControlsType === opt;
                       return (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setViewerControlsType(opt)}
-                          style={{
-                            padding: "5px 14px",
-                            borderRadius: "var(--radius-sm)",
-                            border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)",
-                            background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)",
-                            color: active ? "var(--accent-blue)" : "var(--text-secondary)",
-                            fontSize: 12,
-                            fontWeight: active ? 600 : 400,
-                            cursor: "pointer",
-                            transition: "all 0.12s",
-                          }}
-                        >
+                        <button key={opt} type="button" onClick={() => setViewerControlsType(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.12s" }}>
                           {opt.charAt(0).toUpperCase() + opt.slice(1)}
                         </button>
                       );
                     })}
                   </div>
                 </div>
-
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                   <span style={{ lineHeight: 1.2 }}>Timecode display</span>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {(['timeline', 'viewer', 'both', 'none'] as const).map(opt => {
                       const active = timecodePanel === opt;
                       return (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setTimecodePanel(opt)}
-                          style={{
-                            padding: "5px 14px",
-                            borderRadius: "var(--radius-sm)",
-                            border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)",
-                            background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)",
-                            color: active ? "var(--accent-blue)" : "var(--text-secondary)",
-                            fontSize: 12,
-                            fontWeight: active ? 600 : 400,
-                            cursor: "pointer",
-                            transition: "all 0.12s",
-                          }}
-                        >
+                        <button key={opt} type="button" onClick={() => setTimecodePanel(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.12s" }}>
                           {opt.charAt(0).toUpperCase() + opt.slice(1)}
                         </button>
                       );
@@ -453,102 +352,27 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
               </div>
             )}
-
             {activeTab === "shortcuts" && (
               <div className="settings-panel-content">
                 {(Object.keys(SHORTCUT_LABELS) as ShortcutAction[]).map(action => (
-                  <div
-                    key={action}
-                    className="settings-field"
-                    style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}
-                  >
+                  <div key={action} className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                       <span style={{ lineHeight: 1.2 }}>{SHORTCUT_LABELS[action]}</span>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          onClick={() => addCombination(action)}
-                          title="Add shortcut combination"
-                          style={{ padding: 4 }}
-                        >
-                          <Plus size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          onClick={() => handleReset(action)}
-                          title="Reset to default shortcuts"
-                          style={{ padding: 4 }}
-                        >
-                          <RotateCcw size={14} />
-                        </button>
+                        <button type="button" className="icon-btn" onClick={() => addCombination(action)} title="Add shortcut combination" style={{ padding: 4 }}><Plus size={14} /></button>
+                        <button type="button" className="icon-btn" onClick={() => handleReset(action)} title="Reset to default shortcuts" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                       </div>
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                       {shortcuts[action].map((keys, idx) => {
                         const isEditing = editingChip?.action === action && editingChip?.index === idx;
                         return (
-                          <div
-                            key={idx}
-                            ref={el => { chipRefs.current[`${action}-${idx}`] = el; }}
-                            tabIndex={0}
-                            onFocus={() => setEditingChip({ action, index: idx })}
-                            onBlur={() => {
-                              setTimeout(() => setEditingChip(null), 150);
-                            }}
-                            onKeyDown={(e) => handleChipKeyDown(e, action, idx)}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 4,
-                              background: isEditing ? "var(--bg-hover)" : "var(--bg-elevated)",
-                              border: isEditing ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)",
-                              borderRadius: "var(--radius-sm)",
-                              padding: "3px 8px",
-                              cursor: "pointer",
-                              outline: "none",
-                              transition: "border-color 0.12s, background 0.12s",
-                              minHeight: 28,
-                            }}
-                            title={
-                              isEditing
-                                ? "Press keys to assign..."
-                                : keys.length === 0
-                                  ? "Click then press keys to assign"
-                                  : "Click then press new keys to reassign"
-                            }
-                          >
-                            <span style={{
-                              fontSize: 12,
-                              color: keys.length > 0 ? "var(--text-primary)" : "var(--text-muted)",
-                              fontFamily: "monospace",
-                            }}>
-                              {isEditing && keys.length === 0
-                                ? "..."
-                                : keys.length > 0
-                                  ? formatKeys(keys)
-                                  : "None"}
+                          <div key={idx} ref={el => { chipRefs.current[`${action}-${idx}`] = el; }} tabIndex={0} onFocus={() => setEditingChip({ action, index: idx })} onBlur={() => { setTimeout(() => setEditingChip(null), 150); }} onKeyDown={(e) => handleChipKeyDown(e, action, idx)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: isEditing ? "var(--bg-hover)" : "var(--bg-elevated)", border: isEditing ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", borderRadius: "var(--radius-sm)", padding: "3px 8px", cursor: "pointer", outline: "none", transition: "border-color 0.12s, background 0.12s", minHeight: 28 }} title={isEditing ? "Press keys to assign..." : keys.length === 0 ? "Click then press keys to assign" : "Click then press new keys to reassign"}>
+                            <span style={{ fontSize: 12, color: keys.length > 0 ? "var(--text-primary)" : "var(--text-muted)", fontFamily: "monospace" }}>
+                              {isEditing && keys.length === 0 ? "..." : keys.length > 0 ? formatKeys(keys) : "None"}
                             </span>
                             {shortcuts[action].length > 1 && (
-                              <button
-                                type="button"
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  color: "var(--text-muted)",
-                                  cursor: "pointer",
-                                  padding: "0 2px",
-                                  fontSize: 13,
-                                  lineHeight: 1,
-                                  display: "flex",
-                                  alignItems: "center",
-                                }}
-                                onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }}
-                                title="Remove this combination"
-                              >
-                                x
-                              </button>
+                              <button type="button" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: "0 2px", fontSize: 13, lineHeight: 1, display: "flex", alignItems: "center" }} onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }} title="Remove this combination">x</button>
                             )}
                           </div>
                         );
@@ -560,8 +384,8 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
             )}
           </div>
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
@@ -585,5 +409,3 @@ export function closeSettings() {
 (window as any).__onColorPickerClose = null;
 try { (window as any).OpenSettings = OpenSettings; } catch (e) {}
 try { (window as any).closeSettings = closeSettings; } catch (e) {}
-
-
