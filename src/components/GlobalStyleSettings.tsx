@@ -18,7 +18,8 @@ export type ColorVarName =
   | '--input-field'
   | '--input-field-bg'
   | '--playneedle'
-  | '--video-bg';
+  | '--video-bg'
+  | '--accent-blue';
 
 export type ThemeColors = Record<ColorVarName, string>;
 
@@ -46,4 +47,5 @@ export const colorFields: ColorField[] = [
   { varName: '--input-field', label: 'Input field primary' },
   { varName: '--input-field-bg', label: 'Input field secondary' },
   { varName: '--playneedle', label: 'Playneedle' },
+  { varName: '--accent-blue', label: 'Highlight color' },
 ];
