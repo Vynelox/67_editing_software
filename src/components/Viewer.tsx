@@ -152,11 +152,8 @@ export default function Viewer({
     </div>
   );
 
-  const skipBtn = (onClick: () => void, title: string, icon: React.ReactNode, size: number) => (
-    <button onClick={onClick} title={title}
-      style={{ display:'flex', alignItems:'center', justifyContent:'center', width:size, height:size, borderRadius:4, background:'transparent', border:'none', color:'var(--text-secondary)', cursor:'pointer', flexShrink:0 }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background='var(--bg-hover)'; (e.currentTarget as HTMLElement).style.color='var(--text-primary)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background='transparent'; (e.currentTarget as HTMLElement).style.color='var(--text-secondary)'; }}
+  const skipBtn = (onClick: () => void, title: string, icon: React.ReactNode, className: string) => (
+    <button onClick={onClick} title={title} className={`ctrl-btn ${className}`}
     >{icon}</button>
   );
 
@@ -178,40 +175,34 @@ export default function Viewer({
       </div>
 
       {controlsType === 'compact' ? (
-        <div style={{ display:'flex', alignItems:'center', gap:6, padding:'0 10px', height:32, background:'var(--bg-panel)', borderTop:'1px solid var(--border)', flexShrink:0 }}>
-          {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={12} />, 22)}
-          <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'}
-            style={{ display:'flex', alignItems:'center', justifyContent:'center', width:26, height:26, borderRadius:6, background:'var(--input-field)', border:'1px solid var(--border-mid)', color:'var(--text-primary)', cursor:'pointer', flexShrink:0, transition:'filter 0.12s' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter='brightness(1.2)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter='none'; }}
+        <div className="viewer-controls viewer-controls--compact">
+          {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={12} />, 'ctrl-btn-small')}
+          <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'} className="viewer-play-btn ctrl-btn-small"
           >{playing ? <Pause size={13} /> : <Play size={13} />}</button>
-          {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={12} />, 22)}
+          {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={12} />, 'ctrl-btn-small')}
           {scrubBar(3)}
           {timecodePanel === 'viewer' || timecodePanel === 'both' ? (
-            <span style={{ fontFamily:'monospace', fontSize:10, color:'var(--text-muted)', letterSpacing:1, flexShrink:0 }}>{formatTimecode(playhead)}</span>
+            <span className="viewer-timecode">{formatTimecode(playhead)}</span>
           ) : null}
-          <Volume2 size={12} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+          <Volume2 size={12} className="viewer-volume-icon viewer-volume-icon--compact" />
         </div>
       ) : (
-        <div style={{ display:'flex', flexDirection:'column', gap:8, padding:'8px 14px 10px', background:'var(--bg-panel)', borderTop:'1px solid var(--border)', flexShrink:0 }}>
+        <div className="viewer-controls viewer-controls--full">
           {scrubBar(4)}
-          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <div className="viewer-controls-row">
             {timecodePanel === 'viewer' || timecodePanel === 'both' ? (
-              <span style={{ fontFamily:'monospace', fontSize:11, color:'var(--text-muted)', letterSpacing:1, minWidth:64 }}>{formatTimecode(playhead)}</span>
+              <span className="viewer-timecode viewer-timecode--full">{formatTimecode(playhead)}</span>
             ) : (
-              <span style={{ minWidth:64 }} />
+              <span className="viewer-timecode-placeholder" />
             )}
-            <div style={{ flex:1, display:'flex', justifyContent:'center', alignItems:'center', gap:2 }}>
-              {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={14} />, 28)}
-              <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'}
-                style={{ display:'flex', alignItems:'center', justifyContent:'center', width:36, height:36, borderRadius:10, background:'var(--input-field)', border:'1px solid var(--border-mid)', color:'var(--text-primary)', cursor:'pointer', transition:'filter 0.12s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter='brightness(1.2)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter='none'; }}
+            <div className="viewer-controls-center">
+              {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={14} />, 'ctrl-btn')}
+              <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'} className="viewer-play-btn ctrl-btn"
               >{playing ? <Pause size={16} /> : <Play size={16} />}</button>
-              {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={14} />, 28)}
+              {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={14} />, 'ctrl-btn')}
             </div>
-            <div style={{ minWidth:64, display:'flex', justifyContent:'flex-end' }}>
-              <Volume2 size={14} style={{ color:'var(--text-muted)' }} />
+            <div className="viewer-controls-right">
+              <Volume2 size={14} className="viewer-volume-icon viewer-volume-icon--full" />
             </div>
           </div>
         </div>

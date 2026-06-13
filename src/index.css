@@ -384,48 +384,147 @@ html, body, #root {
 .viewer-controls {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: calc(6px * var(--scale)) var(--space-md);
+  gap: calc(6px * var(--scale));
+  padding: calc(6px * var(--scale)) calc(10px * var(--scale));
   border-top: var(--border-width) solid var(--border);
   background: var(--bg-panel);
   flex-shrink: 0;
   height: var(--bar-height-md);
 }
 
+.viewer-controls--compact {
+  height: calc(32px * var(--scale));
+  padding-bottom: calc(8px * var(--scale));
+  margin-bottom: calc(16px * var(--scale));
+}
+
+.viewer-controls--full {
+  flex-direction: column;
+  gap: calc(8px * var(--scale));
+  padding-bottom: calc(35px * var(--scale));
+}
+
+.viewer-controls-row {
+  display: flex;
+  align-items: center;
+  gap: calc(6px * var(--scale));
+  width: 100%;
+}
+
+.viewer-controls-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: calc(2px * var(--scale));
+}
+
+.viewer-controls-right {
+  min-width: calc(64px * var(--scale));
+  display: flex;
+  justify-content: flex-end;
+}
+
+.viewer-timecode {
+  font-family: monospace;
+  font-size: calc(10px * var(--scale));
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.viewer-timecode--full {
+  font-size: calc(11px * var(--scale));
+  min-width: calc(64px * var(--scale));
+}
+
+.viewer-timecode-placeholder {
+  min-width: calc(64px * var(--scale));
+}
+
+.viewer-volume-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer-volume-icon--compact {
+  width: calc(15px * var(--scale)) !important;
+  height: calc(15px * var(--scale)) !important;
+  overflow: hidden;
+}
+
+.viewer-volume-icon--compact svg {
+  width: calc(10px * var(--scale)) !important;
+  height: calc(10px * var(--scale)) !important;
+  max-width: calc(10px * var(--scale)) !important;
+  max-height: calc(10px * var(--scale)) !important;
+}
+
+.viewer-volume-icon--full {
+  width: calc(15px * var(--scale)) !important;
+  height: calc(15px * var(--scale)) !important;
+  overflow: hidden;
+}
+
+.viewer-volume-icon--full svg {
+  width: calc(12px * var(--scale)) !important;
+  height: calc(12px * var(--scale)) !important;
+  max-width: calc(12px * var(--scale)) !important;
+  max-height: calc(12px * var(--scale)) !important;
+}
+
+.viewer-play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--input-field);
+  border: var(--border-width) solid var(--border-mid);
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: filter 0.12s;
+}
+
+.viewer-play-btn:hover {
+  filter: brightness(1.2);
+}
+
 .ctrl-btn {
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: calc(5px * var(--scale));
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+  border-radius: calc(4px * var(--scale));
   width: calc(28px * var(--scale));
   height: calc(28px * var(--scale));
-  justify-content: center;
+  padding: 0;
 }
-.ctrl-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.ctrl-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ctrl-btn-small {
+  width: calc(22px * var(--scale));
+  height: calc(22px * var(--scale));
+}
 
 .ctrl-btn svg {
   width: calc(14px * var(--scale));
   height: calc(14px * var(--scale));
 }
 
-.play-btn {
-  width: calc(32px * var(--scale)) !important;
-  height: calc(32px * var(--scale)) !important;
-  border-radius: 50% !important;
-  background: var(--accent-blue) !important;
-  color: #0a0c14 !important;
-  justify-content: center;
-}
-.play-btn:hover { filter: brightness(1.15); }
-
-.play-btn svg {
-  width: calc(14px * var(--scale)) !important;
-  height: calc(14px * var(--scale)) !important;
+.ctrl-btn-small svg {
+  width: calc(12px * var(--scale));
+  height: calc(12px * var(--scale));
 }
 
 .scrub-bar {
