@@ -34,6 +34,7 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
+  --gui-scale: 1;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
@@ -49,6 +50,39 @@ html, body, #root {
   color: var(--text-primary);
 }
 
+/* GUI Scale - scales visual elements without affecting layout */
+#root {
+  --scale: var(--gui-scale);
+  
+  /* Scale font sizes */
+  font-size: calc(13px * var(--scale));
+  
+  /* Scale spacing */
+  --space-xs: calc(4px * var(--scale));
+  --space-sm: calc(8px * var(--scale));
+  --space-md: calc(12px * var(--scale));
+  --space-lg: calc(16px * var(--scale));
+  --space-xl: calc(24px * var(--scale));
+  
+  /* Scale border widths */
+  --border-width: calc(1px * var(--scale));
+  --border-width-thick: calc(2px * var(--scale));
+  
+  /* Scale icon sizes */
+  --icon-sm: calc(12px * var(--scale));
+  --icon-md: calc(16px * var(--scale));
+  --icon-lg: calc(24px * var(--scale));
+  
+  /* Scale bar heights (horizontal bars) */
+  --bar-height-sm: calc(28px * var(--scale));
+  --bar-height-md: calc(36px * var(--scale));
+  --bar-height-lg: calc(44px * var(--scale));
+  
+  /* Scale bar widths (vertical bars) */
+  --bar-width-sm: calc(60px * var(--scale));
+  --bar-width-md: calc(112px * var(--scale));
+}
+
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -59,22 +93,27 @@ html, body, #root {
 .app-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  height: 44px;
+  gap: var(--space-md);
+  padding: 0 var(--space-lg);
+  height: var(--bar-height-lg);
   background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
 }
 
 .app-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 15px;
+  gap: calc(8px * var(--scale));
+  font-size: calc(15px * var(--scale));
   font-weight: 700;
   letter-spacing: -0.3px;
   color: var(--text-primary);
+}
+
+.app-logo svg {
+  width: calc(22px * var(--scale));
+  height: calc(22px * var(--scale));
 }
 
 .app-sub {
@@ -151,14 +190,14 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  height: 36px;
-  border-bottom: 1px solid var(--border);
+  padding: 0 var(--space-md);
+  height: var(--bar-height-md);
+  border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
 }
 
 .panel-title {
-  font-size: 11px;
+  font-size: calc(11px * var(--scale));
   font-weight: 600;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -186,13 +225,13 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 40px 20px;
+  gap: calc(10px * var(--scale));
+  padding: calc(40px * var(--scale)) calc(20px * var(--scale));
   color: var(--text-muted);
   text-align: center;
-  font-size: 12px;
+  font-size: calc(12px * var(--scale));
   background: var(--bg-panel);
-  border: 1px dashed var(--border-mid);
+  border: var(--border-width) dashed var(--border-mid);
   border-radius: var(--radius-md);
   transition: background 0.15s ease, border-color 0.15s ease;
 }
@@ -200,6 +239,11 @@ html, body, #root {
 .empty-drop:hover {
   background: var(--bg-hover);
   border-color: var(--border);
+}
+
+.empty-drop svg {
+  width: calc(32px * var(--scale));
+  height: calc(32px * var(--scale));
 }
 
 .media-item {
@@ -262,17 +306,22 @@ html, body, #root {
 .media-remove:hover { background: rgba(239,68,68,0.15); }
 
 .collapse-toggle {
-  width: 28px;
-  height: 28px;
+  width: calc(28px * var(--scale));
+  height: calc(28px * var(--scale));
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
+  border: var(--border-width) solid transparent;
+  border-radius: calc(6px * var(--scale));
   color: var(--text-secondary);
 }
 .collapse-toggle:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border); }
+
+.collapse-toggle svg {
+  width: calc(14px * var(--scale));
+  height: calc(14px * var(--scale));
+}
 
 /* Viewer */
 .viewer {
@@ -285,27 +334,27 @@ html, body, #root {
 .viewer-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  height: 36px;
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-md);
+  padding: 0 var(--space-lg);
+  height: var(--bar-height-md);
+  border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
 }
 
 .timecode {
   font-family: 'JetBrains Mono', 'Fira Mono', monospace;
-  font-size: 12px;
+  font-size: calc(12px * var(--scale));
   color: var(--text-secondary);
   letter-spacing: 1px;
   margin-left: auto;
 }
 
 .export-btn {
-  padding: 4px 14px;
+  padding: calc(4px * var(--scale)) calc(14px * var(--scale));
   border-radius: var(--radius-md);
   background: var(--accent-blue);
   color: #0a0c14;
-  font-size: 12px;
+  font-size: calc(12px * var(--scale));
   font-weight: 600;
   border: none;
   cursor: pointer;
@@ -335,11 +384,12 @@ html, body, #root {
 .viewer-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-top: 1px solid var(--border);
+  gap: var(--space-sm);
+  padding: calc(6px * var(--scale)) var(--space-md);
+  border-top: var(--border-width) solid var(--border);
   background: var(--bg-panel);
   flex-shrink: 0;
+  height: var(--bar-height-md);
 }
 
 .ctrl-btn {
@@ -347,22 +397,36 @@ html, body, #root {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 5px;
+  padding: calc(5px * var(--scale));
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   transition: color 0.15s, background 0.15s;
+  width: calc(28px * var(--scale));
+  height: calc(28px * var(--scale));
+  justify-content: center;
 }
 .ctrl-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
 
+.ctrl-btn svg {
+  width: calc(14px * var(--scale));
+  height: calc(14px * var(--scale));
+}
+
 .play-btn {
-  width: 32px; height: 32px;
+  width: calc(32px * var(--scale)) !important;
+  height: calc(32px * var(--scale)) !important;
   border-radius: 50% !important;
   background: var(--accent-blue) !important;
   color: #0a0c14 !important;
   justify-content: center;
 }
 .play-btn:hover { filter: brightness(1.15); }
+
+.play-btn svg {
+  width: calc(14px * var(--scale)) !important;
+  height: calc(14px * var(--scale)) !important;
+}
 
 .scrub-bar {
   flex: 1;
@@ -407,20 +471,20 @@ html, body, #root {
 .tl-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 16px;
-  height: 36px;
-  border-bottom: 1px solid var(--border);
+  gap: calc(10px * var(--scale));
+  padding: 0 var(--space-lg);
+  height: var(--bar-height-md);
+  border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
 }
 
 .zoom-ctrl {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   margin-left: auto;
 }
-.zoom-label { font-size: 11px; color: var(--text-muted); min-width: 36px; text-align: center; }
+.zoom-label { font-size: calc(11px * var(--scale)); color: var(--text-muted); min-width: calc(36px * var(--scale)); text-align: center; }
 
 .tl-main {
   display: flex;
@@ -430,14 +494,14 @@ html, body, #root {
 }
 
 .tl-labels {
-  width: 60px;
+  width: var(--bar-width-sm);
   flex-shrink: 0;
   background: var(--bg-elevated);
-  border-right: 1px solid var(--border);
+  border-right: var(--border-width) solid var(--border);
   display: flex;
   flex-direction: column;
-  padding-top: 32px; /* match ruler height */
-  padding-bottom: 9px; /* match scrollbar height so centering space is identical */
+  padding-top: calc(32px * var(--scale)); /* match ruler height */
+  padding-bottom: calc(9px * var(--scale)); /* match scrollbar height so centering space is identical */
   align-items: stretch;
   justify-content: center;
 }
@@ -446,21 +510,26 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 0 10px;
+  gap: calc(5px * var(--scale));
+  padding: 0 calc(10px * var(--scale));
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--scale));
   font-weight: 500;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
 }
 
+.tl-label svg {
+  width: calc(13px * var(--scale));
+  height: calc(13px * var(--scale));
+}
+
 .tl-label:first-child {
-  border-top: 1px solid var(--border);
+  border-top: var(--border-width) solid var(--border);
 }
 
 .tl-track:first-child {
-  border-top: 1px solid var(--border);
+  border-top: var(--border-width) solid var(--border);
 }
 
 /* Splitter / Resizer */
@@ -484,8 +553,9 @@ html, body, #root {
   top: 0;
   z-index: 10;
   background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
   overflow: hidden;
+  height: calc(32px * var(--scale));
 }
 
 .tl-inner {
@@ -504,15 +574,15 @@ html, body, #root {
   position: absolute;
   top: 0;
   height: 100%;
-  border-left: 1px solid var(--border);
+  border-left: var(--border-width) solid var(--border);
   pointer-events: none;
 }
 
 .ruler-label {
   position: absolute;
-  left: 3px;
-  top: 6px;
-  font-size: 10px;
+  left: calc(3px * var(--scale));
+  top: calc(6px * var(--scale));
+  font-size: calc(10px * var(--scale));
   font-family: monospace;
   color: var(--text-muted);
   white-space: nowrap;
@@ -1191,7 +1261,8 @@ input[type="color"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px; height: 26px;
+  width: calc(26px * var(--scale));
+  height: calc(26px * var(--scale));
   border-radius: var(--radius-sm);
   background: none;
   border: none;
@@ -1200,6 +1271,11 @@ input[type="color"] {
   transition: background 0.12s, color 0.12s;
 }
 .icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.icon-btn svg {
+  width: calc(16px * var(--scale));
+  height: calc(16px * var(--scale));
+}
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

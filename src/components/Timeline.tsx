@@ -92,6 +92,9 @@ export default function Timeline({
   const getTimecodePanel = () => {
     try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; }
   };
+  const getGuiScale = () => {
+    try { const v = window.localStorage.getItem('juicecut.settings.guiScale'); return v ? Number(v) / 100 : 1; } catch { return 1; }
+  };
   const velocityRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const scrollElRef = useRef<HTMLElement | null>(null);

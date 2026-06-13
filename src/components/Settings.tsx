@@ -52,6 +52,9 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   });
   const panelRef = useRef<HTMLDivElement | null>(null);
 
+  const [guiScale, setGuiScale] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.guiScale"); return v ? Number(v) : 100; } catch { return 100; }
+  });
   const [playheadTop, setPlayheadTop] = useState<number>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.playheadTopPercent"); return v ? Number(v) : 15; } catch { return 15; }
   });
@@ -103,6 +106,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     return Math.round(1 + 399 * Math.pow(ratio, SCROLL_AMOUNT_POWER));
   };
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("juicecut.settings.guiScale", String(guiScale));
+      document.documentElement.style.setProperty('--gui-scale', `${guiScale / 100}`);
+      window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "guiScale", value: guiScale } }));
+    } catch {}
+  }, [guiScale]);
   useEffect(() => {
     try {
       window.localStorage.setItem("juicecut.settings.playheadTopPercent", String(playheadTop));
@@ -227,6 +237,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
           <div className="settings-panel">
             {activeTab === "sliders" && (
               <div className="settings-panel-content">
+                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>GUI scale</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{guiScale}%</span>
+                      <button type="button" className="icon-btn" onClick={() => setGuiScale(100)} title="Reset to default (100%)" style={{ padding: 4 }}>
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <input type="range" className="settings-range-input" min={50} max={200} step={5} value={guiScale} onChange={e => setGuiScale(Number(e.target.value))} />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>50%</span><span>200%</span></div>
+                </div>
+
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>Playneedle vertical<br />offset (%)</span>

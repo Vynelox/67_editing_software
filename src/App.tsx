@@ -90,18 +90,30 @@ function AppContent() {
     try { const v = window.localStorage.getItem('juicecut.settings.includeResizeInUndo'); return v === null ? true : v === 'true'; } catch { return true; }
   });
 
-  // layout (persisted) - moved above snapshot to avoid use-before-declare
-  const [leftWidth, setLeftWidth] = useState<number>(() => {
-    try { const v = window.localStorage.getItem('juicecut.layout.leftWidth'); return v ? Number(v) : 260; } catch { return 260; }
+  // layout (persisted) - stored as percentages of viewport
+  const [leftWidthPct, setLeftWidthPct] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.layout.leftWidthPct'); return v ? Number(v) : 20; } catch { return 20; }
   });
   const [leftCollapsed, setLeftCollapsed] = useState<boolean>(() => {
     try { const v = window.localStorage.getItem('juicecut.layout.leftCollapsed'); return v === 'true'; } catch { return false; }
   });
   useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftCollapsed', leftCollapsed ? 'true' : 'false'); } catch {} }, [leftCollapsed]);
-  const [savedTimelineHeight, setSavedTimelineHeight] = useState<number | null>(null);
-  const [timelineHeight, setTimelineHeight] = useState<number>(() => {
-    try { const v = window.localStorage.getItem('juicecut.layout.timelineHeight'); return v ? Number(v) : 220; } catch { return 220; }
+  const [savedTimelineHeightPct, setSavedTimelineHeightPct] = useState<number | null>(null);
+  const [timelineHeightPct, setTimelineHeightPct] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.layout.timelineHeightPct'); return v ? Number(v) : 35; } catch { return 35; }
   });
+  
+  // Get GUI scale
+  const getGuiScale = () => {
+    try { const v = window.localStorage.getItem('juicecut.settings.guiScale'); return v ? Number(v) / 100 : 1; } catch { return 1; }
+  };
+  
+  // Calculate actual pixel values based on viewport and GUI scale
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+  const guiScale = getGuiScale();
+  const leftWidth = Math.round((viewportWidth * leftWidthPct / 100) / guiScale);
+  const timelineHeight = Math.round((viewportHeight * timelineHeightPct / 100) / guiScale);
   const [showStyle, setShowStyle] = useState(false);
   const [stylePage, setStylePage] = useState<string | null>(null);
 
@@ -156,8 +168,8 @@ function AppContent() {
   const [exportVideo, setExportVideo] = useState(true);
   const [exportAudio, setExportAudio] = useState(true);
   const [exportPath, setExportPath] = useState('');
-  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftWidth', String(leftWidth)); } catch {} }, [leftWidth]);
-  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.timelineHeight', String(timelineHeight)); } catch {} }, [timelineHeight]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.leftWidthPct', String(leftWidthPct)); } catch {} }, [leftWidthPct]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.layout.timelineHeightPct', String(timelineHeightPct)); } catch {} }, [timelineHeightPct]);
 
   const totalFrames = clips.reduce((max, c) => Math.max(max, c.endFrame), 0);
 
@@ -167,8 +179,8 @@ function AppContent() {
     selectedIds: [...selectedIds],
     playhead,
     settings: { playheadTop, includeResizeInUndo },
-    layout: { leftWidth, timelineHeight }
-  }), [clips, mediaItems, selectedIds, playhead, playheadTop, includeResizeInUndo, leftWidth, timelineHeight]);
+    layout: { leftWidthPct, timelineHeightPct }
+  }), [clips, mediaItems, selectedIds, playhead, playheadTop, includeResizeInUndo, leftWidthPct, timelineHeightPct]);
 
   const restore = useCallback((snap: any) => {
     try {
@@ -184,13 +196,13 @@ function AppContent() {
         setIncludeResizeInUndo(typeof snap.settings.includeResizeInUndo === 'boolean' ? snap.settings.includeResizeInUndo : includeResizeInUndo);
       }
       if (snap?.layout) {
-        setLeftWidth(typeof snap.layout.leftWidth === 'number' ? snap.layout.leftWidth : leftWidth);
-        setTimelineHeight(typeof snap.layout.timelineHeight === 'number' ? snap.layout.timelineHeight : timelineHeight);
+        setLeftWidthPct(typeof snap.layout.leftWidthPct === 'number' ? snap.layout.leftWidthPct : leftWidthPct);
+        setTimelineHeightPct(typeof snap.layout.timelineHeightPct === 'number' ? snap.layout.timelineHeightPct : timelineHeightPct);
       }
     } catch (err) {
       console.warn('Failed to restore snapshot', err);
     }
-  }, [setClips, setMediaItems, setSelectedIds, setPlayhead, playheadTop, includeResizeInUndo, leftWidth, timelineHeight]);
+  }, [setClips, setMediaItems, setSelectedIds, setPlayhead, playheadTop, includeResizeInUndo, leftWidthPct, timelineHeightPct]);
 
   // settings are opened via OpenSettings()
 
@@ -592,7 +604,10 @@ function AppContent() {
         {!leftCollapsed && (
           <div className="workspace-vsplit">
             <Splitter orientation="vertical" onChange={(dx) => {
-              setLeftWidth(w => Math.max(120, Math.min(800, w + dx)));
+              const guiScale = getGuiScale();
+              const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+              const dxPct = (dx / guiScale) / viewportWidth * 100;
+              setLeftWidthPct(w => Math.max(5, Math.min(50, w + dxPct)));
             }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
           </div>
         )}
@@ -612,7 +627,10 @@ function AppContent() {
 
         <div className="workspace-hsplit">
           <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
-            setTimelineHeight(h => Math.max(120, Math.min(900, h - dy)));
+            const guiScale = getGuiScale();
+            const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+            const dyPct = (dy / guiScale) / viewportHeight * 100;
+            setTimelineHeightPct(h => Math.max(15, Math.min(60, h - dyPct)));
           }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
         </div>
 
