@@ -12,6 +12,20 @@ const DEFAULT_SHORTCUTS: Record<ShortcutAction, string[][]> = {
 const STORAGE_KEY = "juicecut.settings.keyboardShortcuts";
 let cache: Record<ShortcutAction, string[][]> | null = null;
 
+// Track globally pressed keys (for wheel-event shortcut matching with non-modifier keys)
+const pressedKeys = new Set<string>();
+if (typeof window !== "undefined") {
+  window.addEventListener("keydown", (e: KeyboardEvent) => {
+    pressedKeys.add(e.key.toLowerCase());
+  });
+  window.addEventListener("keyup", (e: KeyboardEvent) => {
+    pressedKeys.delete(e.key.toLowerCase());
+  });
+  window.addEventListener("blur", () => {
+    pressedKeys.clear();
+  });
+}
+
 function load(): Record<ShortcutAction, string[][]> {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -80,10 +94,17 @@ function keysMatchCombo(combo: string[], e: KeyboardEvent): boolean {
 
 function modifiersMatchCombo(combo: string[], e: WheelEvent): boolean {
   const mods = combo.filter(k => ["ctrl","shift","alt","meta"].includes(k.toLowerCase()));
-  if (mods.length === 0) return true;
+  const nonMods = combo.filter(k => !["ctrl","shift","alt","meta"].includes(k.toLowerCase()));
+  // Check modifiers (if any)
   const em = eventModifiers(e);
   if (mods.length !== em.size) return false;
   for (const k of mods) { if (!em.has(k.toLowerCase())) return false; }
+  // Check non-modifier keys (if any) against the global pressed keys set
+  if (nonMods.length > 0) {
+    for (const k of nonMods) {
+      if (!pressedKeys.has(k.toLowerCase())) return false;
+    }
+  }
   return true;
 }
 
