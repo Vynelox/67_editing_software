@@ -269,12 +269,14 @@ export default function Timeline({
       onFadeChange(fadeState.clipId, fadeState.side, newFrames);
     }
     if (playheadDraggingRef.current && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
       const scrollEl = containerRef.current.querySelector('.tl-scroll') as HTMLElement;
+      const scrollRect = scrollEl?.getBoundingClientRect();
       const scrollX = scrollEl?.scrollLeft ?? 0;
-      const x = lastMouseClientX.current - rect.left - 60 + scrollX;
-      const frame = Math.max(0, xToFrame(x, zoom));
-      onSeek(frame);
+      if (scrollRect) {
+        const x = scrollX + (lastMouseClientX.current - scrollRect.left);
+        const frame = Math.max(0, xToFrame(x, zoom));
+        onSeek(frame);
+      }
     }
   }, [dragState, fadeState, zoom, onFadeChange, onSeek]);
 
@@ -308,9 +310,9 @@ export default function Timeline({
     if (!scrollEl) return;
     const handleScroll = () => {
       if (playheadDraggingRef.current && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
+        const scrollRect = scrollEl.getBoundingClientRect();
         const scrollX = scrollEl.scrollLeft;
-        const x = lastMouseClientX.current - rect.left - 60 + scrollX;
+        const x = scrollX + (lastMouseClientX.current - scrollRect.left);
         const frame = Math.max(0, xToFrame(x, zoom));
         onSeek(frame);
       }
@@ -513,9 +515,11 @@ export default function Timeline({
               e.preventDefault();
               const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement;
               const scrollX = scrollEl?.scrollLeft ?? 0;
-              const rect = containerRef.current!.getBoundingClientRect();
-              const x = e.clientX - rect.left - 60 + scrollX;
-              onSeek(Math.max(0, xToFrame(x, zoom)));
+              const scrollRect = scrollEl?.getBoundingClientRect();
+              if (scrollRect) {
+                const x = scrollX + (e.clientX - scrollRect.left);
+                onSeek(Math.max(0, xToFrame(x, zoom)));
+              }
               playheadDraggingRef.current = true;
             }}
           >
