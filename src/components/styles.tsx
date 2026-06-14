@@ -88,7 +88,7 @@ const monokaiIcon: string = 'm8 6-6 6 6 6M16 6l6 6-6 6';
 const lavenderIcon: string = 'M12 22V8M9 11l3-3 3 3M10 11c0 1 1 2 2 2s2-1 2-2M10 8c0 1 1 2 2 2s2-1 2-2M9 5c0 1 1 2 3 2s3-1 3-2M11 14c0-1 1-2 1-3s-1-2-1-3M13 14c0-1-1-2-1-3s1-2 1-3';
 const cyberpunkIcon: string = 'M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3M6 6h12v12H6zM10 10h4v4h-4z';
 const oakIcon: string = 'M5 8a7 3 0 0 1 14 0v10a7 3 0 0 1-14 0V8zM8 8a4 1.5 0 0 1 8 0 4 1.5 0 0 1-8 0zM10 8a2 0.7 0 0 1 4 0 2 0.7 0 0 1-4 0z';
-const forestIcon: string = 'M12 2L7 9h3l-5 7h4l-4 5h12l-4-5h4l-5-7h3L12 2zM11 21h2';
+const forestIcon: string = 'M12 2L6 10h3l-4 6h3l-3 5h14l-3-5h3l-4-6h3L12 2zM10 21h4';
 
 interface DisplayItem {
   id: string;
