@@ -121,6 +121,8 @@ export default function Timeline({
   const [zoomAnimTrigger, setZoomAnimTrigger] = useState(0);
   const scrollTargetRef = useRef<number | null>(null);
   const zoomMouseXTargetRef = useRef<number>(0);
+  // Playneedle auto-scroll: target scroll to bring playhead into interquartile range
+  const playheadScrollTargetRef = useRef<number | null>(null);
 
   // Keep zoomCurrentRef and zoomTargetRef in sync with zoom state
   useEffect(() => {
@@ -158,11 +160,22 @@ export default function Timeline({
 
         let targetScrollLeft: number;
         if (zoomEpicenter === 'playneedle') {
-          const centeredScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - el.clientWidth / 2;
-          const scrollSmoothness = getScrollSmoothFactor();
-          const st = scrollSmoothness === 0 ? 1 : 0.02 + (1 - scrollSmoothness / 100) * 0.18;
-          zoomMouseXRef.current = zoomMouseXRef.current + (0 - zoomMouseXRef.current) * st;
-          targetScrollLeft = Math.max(0, centeredScrollLeft - zoomMouseXRef.current);
+          // Same as cursor: keep the playhead at its viewport position
+          // If there's an auto-scroll target (playhead was off-screen), smoothly scroll toward it
+          if (playheadScrollTargetRef.current !== null) {
+            const currentScroll = el.scrollLeft;
+            const scrollSmoothFactor = getScrollSmoothFactor();
+            const st = scrollSmoothFactor === 0 ? 1 : 0.02 + (1 - scrollSmoothFactor / 100) * 0.18;
+            const newScroll = currentScroll + (playheadScrollTargetRef.current - currentScroll) * st;
+            // Check if playhead is now within interquartile range (25%-75%)
+            const playheadViewportX = frameToX(playheadRef.current, clampedZoom) - newScroll;
+            if (playheadViewportX >= el.clientWidth * 0.25 && playheadViewportX <= el.clientWidth * 0.75) {
+              playheadScrollTargetRef.current = null;
+            }
+            targetScrollLeft = Math.max(0, newScroll);
+          } else {
+            targetScrollLeft = Math.max(0, frameToX(zoomBeforeFrameRef.current, clampedZoom) - zoomMouseXRef.current);
+          }
         } else if (zoomEpicenter === 'middle') {
           // Keep the center of the viewport fixed
           const centeredScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - el.clientWidth / 2;
@@ -403,10 +416,19 @@ export default function Timeline({
 
         // Always update epicenter so it reflects the current playneedle/cursor position
         if (zoomEpicenter === 'playneedle') {
+          // Same behavior as cursor: keep the playhead at its current viewport position
           zoomBeforeFrameRef.current = playheadRef.current;
           const playheadViewportX = frameToX(playheadRef.current, zoomCurrentRef.current) - el.scrollLeft;
-          zoomMouseXRef.current = el.clientWidth / 2 - playheadViewportX;
-          zoomMouseXTargetRef.current = 0;
+          zoomMouseXRef.current = playheadViewportX;
+          zoomMouseXTargetRef.current = playheadViewportX;
+          // If playhead is off-screen, set a scroll target to bring it into interquartile range
+          if (playheadViewportX < 0 || playheadViewportX > el.clientWidth) {
+            const targetViewportX = el.clientWidth * 0.5; // center of interquartile range
+            const targetScrollLeft = frameToX(playheadRef.current, zoomCurrentRef.current) - targetViewportX;
+            playheadScrollTargetRef.current = Math.max(0, targetScrollLeft);
+          } else {
+            playheadScrollTargetRef.current = null;
+          }
         } else if (zoomEpicenter === 'cursor') {
           const rect = el.getBoundingClientRect();
           const mouseX = e.clientX - rect.left;
