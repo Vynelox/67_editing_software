@@ -154,16 +154,21 @@ export default function Timeline({
 
       if (zoomScrollElRef.current) {
         const el = zoomScrollElRef.current;
-        const centerPlayneedle = (() => { try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? true : v === 'true'; } catch { return true; } })();
+        const zoomEpicenter = (() => { try { return window.localStorage.getItem('juicecut.settings.zoomEpicenter') || 'playneedle'; } catch { return 'playneedle'; } })();
 
         let targetScrollLeft: number;
-        if (centerPlayneedle) {
+        if (zoomEpicenter === 'playneedle') {
           const centeredScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - el.clientWidth / 2;
           const scrollSmoothness = getScrollSmoothFactor();
           const st = scrollSmoothness === 0 ? 1 : 0.02 + (1 - scrollSmoothness / 100) * 0.18;
           zoomMouseXRef.current = zoomMouseXRef.current + (0 - zoomMouseXRef.current) * st;
           targetScrollLeft = Math.max(0, centeredScrollLeft - zoomMouseXRef.current);
+        } else if (zoomEpicenter === 'middle') {
+          // Keep the center of the viewport fixed
+          const centeredScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - el.clientWidth / 2;
+          targetScrollLeft = Math.max(0, centeredScrollLeft);
         } else {
+          // 'cursor' — keep the frame under the cursor fixed
           targetScrollLeft = Math.max(0, frameToX(zoomBeforeFrameRef.current, clampedZoom) - zoomMouseXRef.current);
         }
 
@@ -394,21 +399,27 @@ export default function Timeline({
         const scale = e.deltaY < 0 ? zoomScale : 1 / zoomScale;
         const targetZoom = Math.max(0.25, Math.min(4, zoomTargetRef.current * scale));
 
-        const centerPlayneedle = (() => { try { const v = window.localStorage.getItem('juicecut.settings.centerPlayneedle'); return v === null ? true : v === 'true'; } catch { return true; } })();
+        const zoomEpicenter = (() => { try { return window.localStorage.getItem('juicecut.settings.zoomEpicenter') || 'playneedle'; } catch { return 'playneedle'; } })();
 
-        if (!zoomAnimatingRef.current) {
-          if (centerPlayneedle) {
-            zoomBeforeFrameRef.current = playheadRef.current;
-            const playheadViewportX = frameToX(playheadRef.current, zoomCurrentRef.current) - el.scrollLeft;
-            zoomMouseXRef.current = el.clientWidth / 2 - playheadViewportX;
-            zoomMouseXTargetRef.current = 0;
-          } else {
-            const rect = el.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            zoomBeforeFrameRef.current = xToFrame(el.scrollLeft + mouseX, zoomCurrentRef.current);
-            zoomMouseXRef.current = mouseX;
-            zoomMouseXTargetRef.current = mouseX;
-          }
+        // Always update epicenter so it reflects the current playneedle/cursor position
+        if (zoomEpicenter === 'playneedle') {
+          zoomBeforeFrameRef.current = playheadRef.current;
+          const playheadViewportX = frameToX(playheadRef.current, zoomCurrentRef.current) - el.scrollLeft;
+          zoomMouseXRef.current = el.clientWidth / 2 - playheadViewportX;
+          zoomMouseXTargetRef.current = 0;
+        } else if (zoomEpicenter === 'cursor') {
+          const rect = el.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          zoomBeforeFrameRef.current = xToFrame(el.scrollLeft + mouseX, zoomCurrentRef.current);
+          zoomMouseXRef.current = mouseX;
+          zoomMouseXTargetRef.current = mouseX;
+        } else {
+          // 'middle' — zoom toward the center of the visible timeline
+          const rect = el.getBoundingClientRect();
+          const middleX = el.clientWidth / 2;
+          zoomBeforeFrameRef.current = xToFrame(el.scrollLeft + middleX, zoomCurrentRef.current);
+          zoomMouseXRef.current = middleX;
+          zoomMouseXTargetRef.current = middleX;
         }
 
         zoomTargetRef.current = targetZoom;

@@ -65,8 +65,8 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [cancelZoomOnScroll, setCancelZoomOnScroll] = useState<boolean>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.cancelZoomOnScroll"); return v === null ? true : v === "true"; } catch { return true; }
   });
-  const [centerPlayneedle, setCenterPlayneedle] = useState<boolean>(() => {
-    try { const v = window.localStorage.getItem("juicecut.settings.centerPlayneedle"); return v === null ? true : v === "true"; } catch { return true; }
+  const [zoomEpicenter, setZoomEpicenter] = useState<string>(() => {
+    try { return window.localStorage.getItem('juicecut.settings.zoomEpicenter') || 'playneedle'; } catch { return 'playneedle'; }
   });
   const [scrollSmooth, setScrollSmooth] = useState<number>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.scrollSmooth"); return v ? Number(v) : 50; } catch { return 50; }
@@ -122,7 +122,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   }, [playheadTop]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.includeResizeInUndo", includeResizeInUndo ? "true" : "false"); } catch {} }, [includeResizeInUndo]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.cancelZoomOnScroll", cancelZoomOnScroll ? "true" : "false"); } catch {} }, [cancelZoomOnScroll]);
-  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.centerPlayneedle", centerPlayneedle ? "true" : "false"); } catch {} }, [centerPlayneedle]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.zoomEpicenter', zoomEpicenter); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'zoomEpicenter', value: zoomEpicenter } })); } catch {} }, [zoomEpicenter]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollSmooth", String(scrollSmooth)); } catch {} }, [scrollSmooth]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollAmount", String(scrollAmount)); } catch {} }, [scrollAmount]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomAmount", String(scrollZoomAmount)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomAmount", value: scrollZoomAmount } })); } catch {} }, [scrollZoomAmount]);
@@ -313,13 +313,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     <button type="button" className="icon-btn" onClick={() => setCancelZoomOnScroll(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                   </div>
                 </div>
-                <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                  <span style={{ flex: 1, lineHeight: 1.2 }}>Center playneedle<br />when zooming</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input type="checkbox" className="settings-checkbox" checked={centerPlayneedle} onChange={e => setCenterPlayneedle(e.target.checked)} />
-                    <button type="button" className="icon-btn" onClick={() => setCenterPlayneedle(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                  </div>
-                </div>
               </div>
             )}
             {activeTab === "multiselects" && (
@@ -344,6 +337,19 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                       const active = timecodePanel === opt;
                       return (
                         <button key={opt} type="button" onClick={() => setTimecodePanel(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.12s" }}>
+                          {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+                  <span style={{ lineHeight: 1.2 }}>Timeline zoom epicenter</span>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {(['playneedle', 'middle', 'cursor'] as const).map(opt => {
+                      const active = zoomEpicenter === opt;
+                      return (
+                        <button key={opt} type="button" onClick={() => setZoomEpicenter(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.12s" }}>
                           {opt.charAt(0).toUpperCase() + opt.slice(1)}
                         </button>
                       );
