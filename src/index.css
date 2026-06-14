@@ -573,13 +573,16 @@ html, body, #root {
   height: var(--bar-height-md);
   border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
+  position: relative;
 }
 
 .zoom-ctrl {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  margin-left: auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 .zoom-label { font-size: calc(11px * var(--scale)); color: var(--text-muted); min-width: calc(36px * var(--scale)); text-align: center; }
 

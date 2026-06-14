@@ -89,9 +89,21 @@ export default function Timeline({
   const getCancelZoomOnScroll = () => {
     try { const v = window.localStorage.getItem('juicecut.settings.cancelZoomOnScroll'); return v === null ? true : v === 'true'; } catch { return true; }
   };
-  const getTimecodePanel = () => {
+  const [timecodePanel, setTimecodePanel] = useState<string>(() => {
     try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; }
-  };
+  });
+
+  // Listen for timecode panel setting changes
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.key === 'timecodePanel' && typeof detail.value === 'string') {
+        setTimecodePanel(detail.value);
+      }
+    };
+    window.addEventListener('juicecut-settings-changed', handler);
+    return () => window.removeEventListener('juicecut-settings-changed', handler);
+  }, []);
   const getGuiScale = () => {
     try { const v = window.localStorage.getItem('juicecut.settings.guiScale'); return v ? Number(v) / 100 : 1; } catch { return 1; }
   };
@@ -488,7 +500,7 @@ export default function Timeline({
           <span className="zoom-label">{Math.round(zoom * 100)}%</span>
           <button className="icon-btn" onClick={() => setZoom(z => Math.min(4, z + 0.25))}>+</button>
         </div>
-        {getTimecodePanel() === 'timeline' || getTimecodePanel() === 'both' ? (
+        {timecodePanel === 'timeline' || timecodePanel === 'both' ? (
           <span className="timecode">{formatTimecode(playhead)}</span>
         ) : null}
       </div>
