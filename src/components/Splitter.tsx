@@ -5,9 +5,10 @@ interface Props {
   onChange: (delta: number) => void;
   onDragEnd?: () => void;
   thickness?: number;
+  background?: string;
 }
 
-export default function Splitter({ orientation, onChange, onDragEnd, thickness = 8 }: Props) {
+export default function Splitter({ orientation, onChange, onDragEnd, thickness = 8, background }: Props) {
   const startRef = useRef(0);
   const draggingRef = useRef(false);
 
@@ -48,8 +49,8 @@ export default function Splitter({ orientation, onChange, onDragEnd, thickness =
   };
 
   const style: React.CSSProperties = orientation === 'vertical'
-    ? { width: thickness, cursor: 'col-resize', flexShrink: 0 }
-    : { height: thickness, cursor: 'row-resize', flexShrink: 0 };
+    ? { width: thickness, cursor: 'col-resize', flexShrink: 0, ...(background ? { background } : {}) }
+    : { height: thickness, cursor: 'row-resize', flexShrink: 0, ...(background ? { background } : {}) };
 
   return <div role="separator" aria-orientation={orientation} onPointerDown={handleDown} style={style} />;
 }

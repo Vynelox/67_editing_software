@@ -109,12 +109,16 @@ function AppContent() {
     try { const v = window.localStorage.getItem('juicecut.settings.guiScale'); return v ? Number(v) / 100 : 1; } catch { return 1; }
   };
   
-  // Calculate actual pixel values based on viewport and GUI scale
+  // Calculate pixel positions from stored percentages
+  // These are pure percentages of the viewport — no GUI scale division.
+  // The splitter position as a % of the total viewport stays constant regardless of GUI scale.
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+  const leftWidth = Math.round(viewportWidth * leftWidthPct / 100);
+  const timelineHeight = Math.round(viewportHeight * timelineHeightPct / 100);
+  // guiScale is still read to trigger re-renders when scale changes
   const guiScale = getGuiScale();
-  const leftWidth = Math.round((viewportWidth * leftWidthPct / 100) / guiScale);
-  const timelineHeight = Math.round((viewportHeight * timelineHeightPct / 100) / guiScale);
+  void guiScale; // used to force re-render dependency
   const [showStyle, setShowStyle] = useState(false);
   const [stylePage, setStylePage] = useState<string | null>(null);
 
@@ -207,12 +211,20 @@ function AppContent() {
     try { window.localStorage.setItem('juicecut.settings.playheadTopPercent', String(playheadTop)); } catch {}
   }, [playheadTop]);
 
+  // GUI scale state - needed to trigger re-render when scale changes
+  const [guiScaleState, setGuiScaleState] = useState<number>(() => {
+    try { const v = window.localStorage.getItem('juicecut.settings.guiScale'); return v ? Number(v) / 100 : 1; } catch { return 1; }
+  });
+
   // Listen for settings changes from the Settings modal
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.key === 'playheadTopPercent' && typeof detail.value === 'number') {
         setPlayheadTop(detail.value);
+      }
+      if (detail?.key === 'guiScale' && typeof detail.value === 'number') {
+        setGuiScaleState(detail.value / 100);
       }
       if (detail?.key === 'elevatedPanelDarkenAmount' && typeof detail.value === 'number') {
         const pct = detail.value;
@@ -513,12 +525,11 @@ function AppContent() {
 
         {!leftCollapsed && (
           <div className="workspace-vsplit">
-            <Splitter orientation="vertical" onChange={(dx) => {
-              const guiScale = getGuiScale();
-              const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
-              const dxPct = (dx / guiScale) / viewportWidth * 100;
-              setLeftWidthPct(w => Math.max(5, Math.min(50, w + dxPct)));
-            }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
+             <Splitter orientation="vertical" onChange={(dx) => {
+               const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+               const dxPct = dx / viewportWidth * 100;
+               setLeftWidthPct(w => Math.max(5, Math.min(50, w + dxPct)));
+             }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
           </div>
         )}
 
@@ -528,9 +539,8 @@ function AppContent() {
 
         <div className="workspace-hsplit">
           <Splitter orientation="horizontal" thickness={8} onChange={(dy) => {
-            const guiScale = getGuiScale();
             const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
-            const dyPct = (dy / guiScale) / viewportHeight * 100;
+            const dyPct = dy / viewportHeight * 100;
             setTimelineHeightPct(h => Math.max(15, Math.min(60, h - dyPct)));
           }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
         </div>

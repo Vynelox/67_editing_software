@@ -34,14 +34,19 @@ export default function DraggableModal({ title, body, onClose, className = '', m
   const [isMinimized, setIsMinimized] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
+  const getGuiScale = () => {
+    try { const v = window.localStorage.getItem('juicecut.settings.guiScale'); return v ? Number(v) / 100 : 1; } catch { return 1; }
+  };
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     // Don't start drag if clicking close or minimize buttons
     if (target.closest('.modal-minimize-btn') || target.closest('[aria-label="Close"]')) return;
     setIsDragging(true);
+    const scale = getGuiScale();
     dragOffset.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
+      x: (e.clientX - position.x) / scale,
+      y: (e.clientY - position.y) / scale,
     };
   }, [position]);
 
@@ -49,9 +54,10 @@ export default function DraggableModal({ title, body, onClose, className = '', m
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
+      const scale = getGuiScale();
       setPosition({
-        x: e.clientX - dragOffset.current.x,
-        y: e.clientY - dragOffset.current.y,
+        x: e.clientX / scale - dragOffset.current.x,
+        y: e.clientY / scale - dragOffset.current.y,
       });
     };
 

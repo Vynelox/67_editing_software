@@ -541,6 +541,10 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
     return true;
   };
 
+  const getGuiScale = () => {
+    try { const v = window.localStorage.getItem('juicecut.settings.guiScale'); return v ? Number(v) / 100 : 1; } catch { return 1; }
+  };
+
   const onDragPointerDown = (e: React.PointerEvent) => {
     if (!shouldStartDrag(e.target)) return;
 
@@ -557,7 +561,8 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
     const rect = panel.getBoundingClientRect();
     const startLeft = dragPos?.left ?? rect.left;
     const startTop = dragPos?.top ?? rect.top;
-    dragStateRef.current = { startX: e.clientX, startY: e.clientY, startLeft, startTop };
+    const scale = getGuiScale();
+    dragStateRef.current = { startX: e.clientX / scale, startY: e.clientY / scale, startLeft, startTop };
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     e.preventDefault();
   };
@@ -565,8 +570,9 @@ export default function ColorPicker({ value, onChange, fullScreen, autoOpen, onC
   const onDragPointerMove = (e: React.PointerEvent) => {
     const st = dragStateRef.current;
     if (!st) return;
-    const nextLeft = st.startLeft + (e.clientX - st.startX);
-    const nextTop = st.startTop + (e.clientY - st.startY);
+    const scale = getGuiScale();
+    const nextLeft = st.startLeft + (e.clientX / scale - st.startX);
+    const nextTop = st.startTop + (e.clientY / scale - st.startY);
     // keep at least a small portion on-screen
     const margin = 16;
     const w = popoverRef.current?.offsetWidth ?? 0;
