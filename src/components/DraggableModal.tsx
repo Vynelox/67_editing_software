@@ -93,7 +93,7 @@ export default function DraggableModal({ title, body, onClose, className = '', m
         >
           {headerLeft}
           <span className="panel-title settings-title" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>{title}</span>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginLeft: 'auto', paddingRight: 8, height: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginLeft: 'auto', height: '100%' }}>
             {minimizable && (
               <button
                 className="icon-btn modal-minimize-btn"
