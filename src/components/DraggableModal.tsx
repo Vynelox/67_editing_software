@@ -82,8 +82,8 @@ export default function DraggableModal({ title, body, onClose, className = '', m
           left: `calc(50% + ${position.x}px)`,
           top: `calc(50% + ${position.y}px)`,
           transform: 'translate(-50%, -50%)',
-          ...(isMinimized ? { height: 'auto', minHeight: 0, maxHeight: 'none', overflow: 'hidden' } : {}),
           ...style,
+          ...(isMinimized ? { height: 'auto', minHeight: 0, maxHeight: 'none', overflow: 'hidden' } : {}),
         }}
       >
         <div
