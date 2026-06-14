@@ -1,7 +1,8 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { OpenColorPicker } from './ColorPicker';
-import { colorFields, type ThemeColors } from './GlobalStyleSettings';
+import { colorFields, type ThemeColors, type ColorVarName } from './GlobalStyleSettings';
 import DraggableModal from './DraggableModal';
+import { RotateCcw } from 'lucide-react';
 
 function normalizeColor(raw: string) {
   if (!raw) return '#000000';
@@ -155,12 +156,26 @@ export function StylesContent({ themeName, setShowStyle, setStylePage }: {
     colorFields.forEach(c => { initial[c.varName] = normalizeColor(styles.getPropertyValue(c.varName).trim() || '#000000'); });
     return initial;
   });
+  const prevThemeRef = useRef(themeName);
 
-  useEffect(() => { applyThemeToDocument(themeName); setColors({ ...getThemeColors(themeName) }); }, [themeName]);
+  // Only reset colors when the theme actually changes, not on re-mount
+  useEffect(() => {
+    if (prevThemeRef.current !== themeName) {
+      prevThemeRef.current = themeName;
+      applyThemeToDocument(themeName);
+      setColors({ ...getThemeColors(themeName) });
+    }
+  }, [themeName]);
 
   function updateColor(varName: string, hex: string) {
     document.documentElement.style.setProperty(varName, hex);
     setColors(prev => ({ ...prev, [varName]: hex }));
+  }
+
+  function resetColor(varName: ColorVarName) {
+    const defaultColor = getThemeColors(themeName)[varName];
+    document.documentElement.style.setProperty(varName, defaultColor);
+    setColors(prev => ({ ...prev, [varName]: defaultColor }));
   }
 
   function handleColorClick(varName: string, currentValue: string) {
@@ -172,17 +187,27 @@ export function StylesContent({ themeName, setShowStyle, setStylePage }: {
     (window as any).__colorPickerCleanup = () => { cleanup(); if ((window as any).__onColorPickerClose) { (window as any).__onColorPickerClose(); (window as any).__onColorPickerClose = null; } };
   }
 
+  const defaultColors = getThemeColors(themeName);
+
   return (
     <div style={{ flex: 1, padding: 12, overflow: 'auto' }}>
       <div className="appearance-plain">
-        {colorFields.map(field => (
-          <div key={field.varName} className="color-field">
-            <div className="color-label">{field.label}</div>
-            <div className="color-controls">
-              <button type="button" className="color-swatch" style={{ backgroundColor: colors[field.varName] || '#000000' }} onClick={() => handleColorClick(field.varName, colors[field.varName] || '#000000')} title="Click to pick a color" />
+        {colorFields.map(field => {
+          const isCustom = colors[field.varName] !== defaultColors[field.varName];
+          return (
+            <div key={field.varName} className="color-field">
+              <div className="color-label">{field.label}</div>
+              <div className="color-controls">
+                <button type="button" className="color-swatch" style={{ backgroundColor: colors[field.varName] || '#000000' }} onClick={() => handleColorClick(field.varName, colors[field.varName] || '#000000')} title="Click to pick a color" />
+                {isCustom && (
+                  <button type="button" className="icon-btn" onClick={() => resetColor(field.varName)} title="Reset to default" style={{ width: 24, height: 24, color: 'var(--text-muted)' }}>
+                    <RotateCcw size={12} />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
