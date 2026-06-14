@@ -215,7 +215,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                       <button type="button" className="icon-btn" onClick={() => setGuiScale(100)} title="Reset to default (100%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                     </div>
                   </div>
-                  <input type="range" className="settings-range-input" min={50} max={200} step={5} value={guiScale} onChange={e => setGuiScale(Number(e.target.value))} />
+                  <input type="range" className="settings-range-input" min={50} max={200} step={1} value={guiScale} onChange={e => setGuiScale(Number(e.target.value))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>50%</span><span>200%</span></div>
                 </div>
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
