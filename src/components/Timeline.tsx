@@ -237,15 +237,17 @@ export default function Timeline({
   const handleNeedleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     const target = getPlayheadContext();
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
     setTorusTarget(target);
-    const playheadEl = containerRef.current?.querySelector('.tl-playhead') as HTMLElement | null;
-    const playheadH = playheadEl?.clientHeight ?? 0;
-    const pct = typeof playheadTop === 'number' ? Math.min(100, Math.max(0, playheadTop)) : DEFAULT_PLAYHEAD_TOP_PCT;
-    const offset = (pct / 100) * Math.max(0, playheadH - PLAYHEAD_BTN_H);
-    setTorusPos({ x: e.clientX, y: rect.top + (HEADER_H - 2) + offset });
-  }, [getPlayheadContext, playheadTop]);
+    // Get the playneedle button element and use its center as the anchor point
+    const btnEl = (e.target as HTMLElement).closest('.playhead-btn') as HTMLElement | null;
+    if (btnEl) {
+      const btnRect = btnEl.getBoundingClientRect();
+      setTorusPos({ x: btnRect.left + btnRect.width / 2, y: btnRect.top + btnRect.height / 2 });
+    } else {
+      // Fallback to mouse position
+      setTorusPos({ x: e.clientX, y: e.clientY });
+    }
+  }, [getPlayheadContext]);
 
   const getJoinPairs = useCallback(() => {
     const pairs: Array<{ clipA: TimelineClip; clipB: TimelineClip }> = [];
@@ -457,18 +459,21 @@ export default function Timeline({
       e.preventDefault();
 
       if (zoomAnimatingRef.current) {
+        // Always stop zoom scroll corrections when scrolling horizontally
+        if (zoomRafRef.current !== null) { cancelAnimationFrame(zoomRafRef.current); zoomRafRef.current = null; }
+        // Immediately apply any pending scroll correction so el.scrollLeft is in sync
+        if (pendingScrollCorrection.current) {
+          const { el: corrEl, scrollLeft } = pendingScrollCorrection.current;
+          pendingScrollCorrection.current = null;
+          corrEl.scrollLeft = scrollLeft;
+        }
+        zoomScrollElRef.current = null;
+        scrollTargetRef.current = null;
+        zoomAnimatingRef.current = false;
         if (getCancelZoomOnScroll()) {
-          if (zoomRafRef.current !== null) { cancelAnimationFrame(zoomRafRef.current); zoomRafRef.current = null; }
-          pendingScrollCorrection.current = null;
-          zoomScrollElRef.current = null;
-          scrollTargetRef.current = null;
+          // Commit the zoom target immediately
           zoomCurrentRef.current = zoomTargetRef.current;
-          zoomAnimatingRef.current = false;
           setZoom(zoomTargetRef.current);
-        } else {
-          pendingScrollCorrection.current = null;
-          zoomScrollElRef.current = null;
-          scrollTargetRef.current = null;
         }
       }
 

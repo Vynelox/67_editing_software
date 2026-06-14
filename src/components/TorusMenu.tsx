@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Scissors, ChevronLeft, ChevronRight, X, Move } from 'lucide-react';
+import { Scissors, ChevronLeft, ChevronRight, Move } from 'lucide-react';
 
 type TorusTarget =
   | { kind: 'inside'; clipId: string; frame: number }
@@ -28,11 +28,21 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    const timer = setTimeout(() => window.addEventListener('mousedown', handler), 10);
-    return () => { clearTimeout(timer); window.removeEventListener('mousedown', handler); };
+    const timer = setTimeout(() => {
+      const clickHandler = (e: MouseEvent) => {
+        if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      };
+      const scrollHandler = () => {
+        onClose();
+      };
+      window.addEventListener('mousedown', clickHandler);
+      window.addEventListener('scroll', scrollHandler, true);
+      return () => {
+        window.removeEventListener('mousedown', clickHandler);
+        window.removeEventListener('scroll', scrollHandler, true);
+      };
+    }, 10);
+    return () => clearTimeout(timer);
   }, [onClose]);
 
   const isEdgeOrCut = target.kind === 'edge' || target.kind === 'cut';
@@ -55,29 +65,20 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
 
   const items = isEdgeOrCut ? edgeItems : insideItems;
   const radius = 88;
-  const centerX = 120;
-  const centerY = 120;
+  const size = 240;
+  const centerX = size / 2;
+  const centerY = size / 2;
 
   return (
     <div
       className="torus-overlay"
       ref={ref}
       style={{ left: pos.x - centerX, top: pos.y - centerY }}
+      onMouseDown={(e) => {
+        if ((e.target as HTMLElement).closest('.torus-item')) return;
+        onClose();
+      }}
     >
-      <svg width={240} height={240} className="torus-bg-svg">
-        <circle cx={centerX} cy={centerY} r={radius + 32} fill="rgba(15,15,25,0.92)" />
-        <circle cx={centerX} cy={centerY} r={28} fill="rgba(30,30,50,0.95)" stroke="#334155" strokeWidth={1} />
-        <circle cx={centerX} cy={centerY} r={radius} fill="none" stroke="#1e293b" strokeWidth={56} />
-      </svg>
-
-      <button
-        className="torus-center-btn"
-        style={{ left: centerX - 14, top: centerY - 14 }}
-        onClick={onClose}
-      >
-        <X size={14} />
-      </button>
-
       {items.map((item, i) => {
         const angle = (i / items.length) * Math.PI * 2 - Math.PI / 2;
         const x = centerX + Math.cos(angle) * radius - 32;
@@ -86,22 +87,20 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
           <button
             key={item.label}
             className="torus-item"
-            style={{ left: x, top: y, color: item.color }}
-            onClick={(e) => { e.stopPropagation(); item.action(); }}
+            style={{
+              left: x,
+              top: y,
+              background: 'var(--input-field-bg)',
+              color: 'var(--text-primary)',
+            }}
+            onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
             title={item.label}
           >
-            {item.icon}
+            <span style={{ color: item.color }}>{item.icon}</span>
             <span>{item.label}</span>
           </button>
         );
       })}
-
-      <div
-        className="torus-kind-label"
-        style={{ left: centerX - 28, top: centerY + 20 }}
-      >
-        {isEdgeOrCut ? (target.kind === 'cut' ? 'Cut' : 'Edge') : 'Clip'}
-      </div>
     </div>
   );
 }
