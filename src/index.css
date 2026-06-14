@@ -394,8 +394,6 @@ html, body, #root {
 
 .viewer-controls--compact {
   height: calc(32px * var(--scale));
-  padding-bottom: calc(8px * var(--scale));
-  margin-bottom: calc(16px * var(--scale));
 }
 
 .viewer-controls--full {
