@@ -24,6 +24,37 @@ interface Props {
   onRoll: () => void;
 }
 
+function annularSectorPath(
+  cx: number, cy: number,
+  innerR: number, outerR: number,
+  startAngle: number, endAngle: number,
+  gap: number = 1.5
+): string {
+  // Apply a small gap between sectors
+  const sa = startAngle + gap * 0.5 * (Math.PI / 180);
+  const ea = endAngle - gap * 0.5 * (Math.PI / 180);
+
+  const x1 = cx + innerR * Math.cos(sa);
+  const y1 = cy + innerR * Math.sin(sa);
+  const x2 = cx + outerR * Math.cos(sa);
+  const y2 = cy + outerR * Math.sin(sa);
+  const x3 = cx + outerR * Math.cos(ea);
+  const y3 = cy + outerR * Math.sin(ea);
+  const x4 = cx + innerR * Math.cos(ea);
+  const y4 = cy + innerR * Math.sin(ea);
+
+  const largeArc = (ea - sa) > Math.PI ? 1 : 0;
+
+  return [
+    `M ${x1} ${y1}`,
+    `L ${x2} ${y2}`,
+    `A ${outerR} ${outerR} 0 ${largeArc} 1 ${x3} ${y3}`,
+    `L ${x4} ${y4}`,
+    `A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1} ${y1}`,
+    'Z',
+  ].join(' ');
+}
+
 export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter, onTrimFormer, onStep, onRoll }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -64,43 +95,76 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
   ];
 
   const items = isEdgeOrCut ? edgeItems : insideItems;
-  const radius = 88;
-  const size = 240;
-  const centerX = size / 2;
-  const centerY = size / 2;
+
+  const cx = 120;
+  const cy = 120;
+  const innerR = 52;
+  const outerR = 100;
+  const sectorAngle = (Math.PI * 2) / items.length;
 
   return (
     <div
       className="torus-overlay"
       ref={ref}
-      style={{ left: pos.x - centerX, top: pos.y - centerY }}
+      style={{ left: pos.x - cx, top: pos.y - cy }}
       onMouseDown={(e) => {
-        if ((e.target as HTMLElement).closest('.torus-item')) return;
+        if ((e.target as HTMLElement).closest('.torus-sector')) return;
         onClose();
       }}
     >
-      {items.map((item, i) => {
-        const angle = (i / items.length) * Math.PI * 2 - Math.PI / 2;
-        const x = centerX + Math.cos(angle) * radius - 32;
-        const y = centerY + Math.sin(angle) * radius - 28;
-        return (
-          <button
-            key={item.label}
-            className="torus-item"
-            style={{
-              left: x,
-              top: y,
-              background: 'var(--input-field-bg)',
-              color: 'var(--text-primary)',
-            }}
-            onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
-            title={item.label}
-          >
-            <span style={{ color: item.color }}>{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
+      <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`}>
+        {items.map((item, i) => {
+          const startAngle = i * sectorAngle - Math.PI / 2;
+          const endAngle = (i + 1) * sectorAngle - Math.PI / 2;
+          const midAngle = (startAngle + endAngle) / 2;
+          const labelR = (innerR + outerR) / 2;
+          const labelX = cx + labelR * Math.cos(midAngle);
+          const labelY = cy + labelR * Math.sin(midAngle);
+
+          return (
+            <g key={item.label}>
+              <path
+                d={annularSectorPath(cx, cy, innerR, outerR, startAngle, endAngle)}
+                fill="var(--input-field-bg)"
+                stroke="var(--border-mid)"
+                strokeWidth={0.5}
+                className="torus-sector"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
+              />
+              <foreignObject
+                x={labelX - 36}
+                y={labelY - 16}
+                width={72}
+                height={32}
+                className="torus-sector"
+                style={{ cursor: 'pointer', overflow: 'visible' }}
+                onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    color: 'var(--text-primary)',
+                    fontSize: 10,
+                    lineHeight: 1.1,
+                    textAlign: 'center',
+                    pointerEvents: 'none',
+                    gap: 1,
+                  }}
+                >
+                  <span style={{ color: item.color, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+                  <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
+                </div>
+              </foreignObject>
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }
