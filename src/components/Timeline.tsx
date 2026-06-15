@@ -263,14 +263,14 @@ export default function Timeline({
       const phHeight = scrollEl?.clientHeight ?? 200;
       
       // X coordinate: center of the playneedle in viewport
-      // playheadX is relative to tl-inner, scrollLeft accounts for horizontal scroll
       const btnCenterX = (scrollRect?.left ?? 0) + playheadX - scrollLeft;
       
       // Y coordinate: button center position within the playneedle
-      // Using the formula: v_o * (1 - π/s) + π/(2s) as percentage of playneedle height
+      // The playneedle function f(x) maps x ∈ [0,1] to the full height
+      // The button center is at: v_o * (1 - π/s) + π/(2s) as a fraction of the height
       const { v_o, s } = playneedleParams;
-      const buttonCenterY = v_o * (1 - Math.PI / s) + Math.PI / (2 * s);
-      const btnCenterY = (scrollRect?.top ?? 0) + buttonCenterY * phHeight;
+      const buttonCenterFraction = v_o * (1 - Math.PI / s) + Math.PI / (2 * s);
+      const btnCenterY = (scrollRect?.top ?? 0) + buttonCenterFraction * phHeight;
       
       setTorusPos({ x: btnCenterX, y: btnCenterY });
     } else {
@@ -676,6 +676,7 @@ export default function Timeline({
                 height: '100%',
                 zIndex: 40,
                 pointerEvents: 'none',
+                overflow: 'hidden',
               }}
             >
               <div
@@ -684,7 +685,7 @@ export default function Timeline({
                 onClick={handleNeedleClick}
               >
                 <FormulaPlayneedle
-                  height={containerRef.current?.clientHeight ?? 200}
+                  height={containerRef.current?.querySelector('.tl-scroll')?.clientHeight ?? 200}
                   maxWidth={PLAYHEAD_MAX_WIDTH}
                   color="var(--playneedle)"
                   glowColor="color-mix(in srgb, var(--playneedle) 60%, transparent)"

@@ -42,7 +42,7 @@ function evaluateF(x: number, p: PlayneedleParams): number {
 }
 
 interface Props {
-  height: number;       // total height in pixels
+  height?: number;      // total height in pixels (if undefined, fills container)
   maxWidth: number;     // maximum width in pixels
   color?: string;
   glowColor?: string;
@@ -53,7 +53,7 @@ interface Props {
 }
 
 export default function FormulaPlayneedle({
-  height,
+  height = 200,
   maxWidth,
   color = '#f5f5f5',
   glowColor = 'rgba(245, 245, 245, 0.4)',
@@ -102,7 +102,7 @@ export default function FormulaPlayneedle({
       width={maxWidth}
       height={height}
       viewBox={`0 0 ${maxWidth} ${height}`}
-      style={{ overflow: 'visible' }}
+      style={{ overflow: 'visible', display: 'block', width: '100%', height: '100%' }}
     >
       <defs>
         <filter id="playneedle-glow" x="-50%" y="-50%" width="200%" height="200%">
