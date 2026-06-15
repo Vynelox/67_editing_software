@@ -89,7 +89,10 @@ function SliderSetting({ label, value, min, max, step, onChange, onReset, format
   formatValue?: (v: number) => string;
   logScale?: boolean;
 }) {
-  const displayValue = formatValue ? formatValue(value) : String(value);
+  // Default formatter: round to 3 decimal places
+  const defaultFormat = (v: number) => v.toFixed(3);
+  const fmt = formatValue || defaultFormat;
+  const displayValue = fmt(value);
 
   // For log scale: the slider position is logarithmic
   // Map slider 0-1000 to log(min)-log(max)
@@ -127,8 +130,8 @@ function SliderSetting({ label, value, min, max, step, onChange, onReset, format
         onChange={e => onChange(sliderToValue(Number(e.target.value)))}
       />
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}>
-        <span>{formatValue ? formatValue(min) : min}</span>
-        <span>{formatValue ? formatValue(max) : max}</span>
+        <span>{fmt(min)}</span>
+        <span>{fmt(max)}</span>
       </div>
     </div>
   );
@@ -337,10 +340,10 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
 
                 {/* Scrolling category */}
                 <SettingsCategory title="Scrolling">
-                  <SliderSetting label="Timeline scroll smooth factor" value={scrollSmooth} min={0} max={100} step={1} onChange={setScrollSmooth} onReset={() => setScrollSmooth(50)} formatValue={v => `${v}%`} />
-                  <SliderSetting label="Timeline scroll amount" value={scrollAmount} min={1} max={400} step={1} onChange={setScrollAmount} onReset={() => setScrollAmount(100)} formatValue={v => `${v}%`} />
+                  <SliderSetting label="Timeline scroll smooth factor" value={scrollSmooth} min={0} max={100} step={1} onChange={setScrollSmooth} onReset={() => setScrollSmooth(50)} formatValue={v => `${v.toFixed(3)}%`} />
+                  <SliderSetting label="Timeline scroll amount" value={scrollAmount} min={1} max={400} step={1} onChange={setScrollAmount} onReset={() => setScrollAmount(100)} formatValue={v => `${v.toFixed(3)}%`} />
                   <SliderSetting label="Timeline scroll zoom amount" value={scrollZoomAmount} min={1} max={100} step={1} onChange={setScrollZoomAmount} onReset={() => setScrollZoomAmount(25)} />
-                  <SliderSetting label="Timeline scroll zoom smoothness" value={scrollZoomSmoothness} min={0} max={100} step={1} onChange={setScrollZoomSmoothness} onReset={() => setScrollZoomSmoothness(70)} formatValue={v => `${v}%`} />
+                  <SliderSetting label="Timeline scroll zoom smoothness" value={scrollZoomSmoothness} min={0} max={100} step={1} onChange={setScrollZoomSmoothness} onReset={() => setScrollZoomSmoothness(70)} formatValue={v => `${v.toFixed(3)}%`} />
                 </SettingsCategory>
 
                 {/* Playneedle category */}
@@ -348,7 +351,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <SliderSetting label={<span>t — Total thickness of the needle part</span>} value={pnT} min={0} max={0.5} step={0.001} onChange={setPnT} onReset={() => setPnT(0.092)} formatValue={v => v.toFixed(3)} />
                   <SliderSetting label={<span>j — Length of the ribbon at the top</span>} value={pnJ} min={-0.05} max={0.25} step={0.001} onChange={setPnJ} onReset={() => setPnJ(0.049)} formatValue={v => v.toFixed(3)} />
                   <SliderSetting label={<span>k — Falloff of the ribbon (log scale)</span>} value={pnK} min={10} max={1000} step={1} onChange={setPnK} onReset={() => setPnK(103)} logScale formatValue={v => v.toFixed(3)} />
-                  <SliderSetting label={<span>s — Vertical height of the playneedle button</span>} value={pnS} min={10} max={50} step={0.1} onChange={setPnS} onReset={() => setPnS(16.4)} formatValue={v => v.toFixed(1)} />
+                  <SliderSetting label={<span>s — Vertical height of the playneedle button</span>} value={pnS} min={10} max={50} step={0.1} onChange={setPnS} onReset={() => setPnS(16.4)} formatValue={v => v.toFixed(3)} />
                   <SliderSetting label={<span>v<sub>o</sub> — Vertical offset of the playneedle button</span>} value={pnVo} min={0} max={1} step={0.001} onChange={setPnVo} onReset={() => setPnVo(0.4)} formatValue={v => v.toFixed(3)} />
                   <SliderSetting label={<span>h<sub>b</sub> — Horizontal width of the playneedle button</span>} value={pnHb} min={0.5} max={1} step={0.001} onChange={setPnHb} onReset={() => setPnHb(0.8)} formatValue={v => v.toFixed(3)} />
                   <SliderSetting label={<span>h<sub>r</sub> — Horizontal width of the ribbon</span>} value={pnHr} min={0} max={1} step={0.001} onChange={setPnHr} onReset={() => setPnHr(1)} formatValue={v => v.toFixed(3)} />
@@ -356,8 +359,8 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
 
                 {/* Miscellaneous category */}
                 <SettingsCategory title="Miscellaneous">
-                  <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v}%`} />
-                  <SliderSetting label="Draggable modal background blur amount" value={elevatedPanelBlur} min={0} max={100} step={1} onChange={setElevatedPanelBlur} onReset={() => setElevatedPanelBlur(0)} formatValue={v => `${v}%`} />
+                  <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v.toFixed(3)}%`} />
+                  <SliderSetting label="Draggable modal background blur amount" value={elevatedPanelBlur} min={0} max={100} step={1} onChange={setElevatedPanelBlur} onReset={() => setElevatedPanelBlur(0)} formatValue={v => `${v.toFixed(3)}%`} />
                 </SettingsCategory>
               </div>
             )}
