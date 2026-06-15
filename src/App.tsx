@@ -545,7 +545,7 @@ function AppContent() {
           }} onDragEnd={() => { history.push({ ...snapshot(), __meta: { type: 'resize' } }); }} />
         </div>
 
-        <Timeline clips={clips} tracks={TRACKS} mediaItems={mediaItems} playhead={playhead} playheadTop={playheadTop} selectedIds={selectedIds} onSeek={setPlayhead} onDropMedia={handleDropMedia} onSelectClip={handleSelectClip} onSplitClip={handleSplitClip} onTrimLatter={handleTrimLatter} onTrimFormer={handleTrimFormer} onNudge={handleNudge} onJoin={handleJoin} onFadeChange={handleFadeChange} onRoll={setRollClipId} onStepEdge={handleStepEdge} totalFrames={totalFrames} />
+        <Timeline clips={clips} tracks={TRACKS} mediaItems={mediaItems} playhead={playhead} selectedIds={selectedIds} onSeek={setPlayhead} onDropMedia={handleDropMedia} onSelectClip={handleSelectClip} onSplitClip={handleSplitClip} onTrimLatter={handleTrimLatter} onTrimFormer={handleTrimFormer} onNudge={handleNudge} onJoin={handleJoin} onFadeChange={handleFadeChange} onRoll={setRollClipId} onStepEdge={handleStepEdge} totalFrames={totalFrames} />
       </div>
       {showExport && (
         <DraggableModal

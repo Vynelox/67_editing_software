@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { RotateCcw, Plus } from 'lucide-react';
+import { RotateCcw, Plus, ChevronRight } from 'lucide-react';
 import type { ShortcutAction } from './shortcuts';
 import { getShortcutKeys as scGetKeys, updateShortcuts as scUpdate, resetDefaultShortcuts as scReset } from './shortcuts';
 import DraggableModal from './DraggableModal';
@@ -40,6 +40,100 @@ function formatKeys(keys: string[]): string {
   return sorted.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(" + ");
 }
 
+/** Collapsible category with animated arrow and smooth expand/collapse */
+function SettingsCategory({ title, children }: { title: string; children: React.ReactNode }) {
+  const [expanded, setExpanded] = useState(true);
+  return (
+    <div className="settings-category">
+      <button
+        type="button"
+        className="settings-category-header"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+      >
+        <span className="settings-category-title">{title}</span>
+        <ChevronRight
+          size={14}
+          className="settings-category-arrow"
+          style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+        />
+      </button>
+      <div
+        className="settings-category-body"
+        style={{
+          display: 'grid',
+          gridTemplateRows: expanded ? '1fr' : '0fr',
+          transition: 'grid-template-rows 0.2s ease',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ overflow: 'hidden' }}>
+          <div className="settings-category-body-inner">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A slider setting row with label, value, reset button, range input, and min/max labels */
+function SliderSetting({ label, value, min, max, step, onChange, onReset, formatValue, logScale }: {
+  label: React.ReactNode;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+  onReset: () => void;
+  formatValue?: (v: number) => string;
+  logScale?: boolean;
+}) {
+  const displayValue = formatValue ? formatValue(value) : String(value);
+
+  // For log scale: the slider position is logarithmic
+  // Map slider 0-1000 to log(min)-log(max)
+  const sliderToValue = (slider: number) => {
+    if (!logScale) return min + (slider / 1000) * (max - min);
+    const logMin = Math.log10(min);
+    const logMax = Math.log10(max);
+    const logVal = logMin + (slider / 1000) * (logMax - logMin);
+    return Math.pow(10, logVal);
+  };
+
+  const valueToSlider = (val: number) => {
+    if (!logScale) return ((val - min) / (max - min)) * 1000;
+    const logMin = Math.log10(min);
+    const logMax = Math.log10(max);
+    return ((Math.log10(val) - logMin) / (logMax - logMin)) * 1000;
+  };
+
+  return (
+    <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+        <span style={{ flex: 1, lineHeight: 1.2 }}>{label}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{displayValue}</span>
+          <button type="button" className="icon-btn" onClick={onReset} title="Reset to default" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+        </div>
+      </div>
+      <input
+        type="range"
+        className="settings-range-input"
+        min={0}
+        max={1000}
+        step={1}
+        value={valueToSlider(value)}
+        onChange={e => onChange(sliderToValue(Number(e.target.value)))}
+      />
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}>
+        <span>{formatValue ? formatValue(min) : min}</span>
+        <span>{formatValue ? formatValue(max) : max}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function Settings(props: Props) {
   return SettingsShell(props);
 }
@@ -56,14 +150,8 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [guiScale, setGuiScale] = useState<number>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.guiScale"); return v ? Number(v) : 100; } catch { return 100; }
   });
-  const [playheadTop, setPlayheadTop] = useState<number>(() => {
-    try { const v = window.localStorage.getItem("juicecut.settings.playheadTopPercent"); return v ? Number(v) : 15; } catch { return 15; }
-  });
   const [includeResizeInUndo, setIncludeResizeInUndo] = useState<boolean>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.includeResizeInUndo"); return v === null ? true : v === "true"; } catch { return true; }
-  });
-  const [cancelZoomOnScroll, setCancelZoomOnScroll] = useState<boolean>(() => {
-    try { const v = window.localStorage.getItem("juicecut.settings.cancelZoomOnScroll"); return v === null ? true : v === "true"; } catch { return true; }
   });
   const [zoomEpicenter, setZoomEpicenter] = useState<string>(() => {
     try { return window.localStorage.getItem('juicecut.settings.zoomEpicenter') || 'playneedle'; } catch { return 'playneedle'; }
@@ -92,6 +180,30 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [elevatedPanelBlur, setElevatedPanelBlur] = useState<number>(() => {
     try { const v = window.localStorage.getItem("juicecut.settings.elevatedPanelBlurAmount"); return v ? Number(v) : 0; } catch { return 0; }
   });
+
+  // Playneedle formula parameters
+  const [pnT, setPnT] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.playneedle_t"); return v !== null ? Number(v) : 0.092; } catch { return 0.092; }
+  });
+  const [pnJ, setPnJ] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.playneedle_j"); return v !== null ? Number(v) : 0.049; } catch { return 0.049; }
+  });
+  const [pnK, setPnK] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.playneedle_k"); return v !== null ? Number(v) : 103; } catch { return 103; }
+  });
+  const [pnS, setPnS] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.playneedle_s"); return v !== null ? Number(v) : 16.4; } catch { return 16.4; }
+  });
+  const [pnVo, setPnVo] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.playneedle_v_o"); return v !== null ? Number(v) : 0.4; } catch { return 0.4; }
+  });
+  const [pnHb, setPnHb] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.playneedle_h_b"); return v !== null ? Number(v) : 0.8; } catch { return 0.8; }
+  });
+  const [pnHr, setPnHr] = useState<number>(() => {
+    try { const v = window.localStorage.getItem("juicecut.settings.playneedle_h_r"); return v !== null ? Number(v) : 1; } catch { return 1; }
+  });
+
   const [shortcuts, setShortcuts] = useState<Record<ShortcutAction, string[][]>>(loadAllShortcuts);
   const [editingChip, setEditingChip] = useState<{ action: ShortcutAction; index: number } | null>(null);
   const chipRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -107,6 +219,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     return Math.round(1 + 399 * Math.pow(ratio, SCROLL_AMOUNT_POWER));
   };
 
+  // Persist all settings
   useEffect(() => {
     try {
       window.localStorage.setItem("juicecut.settings.guiScale", String(guiScale));
@@ -114,14 +227,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
       window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "guiScale", value: guiScale } }));
     } catch {}
   }, [guiScale]);
-  useEffect(() => {
-    try {
-      window.localStorage.setItem("juicecut.settings.playheadTopPercent", String(playheadTop));
-      window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playheadTopPercent", value: playheadTop } }));
-    } catch {}
-  }, [playheadTop]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.includeResizeInUndo", includeResizeInUndo ? "true" : "false"); } catch {} }, [includeResizeInUndo]);
-  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.cancelZoomOnScroll", cancelZoomOnScroll ? "true" : "false"); } catch {} }, [cancelZoomOnScroll]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.zoomEpicenter', zoomEpicenter); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'zoomEpicenter', value: zoomEpicenter } })); } catch {} }, [zoomEpicenter]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollSmooth", String(scrollSmooth)); } catch {} }, [scrollSmooth]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollAmount", String(scrollAmount)); } catch {} }, [scrollAmount]);
@@ -131,6 +237,15 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.timecodePanel', timecodePanel); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'timecodePanel', value: timecodePanel } })); } catch {} }, [timecodePanel]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelDarkenAmount", String(elevatedPanelDarken)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelDarkenAmount", value: elevatedPanelDarken } })); } catch {} }, [elevatedPanelDarken]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelBlurAmount", String(elevatedPanelBlur)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelBlurAmount", value: elevatedPanelBlur } })); } catch {} }, [elevatedPanelBlur]);
+
+  // Persist playneedle formula params
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_t", String(pnT)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_t", value: pnT } })); } catch {} }, [pnT]);
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_j", String(pnJ)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_j", value: pnJ } })); } catch {} }, [pnJ]);
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_k", String(pnK)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_k", value: pnK } })); } catch {} }, [pnK]);
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_s", String(pnS)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_s", value: pnS } })); } catch {} }, [pnS]);
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_v_o", String(pnVo)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_v_o", value: pnVo } })); } catch {} }, [pnVo]);
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_h_b", String(pnHb)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_h_b", value: pnHb } })); } catch {} }, [pnHb]);
+  useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_h_r", String(pnHr)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_h_r", value: pnHr } })); } catch {} }, [pnHr]);
 
   useEffect(() => {
     if (initialScroll != null && panelRef.current) {
@@ -207,6 +322,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
           <div className="settings-panel">
             {activeTab === "sliders" && (
               <div className="settings-panel-content">
+                {/* GUI scale — not in any category */}
                 <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flex: 1, lineHeight: 1.2 }}>GUI scale</span>
@@ -218,83 +334,31 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <input type="range" className="settings-range-input" min={50} max={200} step={1} value={guiScale} onChange={e => setGuiScale(Number(e.target.value))} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>50%</span><span>200%</span></div>
                 </div>
-                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ flex: 1, lineHeight: 1.2 }}>Playneedle vertical<br />offset (%)</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{playheadTop}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setPlayheadTop(15)} title="Reset to default (15%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                    </div>
-                  </div>
-                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={playheadTop} onChange={e => setPlayheadTop(Number(e.target.value))} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Top</span><span>Bottom</span></div>
-                </div>
-                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ flex: 1, lineHeight: 1.2 }}>Timeline scroll<br />smooth factor</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{scrollSmooth}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setScrollSmooth(50)} title="Reset to default (50%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                    </div>
-                  </div>
-                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={scrollSmooth} onChange={e => setScrollSmooth(Number(e.target.value))} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Snappy</span><span>Smooth</span></div>
-                </div>
-                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ flex: 1, lineHeight: 1.2 }}>Timeline scroll<br />amount</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{scrollAmount}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setScrollAmount(100)} title="Reset to default (100%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                    </div>
-                  </div>
-                  <input type="range" className="settings-range-input" min={0} max={1000} step={1} value={scrollAmountToSlider(scrollAmount)} onChange={e => setScrollAmount(sliderToScrollAmount(Number(e.target.value)))} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>1%</span><span>400%</span></div>
-                </div>
-                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ flex: 1, lineHeight: 1.2 }}>Scroll zoom<br />amount</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{scrollZoomAmount}</span>
-                      <button type="button" className="icon-btn" onClick={() => setScrollZoomAmount(25)} title="Reset to default (25)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                    </div>
-                  </div>
-                  <input type="range" className="settings-range-input" min={1} max={100} step={1} value={scrollZoomAmount} onChange={e => setScrollZoomAmount(Number(e.target.value))} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Slow</span><span>Fast</span></div>
-                </div>
-                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ flex: 1, lineHeight: 1.2 }}>Scroll zoom<br />smoothness</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{scrollZoomSmoothness}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setScrollZoomSmoothness(70)} title="Reset to default (70%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                    </div>
-                  </div>
-                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={scrollZoomSmoothness} onChange={e => setScrollZoomSmoothness(Number(e.target.value))} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>Snappy</span><span>Smooth</span></div>
-                </div>
-                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ flex: 1, lineHeight: 1.2 }}>Elevated panel background<br />darken amount</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{elevatedPanelDarken}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setElevatedPanelDarken(50)} title="Reset to default (50%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                    </div>
-                  </div>
-                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={elevatedPanelDarken} onChange={e => { setElevatedPanelDarken(Number(e.target.value)); }} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>White</span><span>Black</span></div>
-                </div>
-                <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ flex: 1, lineHeight: 1.2 }}>Elevated panel background<br />blur amount</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{elevatedPanelBlur}%</span>
-                      <button type="button" className="icon-btn" onClick={() => setElevatedPanelBlur(0)} title="Reset to default (0%)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                    </div>
-                  </div>
-                  <input type="range" className="settings-range-input" min={0} max={100} step={1} value={elevatedPanelBlur} onChange={e => { setElevatedPanelBlur(Number(e.target.value)); }} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>No blur</span><span>Max blur</span></div>
-                </div>
+
+                {/* Scrolling category */}
+                <SettingsCategory title="Scrolling">
+                  <SliderSetting label="Timeline scroll smooth factor" value={scrollSmooth} min={0} max={100} step={1} onChange={setScrollSmooth} onReset={() => setScrollSmooth(50)} formatValue={v => `${v}%`} />
+                  <SliderSetting label="Timeline scroll amount" value={scrollAmount} min={1} max={400} step={1} onChange={setScrollAmount} onReset={() => setScrollAmount(100)} formatValue={v => `${v}%`} />
+                  <SliderSetting label="Timeline scroll zoom amount" value={scrollZoomAmount} min={1} max={100} step={1} onChange={setScrollZoomAmount} onReset={() => setScrollZoomAmount(25)} />
+                  <SliderSetting label="Timeline scroll zoom smoothness" value={scrollZoomSmoothness} min={0} max={100} step={1} onChange={setScrollZoomSmoothness} onReset={() => setScrollZoomSmoothness(70)} formatValue={v => `${v}%`} />
+                </SettingsCategory>
+
+                {/* Playneedle category */}
+                <SettingsCategory title="Playneedle">
+                  <SliderSetting label={<span>t — Total thickness of the needle part</span>} value={pnT} min={0} max={0.5} step={0.001} onChange={setPnT} onReset={() => setPnT(0.092)} formatValue={v => v.toFixed(3)} />
+                  <SliderSetting label={<span>j — Length of the ribbon at the top</span>} value={pnJ} min={-0.05} max={0.25} step={0.001} onChange={setPnJ} onReset={() => setPnJ(0.049)} formatValue={v => v.toFixed(3)} />
+                  <SliderSetting label={<span>k — Falloff of the ribbon (log scale)</span>} value={pnK} min={10} max={1000} step={1} onChange={setPnK} onReset={() => setPnK(103)} logScale />
+                  <SliderSetting label={<span>s — Vertical height of the playneedle button</span>} value={pnS} min={10} max={25} step={0.1} onChange={setPnS} onReset={() => setPnS(16.4)} formatValue={v => v.toFixed(1)} />
+                  <SliderSetting label={<span>v<sub>o</sub> — Vertical offset of the playneedle button</span>} value={pnVo} min={0} max={1} step={0.001} onChange={setPnVo} onReset={() => setPnVo(0.4)} formatValue={v => v.toFixed(3)} />
+                  <SliderSetting label={<span>h<sub>b</sub> — Horizontal width of the playneedle button</span>} value={pnHb} min={0.5} max={1} step={0.001} onChange={setPnHb} onReset={() => setPnHb(0.8)} formatValue={v => v.toFixed(3)} />
+                  <SliderSetting label={<span>h<sub>r</sub> — Horizontal width of the ribbon</span>} value={pnHr} min={0} max={1} step={0.001} onChange={setPnHr} onReset={() => setPnHr(1)} formatValue={v => v.toFixed(3)} />
+                </SettingsCategory>
+
+                {/* Miscellaneous category */}
+                <SettingsCategory title="Miscellaneous">
+                  <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v}%`} />
+                  <SliderSetting label="Draggable modal background blur amount" value={elevatedPanelBlur} min={0} max={100} step={1} onChange={setElevatedPanelBlur} onReset={() => setElevatedPanelBlur(0)} formatValue={v => `${v}%`} />
+                </SettingsCategory>
               </div>
             )}
             {activeTab === "checkboxes" && (
@@ -304,13 +368,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input type="checkbox" className="settings-checkbox" checked={includeResizeInUndo} onChange={e => setIncludeResizeInUndo(e.target.checked)} />
                     <button type="button" className="icon-btn" onClick={() => setIncludeResizeInUndo(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                  </div>
-                </div>
-                <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                  <span style={{ flex: 1, lineHeight: 1.2 }}>Cancel smooth zoom when<br />scrolling timeline</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input type="checkbox" className="settings-checkbox" checked={cancelZoomOnScroll} onChange={e => setCancelZoomOnScroll(e.target.checked)} />
-                    <button type="button" className="icon-btn" onClick={() => setCancelZoomOnScroll(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                   </div>
                 </div>
               </div>

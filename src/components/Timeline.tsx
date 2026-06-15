@@ -6,6 +6,7 @@ import TorusMenu from './TorusMenu';
 import Waveform from './Waveform';
 import ThumbnailRoll from './ThumbnailRoll';
 import { isWheelShortcutMatch } from './shortcuts';
+import FormulaPlayneedle from './FormulaPlayneedle';
 
 interface Props {
   clips: TimelineClip[];
@@ -29,13 +30,7 @@ interface Props {
 const TRACK_H = 64;
 const HEADER_H = 32;
 const PX_PER_FRAME = 4;
-const PLAYHEAD_BTN_H = 16;
-const DEFAULT_PLAYHEAD_TOP_PCT = 15;
-
-function playheadTopStyle(percent: number | undefined): string {
-  const pct = typeof percent === 'number' ? Math.min(100, Math.max(0, percent)) : DEFAULT_PLAYHEAD_TOP_PCT;
-  return `calc((100% - ${PLAYHEAD_BTN_H}px) * ${pct} / 100)`;
-}
+const PLAYHEAD_MAX_WIDTH = 20;
 
 function frameToX(frame: number, zoom: number) { return frame * PX_PER_FRAME * zoom; }
 function xToFrame(x: number, zoom: number) { return Math.round(x / (PX_PER_FRAME * zoom)); }
@@ -47,7 +42,31 @@ type TorusTarget =
 
 interface PropsWithMedia extends Props {
   mediaItems: Map<string, MediaItem>;
-  playheadTop?: number;
+}
+
+interface PlayneedleFormulaParams {
+  t: number;
+  j: number;
+  k: number;
+  s: number;
+  v_o: number;
+  h_b: number;
+  h_r: number;
+}
+
+function getPlayneedleParams(): PlayneedleFormulaParams {
+  const get = (key: string, fallback: number) => {
+    try { const v = window.localStorage.getItem(`juicecut.settings.playneedle_${key}`); return v !== null ? Number(v) : fallback; } catch { return fallback; }
+  };
+  return {
+    t:   get('t',   0.092),
+    j:   get('j',   0.049),
+    k:   get('k',   103),
+    s:   get('s',   16.4),
+    v_o: get('v_o', 0.4),
+    h_b: get('h_b', 0.8),
+    h_r: get('h_r', 1),
+  };
 }
 
 export default function Timeline({
@@ -55,8 +74,8 @@ export default function Timeline({
   onSeek, onDropMedia, onSelectClip,
   onSplitClip, onTrimLatter, onTrimFormer,
   onNudge, onJoin, onFadeChange, onRoll, onStepEdge,
-  totalFrames
-  , mediaItems, playheadTop
+  totalFrames,
+  mediaItems
 }: PropsWithMedia) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -73,7 +92,6 @@ export default function Timeline({
   const playheadRef = useRef(playhead);
   useEffect(() => { playheadRef.current = playhead; }, [playhead]);
 
-  // Smooth scrolling state - read directly in handlers for immediate updates
   const getScrollSmoothFactor = () => {
     try { const v = window.localStorage.getItem('juicecut.settings.scrollSmooth'); return v ? Number(v) : 50; } catch { return 50; }
   };
@@ -92,13 +110,17 @@ export default function Timeline({
   const [timecodePanel, setTimecodePanel] = useState<string>(() => {
     try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; }
   });
+  const [playneedleParams, setPlayneedleParams] = useState<PlayneedleFormulaParams>(getPlayneedleParams);
 
-  // Listen for timecode panel setting changes
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.key === 'timecodePanel' && typeof detail.value === 'string') {
         setTimecodePanel(detail.value);
+      }
+      // Re-read all playneedle params when any playneedle setting changes
+      if (detail?.key && String(detail.key).startsWith('playneedle_')) {
+        setPlayneedleParams(getPlayneedleParams());
       }
     };
     window.addEventListener('juicecut-settings-changed', handler);
@@ -110,7 +132,6 @@ export default function Timeline({
   const velocityRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const scrollElRef = useRef<HTMLElement | null>(null);
-  // Smooth zoom state
   const zoomTargetRef = useRef<number>(1);
   const zoomRafRef = useRef<number | null>(null);
   const zoomScrollElRef = useRef<HTMLElement | null>(null);
@@ -121,10 +142,8 @@ export default function Timeline({
   const [zoomAnimTrigger, setZoomAnimTrigger] = useState(0);
   const scrollTargetRef = useRef<number | null>(null);
   const zoomMouseXTargetRef = useRef<number>(0);
-  // Playneedle auto-scroll: target scroll to bring playhead into interquartile range
   const playheadScrollTargetRef = useRef<number | null>(null);
 
-  // Keep zoomCurrentRef and zoomTargetRef in sync with zoom state
   useEffect(() => {
     zoomCurrentRef.current = zoom;
     if (!zoomAnimatingRef.current) zoomTargetRef.current = zoom;
@@ -138,7 +157,6 @@ export default function Timeline({
     el.scrollLeft = scrollLeft;
   });
 
-  // Start zoom animation when trigger changes
   useEffect(() => {
     if (zoomRafRef.current !== null) return;
 
@@ -160,14 +178,11 @@ export default function Timeline({
 
         let targetScrollLeft: number;
         if (zoomEpicenter === 'playneedle') {
-          // Same as cursor: keep the playhead at its viewport position
-          // If there's an auto-scroll target (playhead was off-screen), smoothly scroll toward it
           if (playheadScrollTargetRef.current !== null) {
             const currentScroll = el.scrollLeft;
             const scrollSmoothFactor = getScrollSmoothFactor();
             const st = scrollSmoothFactor === 0 ? 1 : 0.02 + (1 - scrollSmoothFactor / 100) * 0.18;
             const newScroll = currentScroll + (playheadScrollTargetRef.current - currentScroll) * st;
-            // Check if playhead is now within interquartile range (25%-75%)
             const playheadViewportX = frameToX(playheadRef.current, clampedZoom) - newScroll;
             if (playheadViewportX >= el.clientWidth * 0.25 && playheadViewportX <= el.clientWidth * 0.75) {
               playheadScrollTargetRef.current = null;
@@ -177,11 +192,9 @@ export default function Timeline({
             targetScrollLeft = Math.max(0, frameToX(zoomBeforeFrameRef.current, clampedZoom) - zoomMouseXRef.current);
           }
         } else if (zoomEpicenter === 'middle') {
-          // Keep the center of the viewport fixed
           const centeredScrollLeft = frameToX(zoomBeforeFrameRef.current, clampedZoom) - el.clientWidth / 2;
           targetScrollLeft = Math.max(0, centeredScrollLeft);
         } else {
-          // 'cursor' — keep the frame under the cursor fixed
           targetScrollLeft = Math.max(0, frameToX(zoomBeforeFrameRef.current, clampedZoom) - zoomMouseXRef.current);
         }
 
@@ -238,15 +251,7 @@ export default function Timeline({
     e.stopPropagation();
     const target = getPlayheadContext();
     setTorusTarget(target);
-    // Get the playneedle button element and use its center as the anchor point
-    const btnEl = (e.target as HTMLElement).closest('.playhead-btn') as HTMLElement | null;
-    if (btnEl) {
-      const btnRect = btnEl.getBoundingClientRect();
-      setTorusPos({ x: btnRect.left + btnRect.width / 2, y: btnRect.top + btnRect.height / 2 });
-    } else {
-      // Fallback to mouse position
-      setTorusPos({ x: e.clientX, y: e.clientY });
-    }
+    setTorusPos({ x: e.clientX, y: e.clientY });
   }, [getPlayheadContext]);
 
   const getJoinPairs = useCallback(() => {
@@ -336,7 +341,6 @@ export default function Timeline({
     };
   }, [handleMouseMove, handleMouseUp]);
 
-  // Update playhead position on scroll while dragging
   useEffect(() => {
     const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement | null;
     if (!scrollEl) return;
@@ -353,7 +357,6 @@ export default function Timeline({
     return () => scrollEl.removeEventListener('scroll', handleScroll);
   }, [zoom, onSeek]);
 
-  // Momentum animation loop for smooth scrolling
   useEffect(() => {
     const animate = () => {
       const vel = velocityRef.current;
@@ -382,7 +385,6 @@ export default function Timeline({
   }, []);
 
   const handleWheel = useCallback((_e: React.WheelEvent<HTMLElement>) => {
-    // All wheel handling is done in the native listener below
   }, []);
 
   useEffect(() => {
@@ -394,7 +396,6 @@ export default function Timeline({
     return () => window.removeEventListener('keydown', handler);
   }, [selectedIds, onNudge]);
 
-  // Single non-passive native wheel listener handles everything so preventDefault is always honoured
   useEffect(() => {
     const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement | null;
     if (!scrollEl) return;
@@ -404,7 +405,6 @@ export default function Timeline({
       const scrollSmoothFactor = getScrollSmoothFactor();
       const scrollAmount = getScrollAmount();
 
-      // Use centralized shortcut check instead of hardcoded e.altKey
       if (isWheelShortcutMatch('timelineZoomToggle', e)) {
         e.preventDefault();
         velocityRef.current = 0;
@@ -416,16 +416,13 @@ export default function Timeline({
 
         const zoomEpicenter = (() => { try { return window.localStorage.getItem('juicecut.settings.zoomEpicenter') || 'playneedle'; } catch { return 'playneedle'; } })();
 
-        // Always update epicenter so it reflects the current playneedle/cursor position
         if (zoomEpicenter === 'playneedle') {
-          // Same behavior as cursor: keep the playhead at its current viewport position
           zoomBeforeFrameRef.current = playheadRef.current;
           const playheadViewportX = frameToX(playheadRef.current, zoomCurrentRef.current) - el.scrollLeft;
           zoomMouseXRef.current = playheadViewportX;
           zoomMouseXTargetRef.current = playheadViewportX;
-          // If playhead is off-screen, set a scroll target to bring it into interquartile range
           if (playheadViewportX < 0 || playheadViewportX > el.clientWidth) {
-            const targetViewportX = el.clientWidth * 0.5; // center of interquartile range
+            const targetViewportX = el.clientWidth * 0.5;
             const targetScrollLeft = frameToX(playheadRef.current, zoomCurrentRef.current) - targetViewportX;
             playheadScrollTargetRef.current = Math.max(0, targetScrollLeft);
           } else {
@@ -438,7 +435,6 @@ export default function Timeline({
           zoomMouseXRef.current = mouseX;
           zoomMouseXTargetRef.current = mouseX;
         } else {
-          // 'middle' — zoom toward the center of the visible timeline
           const rect = el.getBoundingClientRect();
           const middleX = el.clientWidth / 2;
           zoomBeforeFrameRef.current = xToFrame(el.scrollLeft + middleX, zoomCurrentRef.current);
@@ -452,16 +448,13 @@ export default function Timeline({
         return;
       }
 
-      // Horizontal pan
       const rawDelta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
       const delta = rawDelta * (scrollAmount / 100);
       if (delta === 0) return;
       e.preventDefault();
 
       if (zoomAnimatingRef.current) {
-        // Always stop zoom scroll corrections when scrolling horizontally
         if (zoomRafRef.current !== null) { cancelAnimationFrame(zoomRafRef.current); zoomRafRef.current = null; }
-        // Immediately apply any pending scroll correction so el.scrollLeft is in sync
         if (pendingScrollCorrection.current) {
           const { el: corrEl, scrollLeft } = pendingScrollCorrection.current;
           pendingScrollCorrection.current = null;
@@ -471,7 +464,6 @@ export default function Timeline({
         scrollTargetRef.current = null;
         zoomAnimatingRef.current = false;
         if (getCancelZoomOnScroll()) {
-          // Commit the zoom target immediately
           zoomCurrentRef.current = zoomTargetRef.current;
           setZoom(zoomTargetRef.current);
         }
@@ -501,11 +493,9 @@ export default function Timeline({
     return () => scrollEl.removeEventListener('wheel', handler);
   }, []);
 
-  // Listen for settings changes to update zoom behavior in real-time
   useEffect(() => {
     const handleSettingsChange = () => {
       if (Math.abs(zoomTargetRef.current - zoom) > 0.001 && zoomRafRef.current === null) {
-        // Animation will restart via the zoom dependency in the animation useEffect
       }
     };
     window.addEventListener('juicecut-settings-changed', handleSettingsChange);
@@ -554,8 +544,8 @@ export default function Timeline({
         </div>
 
         <div className="tl-scroll" style={{ position: 'relative', overflow: 'auto hidden', flex: 1, height: '100%' }} onWheel={handleWheel}>
-          <div 
-            className="tl-inner" 
+          <div
+            className="tl-inner"
             style={{ width: totalWidth, position: 'relative', height: '100%' }}
             onMouseDown={(e) => {
               const target = e.target as HTMLElement;
@@ -653,18 +643,32 @@ export default function Timeline({
               ))}
             </div>
 
+            {/* Formula-based playneedle */}
             <div
               className="tl-playhead"
-              style={{ left: playheadX, top: 0, height: '100%' }}
+              style={{
+                position: 'absolute',
+                left: playheadX - PLAYHEAD_MAX_WIDTH / 2,
+                top: 0,
+                width: PLAYHEAD_MAX_WIDTH,
+                height: '100%',
+                zIndex: 40,
+                pointerEvents: 'none',
+              }}
             >
-              <button
-                className="playhead-btn"
-                style={{ top: playheadTopStyle(playheadTop) }}
+              <div
+                style={{ pointerEvents: 'all', width: '100%', height: '100%' }}
                 onMouseDown={(e) => { e.preventDefault(); playheadDraggingRef.current = true; }}
                 onClick={handleNeedleClick}
-                title="Click for edit options"
-              />
-              <div className="playhead-line" />
+              >
+                <FormulaPlayneedle
+                  height={containerRef.current?.clientHeight ?? 200}
+                  maxWidth={PLAYHEAD_MAX_WIDTH}
+                  color="var(--playneedle)"
+                  glowColor="color-mix(in srgb, var(--playneedle) 60%, transparent)"
+                  params={playneedleParams}
+                />
+              </div>
             </div>
           </div>
         </div>

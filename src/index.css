@@ -1381,6 +1381,48 @@ input[type="color"] {
 ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a3d50; }
 
+/* Settings Categories */
+.settings-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 
+.settings-category-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.12s;
+}
+
+.settings-category-header:hover {
+  color: var(--text-primary);
+}
+
+.settings-category-arrow {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.settings-category-title {
+  letter-spacing: 0.3px;
+}
+
+.settings-category-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 0 12px 20px;
+}
 
 
