@@ -33,32 +33,45 @@ export default function DraggableModal({ title, body, onClose, className = '', m
   const [isDragging, setIsDragging] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
-
-  const getGuiScale = () => {
-    try { const v = window.localStorage.getItem('juicecut.settings.guiScale'); return v ? Number(v) / 100 : 1; } catch { return 1; }
-  };
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     // Don't start drag if clicking close or minimize buttons
     if (target.closest('.modal-minimize-btn') || target.closest('[aria-label="Close"]')) return;
     setIsDragging(true);
-    const scale = getGuiScale();
-    dragOffset.current = {
-      x: (e.clientX - position.x) / scale,
-      y: (e.clientY - position.y) / scale,
-    };
-  }, [position]);
+    // Get the modal element's current screen position
+    const modalEl = overlayRef.current?.querySelector('.modal-box') as HTMLElement | null;
+    if (modalEl) {
+      const modalRect = modalEl.getBoundingClientRect();
+      // Store the offset from click point to the modal's top-left corner
+      dragOffset.current = {
+        x: e.clientX - modalRect.left,
+        y: e.clientY - modalRect.top,
+      };
+    }
+  }, []);
 
   useEffect(() => {
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const scale = getGuiScale();
-      setPosition({
-        x: e.clientX / scale - dragOffset.current.x,
-        y: e.clientY / scale - dragOffset.current.y,
-      });
+      // Directly set the modal position so the anchor point stays under the cursor
+      const modalEl = overlayRef.current?.querySelector('.modal-box') as HTMLElement | null;
+      if (modalEl) {
+        const modalW = modalEl.offsetWidth;
+        const modalH = modalEl.offsetHeight;
+        // position.x is the offset from viewport center
+        // We want: modalRect.left = e.clientX - dragOffset.x
+        // modalRect.left = viewportCenterX + position.x - modalW/2 (from the CSS)
+        // So: position.x = e.clientX - dragOffset.x + modalW/2 - viewportCenterX
+        const vw = document.documentElement.clientWidth;
+        const vh = document.documentElement.clientHeight;
+        setPosition({
+          x: e.clientX - dragOffset.current.x + modalW / 2 - vw / 2,
+          y: e.clientY - dragOffset.current.y + modalH / 2 - vh / 2,
+        });
+      }
     };
 
     const handleMouseUp = () => {
@@ -74,7 +87,7 @@ export default function DraggableModal({ title, body, onClose, className = '', m
   }, [isDragging]);
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true">
+    <div className="modal-overlay" role="dialog" aria-modal="true" ref={overlayRef}>
       <div
         className={`modal-box ${className}`}
         style={{

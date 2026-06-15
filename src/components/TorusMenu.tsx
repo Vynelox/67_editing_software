@@ -101,6 +101,7 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
   const innerR = 52;
   const outerR = 100;
   const sectorAngle = (Math.PI * 2) / items.length;
+  const rotationOffset = -Math.PI / 6; // 30 degrees anticlockwise
 
   return (
     <div
@@ -114,8 +115,8 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
     >
       <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`}>
         {items.map((item, i) => {
-          const startAngle = i * sectorAngle - Math.PI / 2;
-          const endAngle = (i + 1) * sectorAngle - Math.PI / 2;
+          const startAngle = i * sectorAngle - Math.PI / 2 + rotationOffset;
+          const endAngle = (i + 1) * sectorAngle - Math.PI / 2 + rotationOffset;
           const midAngle = (startAngle + endAngle) / 2;
           const labelR = (innerR + outerR) / 2;
           const labelX = cx + labelR * Math.cos(midAngle);
