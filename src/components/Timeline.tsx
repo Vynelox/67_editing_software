@@ -247,12 +247,36 @@ export default function Timeline({
     return { kind: 'inside', clipId: '', frame: playhead };
   }, [clips, playhead]);
 
+  const playheadX = frameToX(playhead, zoom);
+
   const handleNeedleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     const target = getPlayheadContext();
     setTorusTarget(target);
-    setTorusPos({ x: e.clientX, y: e.clientY });
-  }, [getPlayheadContext]);
+    
+    // Calculate the viewport position of the playneedle button center
+    const el = containerRef.current;
+    if (el) {
+      const scrollEl = el.querySelector('.tl-scroll') as HTMLElement | null;
+      const scrollRect = scrollEl?.getBoundingClientRect();
+      const scrollLeft = scrollEl?.scrollLeft ?? 0;
+      const phHeight = scrollEl?.clientHeight ?? 200;
+      
+      // X coordinate: center of the playneedle in viewport
+      // playheadX is relative to tl-inner, scrollLeft accounts for horizontal scroll
+      const btnCenterX = (scrollRect?.left ?? 0) + playheadX - scrollLeft;
+      
+      // Y coordinate: button center position within the playneedle
+      // Using the formula: v_o * (1 - π/s) + π/(2s) as percentage of playneedle height
+      const { v_o, s } = playneedleParams;
+      const buttonCenterY = v_o * (1 - Math.PI / s) + Math.PI / (2 * s);
+      const btnCenterY = (scrollRect?.top ?? 0) + buttonCenterY * phHeight;
+      
+      setTorusPos({ x: btnCenterX, y: btnCenterY });
+    } else {
+      setTorusPos({ x: e.clientX, y: e.clientY });
+    }
+  }, [getPlayheadContext, playheadX, playneedleParams]);
 
   const getJoinPairs = useCallback(() => {
     const pairs: Array<{ clipA: TimelineClip; clipB: TimelineClip }> = [];
@@ -513,8 +537,6 @@ export default function Timeline({
     const frame = Math.max(0, xToFrame(x, zoom));
     onDropMedia(mediaId, trackIdx, frame);
   };
-
-  const playheadX = frameToX(playhead, zoom);
 
   const clipColor = (type: string) =>
     type === 'video' ? 'clip-video' : type === 'audio' ? 'clip-audio' : 'clip-image';

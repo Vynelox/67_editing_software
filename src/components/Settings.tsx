@@ -347,8 +347,8 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 <SettingsCategory title="Playneedle">
                   <SliderSetting label={<span>t — Total thickness of the needle part</span>} value={pnT} min={0} max={0.5} step={0.001} onChange={setPnT} onReset={() => setPnT(0.092)} formatValue={v => v.toFixed(3)} />
                   <SliderSetting label={<span>j — Length of the ribbon at the top</span>} value={pnJ} min={-0.05} max={0.25} step={0.001} onChange={setPnJ} onReset={() => setPnJ(0.049)} formatValue={v => v.toFixed(3)} />
-                  <SliderSetting label={<span>k — Falloff of the ribbon (log scale)</span>} value={pnK} min={10} max={1000} step={1} onChange={setPnK} onReset={() => setPnK(103)} logScale />
-                  <SliderSetting label={<span>s — Vertical height of the playneedle button</span>} value={pnS} min={10} max={25} step={0.1} onChange={setPnS} onReset={() => setPnS(16.4)} formatValue={v => v.toFixed(1)} />
+                  <SliderSetting label={<span>k — Falloff of the ribbon (log scale)</span>} value={pnK} min={10} max={1000} step={1} onChange={setPnK} onReset={() => setPnK(103)} logScale formatValue={v => v.toFixed(3)} />
+                  <SliderSetting label={<span>s — Vertical height of the playneedle button</span>} value={pnS} min={10} max={50} step={0.1} onChange={setPnS} onReset={() => setPnS(16.4)} formatValue={v => v.toFixed(1)} />
                   <SliderSetting label={<span>v<sub>o</sub> — Vertical offset of the playneedle button</span>} value={pnVo} min={0} max={1} step={0.001} onChange={setPnVo} onReset={() => setPnVo(0.4)} formatValue={v => v.toFixed(3)} />
                   <SliderSetting label={<span>h<sub>b</sub> — Horizontal width of the playneedle button</span>} value={pnHb} min={0.5} max={1} step={0.001} onChange={setPnHb} onReset={() => setPnHb(0.8)} formatValue={v => v.toFixed(3)} />
                   <SliderSetting label={<span>h<sub>r</sub> — Horizontal width of the ribbon</span>} value={pnHr} min={0} max={1} step={0.001} onChange={setPnHr} onReset={() => setPnHr(1)} formatValue={v => v.toFixed(3)} />
