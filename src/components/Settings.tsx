@@ -19,6 +19,7 @@ const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
   undo: "Undo",
   redo: "Redo",
   timelineZoomToggle: "Timeline horizontal zoom toggle",
+  exitModal: "Exit modal",
 };
 
 function loadAllShortcuts(): Record<ShortcutAction, string[][]> {
@@ -26,6 +27,7 @@ function loadAllShortcuts(): Record<ShortcutAction, string[][]> {
     undo: scGetKeys("undo"),
     redo: scGetKeys("redo"),
     timelineZoomToggle: scGetKeys("timelineZoomToggle"),
+    exitModal: scGetKeys("exitModal"),
   };
 }
 
@@ -294,7 +296,8 @@ export function OpenSettings(pageData?: any, scroll?: number | null) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
-  const cleanup = () => { try { root.unmount(); } catch (e) {} if (container.parentNode) container.parentNode.removeChild(container); };
+  const cleanup = () => { try { root.unmount(); } catch (e) {} if (container.parentNode) container.parentNode.removeChild(container); (window as any).__popClose?.(); };
+  (window as any).__pushClose?.(cleanup);
   root.render(<SettingsShell initialPageData={pageData} initialScroll={scroll ?? null} onClose={cleanup} />);
   return cleanup;
 }

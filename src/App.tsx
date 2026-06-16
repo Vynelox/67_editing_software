@@ -4,7 +4,8 @@ import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
 import { OpenSettings } from './components/Settings';
-import { StylesModal, applyThemeToDocument } from './components/styles';
+import { isShortcutMatch } from './components/shortcuts';
+import { parentMap, StylesModal, applyThemeToDocument } from './components/styles';
 import Splitter from './components/Splitter';
 import DraggableModal from './components/DraggableModal';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -15,6 +16,12 @@ import {
 import { HistoryProvider, useHistory } from './state/history';
 
 const DEFAULT_IMAGE_DURATION = 5 * FPS;
+
+// Global close stack for escape key handling (LIFO)
+const closeStack: Array<() => void> = [];
+(window as any).__pushClose = (fn: () => void) => { closeStack.push(fn); };
+(window as any).__popClose = () => { closeStack.pop(); };
+(window as any).__peekClose = () => closeStack.length > 0 ? closeStack[closeStack.length - 1] : null;
 
 const TRACKS: Track[] = [
   { id: 'v1', type: 'video', label: 'V1' },
@@ -275,14 +282,40 @@ function AppContent() {
     return () => { if (playIntervalRef.current) clearInterval(playIntervalRef.current); };
   }, [playing, totalFrames]);
 
+  // Styles back/close: goes back one level if inside a sub-page, otherwise closes
+  const handleStyleBackOrClose = useCallback(() => {
+    if (stylePage) {
+      const parentId = parentMap[stylePage] || null;
+      setStylePage(parentId);
+    } else {
+      setShowStyle(false);
+    }
+  }, [stylePage]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && e.key === 'd') { e.preventDefault(); setSelectedIds([]); }
       if (e.key === ' ') { e.preventDefault(); setPlaying(p => !p); }
+      if (isShortcutMatch('exitModal', e)) {
+        // Don't intercept when typing in inputs
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+        // Check close stack first (Settings, TorusMenuEditor)
+        const topClose = (window as any).__peekClose?.();
+        if (topClose) {
+          e.preventDefault();
+          e.stopPropagation();
+          topClose();
+          return;
+        }
+        // React-state modals
+        if (showExport) { e.preventDefault(); setShowExport(false); return; }
+        if (showStyle) { e.preventDefault(); handleStyleBackOrClose(); return; }
+      }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
+  }, [showExport, showStyle, handleStyleBackOrClose]);
 
   const handleAddMedia = useCallback(async (files: FileList) => {
     history.push(snapshot());

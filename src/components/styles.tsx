@@ -112,7 +112,7 @@ const allDisplayItems: Record<string, DisplayItem> = {
   'forest': { id: 'forest', label: 'forest', type: 'theme', icon: forestIcon },
 };
 
-const parentMap: Record<string, string | undefined> = {};
+export const parentMap: Record<string, string | undefined> = {};
 for (const itemId in allDisplayItems) {
   const item = allDisplayItems[itemId];
   if (item.type === 'folder' && item.children) {

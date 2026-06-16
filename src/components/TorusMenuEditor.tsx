@@ -10,8 +10,10 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
   const cleanup = () => {
     try { root.unmount(); } catch (e) {}
     if (container.parentNode) container.parentNode.removeChild(container);
+    (window as any).__popClose?.();
     if (onCloseCallback) onCloseCallback();
   };
+  (window as any).__pushClose?.(cleanup);
   root.render(<TorusMenuEditorModal onClose={cleanup} />);
   return cleanup;
 }

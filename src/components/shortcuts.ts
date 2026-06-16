@@ -1,12 +1,13 @@
 ﻿/**
  * Centralized keyboard shortcut management.
  */
-export type ShortcutAction = "undo" | "redo" | "timelineZoomToggle";
+export type ShortcutAction = "undo" | "redo" | "timelineZoomToggle" | "exitModal";
 
 const DEFAULT_SHORTCUTS: Record<ShortcutAction, string[][]> = {
   undo: [["ctrl", "z"]],
   redo: [["ctrl", "shift", "z"], ["ctrl", "y"], ["ctrl", "alt", "z"]],
   timelineZoomToggle: [["alt"]],
+  exitModal: [["escape"]],
 };
 
 const STORAGE_KEY = "juicecut.settings.keyboardShortcuts";
