@@ -16,34 +16,33 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
   return cleanup;
 }
 
+const ANIMATION_TYPES = ['none', 'pop', 'clock'] as const;
+type AnimationType = typeof ANIMATION_TYPES[number];
+
 export default function TorusMenuEditorModal({ onClose }: { onClose: () => void }) {
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
+  const [animType, setAnimType] = useState<AnimationType>('none');
 
   return (
     <DraggableModal
       title="Torus Menu Editor"
       onClose={onClose}
-      style={{ width: 420, minHeight: 400 }}
+      style={{ width: 360, minHeight: 0 }}
       body={
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '16px 0' }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: 12, textAlign: 'center' }}>
-            Interactive preview — click sectors to test
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 12px 0' }}>
           <div style={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            width: 280,
-            height: 280,
-            background: 'var(--bg-base)',
+            width: 200,
+            height: 200,
             borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border)',
             overflow: 'hidden',
           }}>
             <TorusMenuPreview
               items={insideMenuItems}
-              cx={140}
-              cy={140}
+              cx={100}
+              cy={100}
               innerR={52}
               outerR={100}
               rotationOffset={-Math.PI / 6}
@@ -52,6 +51,34 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
           </div>
           <div style={{ color: 'var(--text-muted)', fontSize: 11, textAlign: 'center' }}>
             {selectedSector ? `Selected: ${selectedSector}` : '6 sectors • Inside mode'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8, width: 200 }}>
+            <span style={{ lineHeight: 1.2, fontSize: 13, color: 'var(--text-secondary)' }}>Animation type</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {ANIMATION_TYPES.map(opt => {
+                const active = animType === opt;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setAnimType(opt)}
+                    style={{
+                      padding: '5px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: active ? '1px solid var(--accent-blue)' : '1px solid var(--border-mid)',
+                      background: active ? 'rgba(56,189,248,0.15)' : 'var(--bg-elevated)',
+                      color: active ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                      fontSize: 12,
+                      fontWeight: active ? 600 : 400,
+                      cursor: 'pointer',
+                      transition: 'all 0.12s',
+                    }}
+                  >
+                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       }
