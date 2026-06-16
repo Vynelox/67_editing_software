@@ -30,7 +30,6 @@ function annularSectorPath(
   startAngle: number, endAngle: number,
   gap: number = 1.5
 ): string {
-  // Apply a small gap between sectors
   const sa = startAngle + gap * 0.5 * (Math.PI / 180);
   const ea = endAngle - gap * 0.5 * (Math.PI / 180);
 
@@ -101,71 +100,81 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
   const innerR = 52;
   const outerR = 100;
   const sectorAngle = (Math.PI * 2) / items.length;
-  const rotationOffset = -Math.PI / 6; // 30 degrees anticlockwise
+  const rotationOffset = -Math.PI / 6;
 
   return (
-    <div
-      className="torus-overlay"
-      ref={ref}
-      style={{ left: pos.x - cx, top: pos.y - cy }}
-      onMouseDown={(e) => {
-        if ((e.target as HTMLElement).closest('.torus-sector')) return;
-        onClose();
-      }}
-    >
-      <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`}>
-        {items.map((item, i) => {
-          const startAngle = i * sectorAngle - Math.PI / 2 + rotationOffset;
-          const endAngle = (i + 1) * sectorAngle - Math.PI / 2 + rotationOffset;
-          const midAngle = (startAngle + endAngle) / 2;
-          const labelR = (innerR + outerR) / 2;
-          const labelX = cx + labelR * Math.cos(midAngle);
-          const labelY = cy + labelR * Math.sin(midAngle);
+    <>
+      <style>{`
+        @keyframes torus-open {
+          0% { opacity: 0; transform: scale(0.3); }
+          60% { opacity: 1; }
+          80% { transform: scale(1.06); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+      <div
+        className="torus-overlay"
+        ref={ref}
+        style={{ left: pos.x - cx, top: pos.y - cy, animation: 'torus-open 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }}
+        onMouseDown={(e) => {
+          if ((e.target as HTMLElement).closest('.torus-sector')) return;
+          onClose();
+        }}
+      >
+        <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`}>
+          {items.map((item, i) => {
+            const startAngle = i * sectorAngle - Math.PI / 2 + rotationOffset;
+            const endAngle = (i + 1) * sectorAngle - Math.PI / 2 + rotationOffset;
+            const midAngle = (startAngle + endAngle) / 2;
+            const labelR = (innerR + outerR) / 2;
+            const labelX = cx + labelR * Math.cos(midAngle);
+            const labelY = cy + labelR * Math.sin(midAngle);
 
-          return (
-            <g key={item.label}>
-              <path
-                d={annularSectorPath(cx, cy, innerR, outerR, startAngle, endAngle)}
-                fill="var(--input-field-bg)"
-                stroke="var(--border-mid)"
-                strokeWidth={0.5}
-                className="torus-sector"
-                style={{ cursor: 'pointer' }}
-                onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
-              />
-              <foreignObject
-                x={labelX - 36}
-                y={labelY - 16}
-                width={72}
-                height={32}
-                className="torus-sector"
-                style={{ cursor: 'pointer', overflow: 'visible' }}
-                onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: '100%',
-                    color: 'var(--text-primary)',
-                    fontSize: 10,
-                    lineHeight: 1.1,
-                    textAlign: 'center',
-                    pointerEvents: 'none',
-                    gap: 1,
-                  }}
+            return (
+              <g key={item.label}>
+                <path
+                  d={annularSectorPath(cx, cy, innerR, outerR, startAngle, endAngle)}
+                  fill="var(--input-field-bg)"
+                  stroke="var(--border-mid)"
+                  strokeWidth={0.5}
+                  className="torus-sector"
+                  style={{ cursor: 'pointer' }}
+                  onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
+                />
+                <foreignObject
+                  x={labelX - 36}
+                  y={labelY - 16}
+                  width={72}
+                  height={32}
+                  className="torus-sector"
+                  style={{ cursor: 'pointer', overflow: 'visible' }}
+                  onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
                 >
-                  <span style={{ color: item.color, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
-                  <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
-                </div>
-              </foreignObject>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '100%',
+                      height: '100%',
+                      color: 'var(--text-primary)',
+                      fontSize: 10,
+                      lineHeight: 1.1,
+                      textAlign: 'center',
+                      pointerEvents: 'none',
+                      gap: 1,
+                    }}
+                  >
+                    <span style={{ color: item.color, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+                    <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
+                  </div>
+                </foreignObject>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </>
   );
 }
