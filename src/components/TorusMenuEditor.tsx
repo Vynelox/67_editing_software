@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import DraggableModal from './DraggableModal';
 import TorusMenuPreview, { insideMenuItems } from './TorusMenuPreview';
@@ -19,9 +19,21 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
 const ANIMATION_TYPES = ['none', 'pop', 'clock'] as const;
 type AnimationType = typeof ANIMATION_TYPES[number];
 
+function getSavedAnimType(): AnimationType {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.torusAnimType');
+    if (v === 'none' || v === 'pop' || v === 'clock') return v;
+  } catch {}
+  return 'pop';
+}
+
 export default function TorusMenuEditorModal({ onClose }: { onClose: () => void }) {
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
-  const [animType, setAnimType] = useState<AnimationType>('none');
+  const [animType, setAnimType] = useState<AnimationType>(getSavedAnimType);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.torusAnimType', animType); } catch {}
+  }, [animType]);
 
   return (
     <DraggableModal
@@ -46,6 +58,7 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
               innerR={52}
               outerR={100}
               rotationOffset={-Math.PI / 6}
+              animType={animType}
               onSectorClick={(label) => setSelectedSector(label)}
             />
           </div>

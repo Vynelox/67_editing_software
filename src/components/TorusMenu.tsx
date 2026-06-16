@@ -54,8 +54,13 @@ function annularSectorPath(
   ].join(' ');
 }
 
+function getAnimType(): string {
+  try { return window.localStorage.getItem('juicecut.settings.torusAnimType') || 'pop'; } catch { return 'pop'; }
+}
+
 export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter, onTrimFormer, onStep, onRoll }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const animType = getAnimType();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,6 +107,26 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
   const sectorAngle = (Math.PI * 2) / items.length;
   const rotationOffset = -Math.PI / 6;
 
+  // Build animation CSS based on type
+  const getOverlayAnimation = () => {
+    if (animType === 'none') return 'none';
+    if (animType === 'clock') return 'none'; // clock animates per-sector
+    return 'torus-open 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+  };
+
+  const getSectorStyle = (index: number): React.CSSProperties => {
+    if (animType === 'none') return { cursor: 'pointer' };
+    if (animType === 'pop') return { cursor: 'pointer', animation: 'torus-open 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' };
+    // clock: staggered pop-in per sector, clockwise
+    const delay = index * 0.06;
+    return {
+      cursor: 'pointer',
+      animation: `torus-sector-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s forwards`,
+      opacity: 0,
+      transform: 'scale(0.3)',
+    };
+  };
+
   return (
     <>
       <style>{`
@@ -111,11 +136,17 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
           80% { transform: scale(1.06); }
           100% { opacity: 1; transform: scale(1); }
         }
+        @keyframes torus-sector-pop {
+          0% { opacity: 0; transform: scale(0.3); }
+          60% { opacity: 1; }
+          80% { transform: scale(1.08); }
+          100% { opacity: 1; transform: scale(1); }
+        }
       `}</style>
       <div
         className="torus-overlay"
         ref={ref}
-        style={{ left: pos.x - cx, top: pos.y - cy, animation: 'torus-open 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }}
+        style={{ left: pos.x - cx, top: pos.y - cy, animation: getOverlayAnimation() }}
         onMouseDown={(e) => {
           if ((e.target as HTMLElement).closest('.torus-sector')) return;
           onClose();
@@ -138,7 +169,7 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
                   stroke="var(--border-mid)"
                   strokeWidth={0.5}
                   className="torus-sector"
-                  style={{ cursor: 'pointer' }}
+                  style={getSectorStyle(i)}
                   onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
                 />
                 <foreignObject
@@ -147,7 +178,7 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
                   width={72}
                   height={32}
                   className="torus-sector"
-                  style={{ cursor: 'pointer', overflow: 'visible' }}
+                  style={{ cursor: 'pointer', overflow: 'visible', ...getSectorStyle(i) }}
                   onClick={(e) => { e.stopPropagation(); item.action(); onClose(); }}
                 >
                   <div
