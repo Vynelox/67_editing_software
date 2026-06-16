@@ -485,11 +485,21 @@ function AppContent() {
       )}
       <header className="app-header">
         <div className="app-logo">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect x="2" y="2" width="8" height="8" rx="1.5" fill="#38bdf8"/>
-            <rect x="12" y="2" width="8" height="8" rx="1.5" fill="#34d399"/>
-            <rect x="2" y="12" width="8" height="8" rx="1.5" fill="#fb923c"/>
-            <rect x="12" y="12" width="8" height="8" rx="1.5" fill="#f472b6"/>
+          <svg viewBox="0 0 22 22" fill="none">
+            {/* Citrus/orange slice shape — the "juice" */}
+            <circle cx="11" cy="11" r="8" fill="#fb923c"/>
+            <circle cx="11" cy="11" r="6.5" fill="#f59e0b"/>
+            {/* Citrus segments */}
+            <path d="M11 4.5V11L14.5 6" stroke="#fb923c" strokeWidth="1.2" strokeLinecap="round"/>
+            <path d="M17.5 11H11L16 14.5" stroke="#fb923c" strokeWidth="1.2" strokeLinecap="round"/>
+            <path d="M11 17.5V11L7.5 16" stroke="#fb923c" strokeWidth="1.2" strokeLinecap="round"/>
+            <path d="M4.5 11H11L6 7.5" stroke="#fb923c" strokeWidth="1.2" strokeLinecap="round"/>
+            {/* Play triangle cut into the citrus */}
+            <path d="M9.5 8L15 11L9.5 14V8Z" fill="#0c0d10"/>
+            {/* Juice splash droplets */}
+            <circle cx="18" cy="5" r="1.2" fill="#fbbf24"/>
+            <circle cx="20" cy="8" r="0.8" fill="#fbbf24"/>
+            <circle cx="5" cy="18" r="1" fill="#fbbf24"/>
           </svg>
           <span>Juice Cut</span>
         </div>
