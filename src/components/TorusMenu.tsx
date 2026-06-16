@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Scissors, ChevronLeft, ChevronRight, Move } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Scissors, ChevronLeft, ChevronRight, Move, Settings } from 'lucide-react';
+import DraggableModal from './DraggableModal';
 
 type TorusTarget =
   | { kind: 'inside'; clipId: string; frame: number }
@@ -54,8 +55,75 @@ function annularSectorPath(
   ].join(' ');
 }
 
+/** Interactive torus menu preview for the editor modal */
+function TorusMenuPreview({ items, cx, cy, innerR, outerR, rotationOffset, onSectorClick }: {
+  items: MenuItem[];
+  cx: number;
+  cy: number;
+  innerR: number;
+  outerR: number;
+  rotationOffset: number;
+  onSectorClick: (label: string) => void;
+}) {
+  const sectorAngle = (Math.PI * 2) / items.length;
+
+  return (
+    <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`}>
+      {items.map((item, i) => {
+        const startAngle = i * sectorAngle - Math.PI / 2 + rotationOffset;
+        const endAngle = (i + 1) * sectorAngle - Math.PI / 2 + rotationOffset;
+        const midAngle = (startAngle + endAngle) / 2;
+        const labelR = (innerR + outerR) / 2;
+        const labelX = cx + labelR * Math.cos(midAngle);
+        const labelY = cy + labelR * Math.sin(midAngle);
+
+        return (
+          <g key={item.label}>
+            <path
+              d={annularSectorPath(cx, cy, innerR, outerR, startAngle, endAngle)}
+              fill="var(--input-field-bg)"
+              stroke="var(--border-mid)"
+              strokeWidth={0.5}
+              style={{ cursor: 'pointer' }}
+              onClick={() => onSectorClick(item.label)}
+            />
+            <foreignObject
+              x={labelX - 36}
+              y={labelY - 16}
+              width={72}
+              height={32}
+              style={{ cursor: 'pointer', overflow: 'visible', pointerEvents: 'none' }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
+                  height: '100%',
+                  color: 'var(--text-primary)',
+                  fontSize: 10,
+                  lineHeight: 1.1,
+                  textAlign: 'center',
+                  pointerEvents: 'none',
+                  gap: 1,
+                }}
+              >
+                <span style={{ color: item.color, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+                <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
+              </div>
+            </foreignObject>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter, onTrimFormer, onStep, onRoll }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -101,6 +169,28 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
   const outerR = 100;
   const sectorAngle = (Math.PI * 2) / items.length;
   const rotationOffset = -Math.PI / 6;
+
+  // Calculate gear button position (above the Split sector)
+  const splitIndex = items.findIndex(item => item.label === 'Split');
+  const gearAngle = splitIndex >= 0
+    ? splitIndex * sectorAngle - Math.PI / 2 + rotationOffset + sectorAngle / 2
+    : -Math.PI / 2;
+  const gearR = outerR + 18;
+  const gearX = cx + gearR * Math.cos(gearAngle);
+  const gearY = cy + gearR * Math.sin(gearAngle);
+
+  // Convert gear position to viewport coordinates
+  const gearViewportX = pos.x - cx + gearX;
+  const gearViewportY = pos.y - cy + gearY;
+
+  const handleOpenEditor = () => {
+    setShowEditor(true);
+    onClose();
+  };
+
+  const handleSectorClick = (label: string) => {
+    console.log('Torus sector clicked:', label);
+  };
 
   return (
     <>
@@ -175,6 +265,69 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
           })}
         </svg>
       </div>
+
+      {/* Gear button — rendered as a separate fixed element above the torus overlay */}
+      <div
+        onClick={handleOpenEditor}
+        style={{
+          position: 'fixed',
+          left: gearViewportX - 14,
+          top: gearViewportY - 14,
+          width: 28,
+          height: 28,
+          borderRadius: '50%',
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border-mid)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 9999,
+          color: 'var(--text-secondary)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        }}
+      >
+        <Settings size={14} />
+      </div>
+
+      {showEditor && (
+        <DraggableModal
+          title="Torus Menu Editor"
+          onClose={() => setShowEditor(false)}
+          style={{ width: 420, minHeight: 400 }}
+          body={
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '16px 0' }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 12, textAlign: 'center' }}>
+                Interactive preview — click sectors to test
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: 280,
+                height: 280,
+                background: 'var(--bg-base)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border)',
+                overflow: 'hidden',
+              }}>
+                <TorusMenuPreview
+                  items={insideItems}
+                  cx={140}
+                  cy={140}
+                  innerR={52}
+                  outerR={100}
+                  rotationOffset={-Math.PI / 6}
+                  onSectorClick={handleSectorClick}
+                />
+              </div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 11, textAlign: 'center' }}>
+                {items.length} sectors • {isEdgeOrCut ? 'Edge/Cut' : 'Inside'} mode
+              </div>
+            </div>
+          }
+        />
+      )}
     </>
   );
 }
