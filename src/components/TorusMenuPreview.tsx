@@ -61,7 +61,7 @@ export default function TorusMenuPreview({
 
   const getSectorStyle = (index: number): React.CSSProperties => {
     if (animType === 'none') return { cursor: 'pointer' };
-    if (animType === 'pop') return { cursor: 'pointer', animation: 'torus-preview-open 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' };
+    if (animType === 'pop') return { cursor: 'pointer', animation: 'torus-preview-open 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards', transformOrigin: '50% 50%', transformBox: 'view-box' };
     // clock: staggered pop-in per sector, scaling outward from torus center
     const delay = index * 0.06;
     return {
