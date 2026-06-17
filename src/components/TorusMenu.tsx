@@ -22,6 +22,7 @@ interface Props {
   onTrimFormer: (ripple: boolean) => void;
   onStep: (dir: number, ripple: boolean) => void;
   onRoll: () => void;
+  showCloseButton?: boolean;
 }
 
 function annularSectorPath(
@@ -58,14 +59,16 @@ function getAnimType(): string {
   try { return window.localStorage.getItem('juicecut.settings.torusAnimType') || 'pop'; } catch { return 'pop'; }
 }
 
-export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter, onTrimFormer, onStep, onRoll }: Props) {
+export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter, onTrimFormer, onStep, onRoll, showCloseButton }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const animType = getAnimType();
 
   useEffect(() => {
     const timer = setTimeout(() => {
       const clickHandler = (e: MouseEvent) => {
-        if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+        const target = e.target as HTMLElement;
+        if (target.closest('.torus-toggle-btn')) return;
+        if (ref.current && !ref.current.contains(target)) onClose();
       };
       const scrollHandler = () => {
         onClose();
@@ -150,7 +153,9 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
         ref={ref}
         style={{ left: pos.x - cx, top: pos.y - cy, animation: getOverlayAnimation() }}
         onMouseDown={(e) => {
-          if ((e.target as HTMLElement).closest('.torus-sector')) return;
+          const target = e.target as HTMLElement;
+          if (target.closest('.torus-sector')) return;
+          if (target.closest('.torus-toggle-btn')) return;
           onClose();
         }}
       >
@@ -207,6 +212,37 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
             );
           })}
         </svg>
+        {/* Center close button — rendered inside the overlay so it's part of the DOM */}
+        {showCloseButton && (
+          <button
+            type="button"
+            className="torus-center-btn"
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            title="Close"
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              border: '2px solid var(--accent-blue)',
+              background: 'rgba(56,189,248,0.2)',
+              color: 'var(--accent-blue)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 10,
+              fontSize: 16,
+              fontWeight: 700,
+              lineHeight: 1,
+            }}
+          >
+            ×
+          </button>
+        )}
       </div>
     </>
   );
