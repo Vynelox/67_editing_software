@@ -108,12 +108,12 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
   const getOverlayAnimation = () => {
     if (animType === 'none') return 'none';
     if (animType === 'clock') return 'none'; // clock animates per-sector
-    return 'torus-open 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+    return `torus-open 0.25s ${bounce === 0 ? 'cubic-bezier(0.22, 1, 0.36, 1)' : 'cubic-bezier(0.34, 1.56, 0.64, 1)'} forwards`;
   };
 
   const getSectorStyle = (index: number): React.CSSProperties => {
     if (animType === 'none') return { cursor: 'pointer' };
-    if (animType === 'pop') return { cursor: 'pointer', animation: 'torus-open 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards', transformOrigin: '50% 50%', transformBox: 'view-box' };
+    if (animType === 'pop') return { cursor: 'pointer', animation: `torus-open 0.25s ${bounce === 0 ? 'cubic-bezier(0.22, 1, 0.36, 1)' : 'cubic-bezier(0.34, 1.56, 0.64, 1)'} forwards`, transformOrigin: '50% 50%', transformBox: 'view-box' };
     // clock: staggered pop-in per sector, scaling outward from torus center
     const delay = index * 0.06;
     return {
