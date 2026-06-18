@@ -65,18 +65,11 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const clickHandler = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('.torus-toggle-btn')) return;
-        if (ref.current && !ref.current.contains(target)) onClose();
-      };
       const scrollHandler = () => {
         onClose();
       };
-      window.addEventListener('mousedown', clickHandler);
       window.addEventListener('scroll', scrollHandler, true);
       return () => {
-        window.removeEventListener('mousedown', clickHandler);
         window.removeEventListener('scroll', scrollHandler, true);
       };
     }, 10);
@@ -153,10 +146,7 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
         ref={ref}
         style={{ left: pos.x - cx, top: pos.y - cy, animation: getOverlayAnimation(), transformOrigin: '50% 50%', transformBox: 'view-box' }}
         onMouseDown={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.closest('.torus-sector')) return;
-          if (target.closest('.torus-toggle-btn')) return;
-          onClose();
+          e.stopPropagation();
         }}
       >
         <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`}>
