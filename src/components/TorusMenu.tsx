@@ -23,6 +23,7 @@ interface Props {
   onStep: (dir: number, ripple: boolean) => void;
   onRoll: () => void;
   showCloseButton?: boolean;
+  bounce?: number;
 }
 
 function annularSectorPath(
@@ -59,7 +60,7 @@ function getAnimType(): string {
   try { return window.localStorage.getItem('juicecut.settings.torusAnimType') || 'pop'; } catch { return 'pop'; }
 }
 
-export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter, onTrimFormer, onStep, onRoll, showCloseButton }: Props) {
+export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter, onTrimFormer, onStep, onRoll, showCloseButton, bounce = 60 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const animType = getAnimType();
 
@@ -131,7 +132,7 @@ export default function TorusMenu({ pos, target, onClose, onSplit, onTrimLatter,
         @keyframes torus-open {
           0% { opacity: 0; transform: scale(0.3); }
           60% { opacity: 1; }
-          80% { transform: scale(1.06); }
+          80% { transform: scale(${1 + (bounce / 100) * 0.15}); }
           100% { opacity: 1; transform: scale(1); }
         }
         @keyframes torus-sector-pop {
