@@ -59,10 +59,8 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              width: 200,
-              height: 200,
-              borderRadius: 'var(--radius-lg)',
-              overflow: 'hidden',
+              width: 260,
+              height: 260,
             }}
           >
             {torusOpen && (
