@@ -137,6 +137,7 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
                     onRoll={noop}
                     showCloseButton
                     bounce={bounce}
+                    closeOnBackgroundClick={false}
                   />
                 </div>
               </div>

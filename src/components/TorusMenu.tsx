@@ -40,6 +40,7 @@ interface Props {
 
   // Shared
   bounce?: number;
+  closeOnBackgroundClick?: boolean;
 }
 
 function annularSectorPath(
@@ -104,6 +105,7 @@ export default function TorusMenu({
   rotationOffset: propRotationOffset,
   onSectorClick,
   animType: propAnimType,
+  closeOnBackgroundClick = true,
 }: Props) {
   const animType = propAnimType ?? getSavedAnimType();
   const bounce = bounceProp ?? getSavedBounce();
@@ -139,17 +141,34 @@ export default function TorusMenu({
   const items = isEdgeOrCut ? edgeItems : insideItems;
   const sectorAngle = (Math.PI * 2) / items.length;
 
-  // Interactive-only: scroll-to-close
+  // Interactive-only: scroll-to-close and background-click-to-close
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!interactive) return;
     const timer = setTimeout(() => {
       const scrollHandler = () => { onClose(); };
       window.addEventListener('scroll', scrollHandler, true);
-      return () => { window.removeEventListener('scroll', scrollHandler, true); };
+
+      let clickHandler: ((e: MouseEvent) => void) | null = null;
+      if (closeOnBackgroundClick) {
+        clickHandler = (e: MouseEvent) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('.torus-toggle-btn')) return;
+          if (target.closest('.torus-center-btn')) return;
+          if (ref.current && !ref.current.contains(target)) {
+            onClose();
+          }
+        };
+        window.addEventListener('mousedown', clickHandler);
+      }
+
+      return () => {
+        window.removeEventListener('scroll', scrollHandler, true);
+        if (clickHandler) window.removeEventListener('mousedown', clickHandler);
+      };
     }, 10);
     return () => clearTimeout(timer);
-  }, [onClose, interactive]);
+  }, [onClose, interactive, closeOnBackgroundClick]);
 
   // Animation helpers
   const getEasing = () => bounce === 0
