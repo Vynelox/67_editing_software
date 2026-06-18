@@ -126,6 +126,7 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
                   pointerEvents: 'auto',
                 }}>
                   <TorusMenu
+                    interactive
                     pos={{ x: 0, y: 0 }}
                     target={dummyTarget}
                     onClose={handleCloseTorus}

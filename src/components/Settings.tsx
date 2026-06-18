@@ -4,7 +4,7 @@ import { RotateCcw, Plus, ChevronRight } from 'lucide-react';
 import type { ShortcutAction } from './shortcuts';
 import { getShortcutKeys as scGetKeys, updateShortcuts as scUpdate, resetDefaultShortcuts as scReset } from './shortcuts';
 import DraggableModal from './DraggableModal';
-import TorusMenuPreview, { insideMenuItems } from './TorusMenuPreview';
+import TorusMenu, { insideMenuItems } from './TorusMenu';
 import { OpenTorusMenuEditor } from './TorusMenuEditor';
 
 type SettingsTab = "sliders" | "checkboxes" | "shortcuts" | "multiselects" | "components";

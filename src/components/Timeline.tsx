@@ -699,6 +699,7 @@ export default function Timeline({
 
       {torusTarget && torusPos && (
         <TorusMenu
+          interactive
           pos={torusPos}
           target={torusTarget}
           onClose={() => { setTorusTarget(null); setTorusPos(null); }}
