@@ -106,9 +106,13 @@ export default function TorusMenu({
   onSectorClick,
   animType: propAnimType,
   closeOnBackgroundClick = true,
+  speed: speedProp,
+  smoothness: smoothnessProp,
 }: Props) {
   const animType = propAnimType ?? getSavedAnimType();
   const bounce = bounceProp ?? getSavedBounce();
+  const speed = speedProp ?? 250;
+  const smoothness = smoothnessProp ?? 50;
 
   const cx = propCx ?? 120;
   const cy = propCy ?? 120;
@@ -171,28 +175,39 @@ export default function TorusMenu({
   }, [onClose, interactive, closeOnBackgroundClick]);
 
   // Animation helpers
-  const getEasing = () => bounce === 0
-    ? 'cubic-bezier(0.22, 1, 0.36, 1)'
-    : 'cubic-bezier(0.34, 1.56, 0.64, 1)';
+  const duration = speed; // ms
+  const t = smoothness / 100; // 0-1
+  const getEasing = () => {
+    // Smoothness controls ease-out: linear -> fast start, gradual deceleration to stop
+    // cubic-bezier(0, 0, x2, 1) where x2 goes from 1 (linear) to 0 (extreme ease-out)
+    const x2 = 1 - t;
+    if (bounce === 0) {
+      // Pure ease-out: no overshoot
+      return `cubic-bezier(0, 0, ${x2.toFixed(2)}, 1)`;
+    }
+    // With bounce: ease-out + slight overshoot
+    const y2 = 1.0 + t * 0.3;
+    return `cubic-bezier(0, 0, ${x2.toFixed(2)}, ${y2.toFixed(2)})`;
+  };
 
   const getOverlayAnimation = () => {
     if (animType === 'none') return 'none';
     if (animType === 'clock') return 'none';
-    return `torus-open 0.25s ${getEasing()} forwards`;
+    return `torus-open ${duration / 1000}s ${getEasing()} forwards`;
   };
 
   const getSectorStyle = (index: number): React.CSSProperties => {
     if (animType === 'none') return { cursor: 'pointer' };
     if (animType === 'pop') return {
       cursor: 'pointer',
-      animation: `torus-open 0.25s ${getEasing()} forwards`,
+      animation: `torus-open ${duration / 1000}s ${getEasing()} forwards`,
       transformOrigin: '50% 50%',
       transformBox: 'view-box' as const,
     };
-    const delay = index * 0.06;
+    const delay = index * (duration / 1000) * 0.24;
     return {
       cursor: 'pointer',
-      animation: `torus-sector-pop 0.2s ${getEasing()} ${delay}s forwards`,
+      animation: `torus-sector-pop ${duration / 1000}s ${getEasing()} ${delay.toFixed(3)}s forwards`,
       opacity: 0,
       transform: 'scale(0.01)',
       transformOrigin: '50% 50%',

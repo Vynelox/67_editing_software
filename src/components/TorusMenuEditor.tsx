@@ -15,6 +15,22 @@ function getSavedAnimType(): AnimationType {
   return 'pop';
 }
 
+function getSavedSpeed(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.torusSpeed');
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 50 && n <= 500) return n; }
+  } catch {}
+  return 250;
+}
+
+function getSavedSmoothness(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.torusSmoothness');
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 100) return n; }
+  } catch {}
+  return 50;
+}
+
 function getSavedBounce(): number {
   try {
     const v = window.localStorage.getItem('juicecut.settings.torusBounce');
@@ -45,6 +61,8 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
   const [torusOpen, setTorusOpen] = useState(false);
   const [animType, setAnimType] = useState<AnimationType>(getSavedAnimType);
   const [bounce, setBounce] = useState(getSavedBounce);
+  const [speed, setSpeed] = useState(getSavedSpeed);
+  const [smoothness, setSmoothness] = useState(getSavedSmoothness);
 
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.torusAnimType', animType); } catch {}
@@ -53,6 +71,14 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.torusBounce', String(bounce)); } catch {}
   }, [bounce]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.torusSpeed', String(speed)); } catch {}
+  }, [speed]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.torusSmoothness', String(smoothness)); } catch {}
+  }, [smoothness]);
 
   const handleCloseTorus = useCallback(() => {
     setTorusOpen(false);
@@ -137,6 +163,8 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
                     onRoll={noop}
                     showCloseButton
                     bounce={bounce}
+                    speed={speed}
+                    smoothness={smoothness}
                     closeOnBackgroundClick={false}
                   />
                 </div>
@@ -183,6 +211,26 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
               step={1}
               onChange={setBounce}
               onReset={() => setBounce(60)}
+              formatValue={v => `${v}%`}
+            />
+            <Slider
+              label="Speed"
+              value={speed}
+              min={50}
+              max={500}
+              step={10}
+              onChange={setSpeed}
+              onReset={() => setSpeed(250)}
+              formatValue={v => `${v}ms`}
+            />
+            <Slider
+              label="Smoothness"
+              value={smoothness}
+              min={0}
+              max={100}
+              step={1}
+              onChange={setSmoothness}
+              onReset={() => setSmoothness(50)}
               formatValue={v => `${v}%`}
             />
           </div>
