@@ -143,11 +143,33 @@ export default function Timeline({
   const scrollTargetRef = useRef<number | null>(null);
   const zoomMouseXTargetRef = useRef<number>(0);
   const playheadScrollTargetRef = useRef<number | null>(null);
+  const [playheadHeight, setPlayheadHeight] = useState(200);
 
   useEffect(() => {
     zoomCurrentRef.current = zoom;
     if (!zoomAnimatingRef.current) zoomTargetRef.current = zoom;
   }, [zoom]);
+  
+  // Ensure playhead has correct height after mount
+  useLayoutEffect(() => {
+    const updatePlayheadHeight = () => {
+      const scrollEl = containerRef.current?.querySelector('.tl-scroll');
+      if (scrollEl) {
+        setPlayheadHeight(scrollEl.clientHeight);
+      }
+    };
+    
+    // Initial update
+    updatePlayheadHeight();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', updatePlayheadHeight);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', updatePlayheadHeight);
+    };
+  }, []);
 
   const pendingScrollCorrection = useRef<{ el: HTMLElement; scrollLeft: number } | null>(null);
   useLayoutEffect(() => {
@@ -685,7 +707,7 @@ export default function Timeline({
                 onClick={handleNeedleClick}
               >
                 <FormulaPlayneedle
-                  height={containerRef.current?.querySelector('.tl-scroll')?.clientHeight ?? 200}
+                  height={playheadHeight}
                   maxWidth={PLAYHEAD_MAX_WIDTH}
                   color="var(--playneedle)"
                   glowColor="color-mix(in srgb, var(--playneedle) 60%, transparent)"
