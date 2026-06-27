@@ -36,10 +36,13 @@ interface Props {
   outerR?: number;
   rotationOffset?: number;
   onSectorClick?: (label: string) => void;
-  animType?: 'none' | 'pop' | 'clock';
+
+  // Animation
+  duration?: number;
+  easing?: number;
+  delay?: number;
 
   // Shared
-  bounce?: number;
   closeOnBackgroundClick?: boolean;
 }
 
@@ -73,16 +76,28 @@ function annularSectorPath(
   ].join(' ');
 }
 
-function getSavedAnimType(): string {
-  try { return window.localStorage.getItem('juicecut.settings.torusAnimType') || 'pop'; } catch { return 'pop'; }
+function getSavedDuration(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.torusDuration');
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 2000) return n; }
+  } catch {}
+  return 300;
 }
 
-function getSavedBounce(): number {
+function getSavedEasing(): number {
   try {
-    const v = window.localStorage.getItem('juicecut.settings.torusBounce');
+    const v = window.localStorage.getItem('juicecut.settings.torusEasing');
     if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 100) return n; }
   } catch {}
-  return 60;
+  return 50;
+}
+
+function getSavedDelay(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.torusDelay');
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= -1000 && n <= 1000) return n; }
+  } catch {}
+  return 0;
 }
 
 export default function TorusMenu({
@@ -96,7 +111,9 @@ export default function TorusMenu({
   onStep = () => {},
   onRoll = () => {},
   showCloseButton = false,
-  bounce: bounceProp,
+  duration: durationProp,
+  easing: easingProp,
+  delay: delayProp,
   items: propItems,
   cx: propCx,
   cy: propCy,
@@ -104,15 +121,11 @@ export default function TorusMenu({
   outerR: propOuterR,
   rotationOffset: propRotationOffset,
   onSectorClick,
-  animType: propAnimType,
   closeOnBackgroundClick = true,
-  speed: speedProp,
-  smoothness: smoothnessProp,
 }: Props) {
-  const animType = propAnimType ?? getSavedAnimType();
-  const bounce = bounceProp ?? getSavedBounce();
-  const speed = speedProp ?? 250;
-  const smoothness = smoothnessProp ?? 50;
+  const duration = durationProp ?? getSavedDuration();
+  const easing = easingProp ?? getSavedEasing();
+  const delay = delayProp ?? getSavedDelay();
 
   const cx = propCx ?? 120;
   const cy = propCy ?? 120;
@@ -175,42 +188,41 @@ export default function TorusMenu({
   }, [onClose, interactive, closeOnBackgroundClick]);
 
   // Animation helpers
-  const duration = speed; // ms
-  const t = smoothness / 100; // 0-1
+  const durationSec = duration / 1000;
+  const t = easing / 100; // 0 = linear, 1 = max ease-in
+
   const getEasing = () => {
-    // Smoothness controls ease-out: linear -> fast start, gradual deceleration to stop
-    // cubic-bezier(0, 0, x2, 1) where x2 goes from 1 (linear) to 0 (extreme ease-out)
-    const x2 = 1 - t;
-    if (bounce === 0) {
-      // Pure ease-out: no overshoot
-      return `cubic-bezier(0, 0, ${x2.toFixed(2)}, 1)`;
-    }
-    // With bounce: ease-out + slight overshoot
-    const y2 = 1.0 + t * 0.3;
-    return `cubic-bezier(0, 0, ${x2.toFixed(2)}, ${y2.toFixed(2)})`;
+    // 0 = linear (cubic-bezier(0, 0, 1, 1))
+    // max = strong ease-in (cubic-bezier(0.2, 0, 1, 1.3))
+    const x2 = 1 - t * 0.8; // 1.0 (linear) -> 0.2 (strong ease-in)
+    const y2 = 1 + t * 0.3; // slight overshoot for bounce feel
+    return `cubic-bezier(${x2.toFixed(2)}, 0, 1, ${y2.toFixed(2)})`;
   };
 
-  const getOverlayAnimation = () => {
-    if (animType === 'none') return 'none';
-    if (animType === 'clock') return 'none';
-    return `torus-open ${duration / 1000}s ${getEasing()} forwards`;
+  // Compute per-sector delay based on delay prop and sector index
+  // delay = 0: all sectors animate at once (same as old pop)
+  // delay > 0: sectors pop in clockwise one by one
+  // delay < 0: sectors pop in anticlockwise one by one
+  const getSectorDelay = (index: number): number => {
+    if (delay === 0) return 0;
+    const count = items.length;
+    if (delay > 0) {
+      // Clockwise: index 0 first, then 1, 2, ...
+      return index * (delay / 1000);
+    } else {
+      // Anticlockwise: last index first
+      return (count - 1 - index) * (-delay / 1000);
+    }
   };
 
   const getSectorStyle = (index: number): React.CSSProperties => {
-    if (animType === 'none') return { cursor: 'pointer' };
-    if (animType === 'pop') return {
-      cursor: 'pointer',
-      animation: `torus-open ${duration / 1000}s ${getEasing()} forwards`,
-      transformOrigin: '50% 50%',
-      transformBox: 'view-box' as const,
-    };
-    const delay = index * (duration / 1000) * 0.24;
+    const sectorDelay = getSectorDelay(index);
     return {
       cursor: 'pointer',
-      animation: `torus-sector-pop ${duration / 1000}s ${getEasing()} ${delay.toFixed(3)}s forwards`,
+      animation: `torus-sector-pop ${durationSec}s ${getEasing()} ${sectorDelay.toFixed(3)}s forwards`,
       opacity: 0,
-      transform: 'scale(0.01)',
-      transformOrigin: '50% 50%',
+      transform: 'scale(0)',
+      transformOrigin: `${cx}px ${cy}px`,
       transformBox: 'view-box' as const,
     };
   };
@@ -283,16 +295,9 @@ export default function TorusMenu({
   return (
     <>
       <style>{`
-        @keyframes torus-open {
-          0% { opacity: 0; transform: scale(0.3); }
-          60% { opacity: 1; }
-          80% { transform: scale(${1 + (bounce / 100) * 0.15}); }
-          100% { opacity: 1; transform: scale(1); }
-        }
         @keyframes torus-sector-pop {
-          0% { opacity: 0; transform: scale(0.01); }
+          0% { opacity: 0; transform: scale(0); }
           60% { opacity: 1; }
-          80% { transform: scale(${1 + (bounce / 100) * 0.15}); }
           100% { opacity: 1; transform: scale(1); }
         }
       `}</style>
@@ -300,7 +305,7 @@ export default function TorusMenu({
         <div
           className="torus-overlay"
           ref={ref}
-          style={{ left: pos.x - cx, top: pos.y - cy, animation: getOverlayAnimation(), transformOrigin: '50% 50%', transformBox: 'view-box' }}
+          style={{ left: pos.x - cx, top: pos.y - cy, transformOrigin: `${cx}px ${cy}px`, transformBox: 'view-box' }}
           onMouseDown={(e) => { e.stopPropagation(); }}
         >
           {svgContent}
@@ -342,10 +347,10 @@ export default function TorusMenu({
   );
 }
 export const insideMenuItems: MenuItem[] = [
-  { label: 'Split', icon: <Scissors size={14} />, color: '#60a5fa' },
-  { label: 'Trim', icon: <ChevronRight size={14} />, color: '#34d399' },
-  { label: 'Trim', icon: <ChevronLeft size={14} />, color: '#34d399' },
-  { label: 'Ripple', icon: <ChevronRight size={14} />, color: '#fbbf24' },
-  { label: 'Ripple', icon: <ChevronLeft size={14} />, color: '#fbbf24' },
-  { label: 'Roll', icon: <Move size={14} />, color: '#f472b6' },
+  { label: 'Split', icon: <Scissors size={14} />, action: () => {}, color: '#60a5fa' },
+  { label: 'Trim', icon: <ChevronRight size={14} />, action: () => {}, color: '#34d399' },
+  { label: 'Trim', icon: <ChevronLeft size={14} />, action: () => {}, color: '#34d399' },
+  { label: 'Ripple', icon: <ChevronRight size={14} />, action: () => {}, color: '#fbbf24' },
+  { label: 'Ripple', icon: <ChevronLeft size={14} />, action: () => {}, color: '#fbbf24' },
+  { label: 'Roll', icon: <Move size={14} />, action: () => {}, color: '#f472b6' },
 ];

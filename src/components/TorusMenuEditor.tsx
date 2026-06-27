@@ -4,42 +4,28 @@ import DraggableModal from './DraggableModal';
 import TorusMenu from './TorusMenu';
 import { Slider } from './Adjustables';
 
-const ANIMATION_TYPES = ['none', 'pop', 'clock'] as const;
-type AnimationType = typeof ANIMATION_TYPES[number];
-
-function getSavedAnimType(): AnimationType {
+function getSavedDuration(): number {
   try {
-    const v = window.localStorage.getItem('juicecut.settings.torusAnimType');
-    if (v === 'none' || v === 'pop' || v === 'clock') return v;
+    const v = window.localStorage.getItem('juicecut.settings.torusDuration');
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 2000) return n; }
   } catch {}
-  return 'pop';
+  return 300;
 }
 
-function getSavedSpeed(): number {
+function getSavedEasing(): number {
   try {
-    const v = window.localStorage.getItem('juicecut.settings.torusSpeed');
-    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 50 && n <= 500) return n; }
-  } catch {}
-  return 250;
-}
-
-function getSavedSmoothness(): number {
-  try {
-    const v = window.localStorage.getItem('juicecut.settings.torusSmoothness');
+    const v = window.localStorage.getItem('juicecut.settings.torusEasing');
     if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 100) return n; }
   } catch {}
   return 50;
 }
 
-function getSavedBounce(): number {
+function getSavedDelay(): number {
   try {
-    const v = window.localStorage.getItem('juicecut.settings.torusBounce');
-    if (v !== null) {
-      const n = parseInt(v, 10);
-      if (!isNaN(n) && n >= 0 && n <= 100) return n;
-    }
+    const v = window.localStorage.getItem('juicecut.settings.torusDelay');
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= -1000 && n <= 1000) return n; }
   } catch {}
-  return 60;
+  return 0;
 }
 
 export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
@@ -59,26 +45,21 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
 
 export default function TorusMenuEditorModal({ onClose }: { onClose: () => void }) {
   const [torusOpen, setTorusOpen] = useState(false);
-  const [animType, setAnimType] = useState<AnimationType>(getSavedAnimType);
-  const [bounce, setBounce] = useState(getSavedBounce);
-  const [speed, setSpeed] = useState(getSavedSpeed);
-  const [smoothness, setSmoothness] = useState(getSavedSmoothness);
+  const [duration, setDuration] = useState(getSavedDuration);
+  const [easing, setEasing] = useState(getSavedEasing);
+  const [delay, setDelay] = useState(getSavedDelay);
 
   useEffect(() => {
-    try { window.localStorage.setItem('juicecut.settings.torusAnimType', animType); } catch {}
-  }, [animType]);
+    try { window.localStorage.setItem('juicecut.settings.torusDuration', String(duration)); } catch {}
+  }, [duration]);
 
   useEffect(() => {
-    try { window.localStorage.setItem('juicecut.settings.torusBounce', String(bounce)); } catch {}
-  }, [bounce]);
+    try { window.localStorage.setItem('juicecut.settings.torusEasing', String(easing)); } catch {}
+  }, [easing]);
 
   useEffect(() => {
-    try { window.localStorage.setItem('juicecut.settings.torusSpeed', String(speed)); } catch {}
-  }, [speed]);
-
-  useEffect(() => {
-    try { window.localStorage.setItem('juicecut.settings.torusSmoothness', String(smoothness)); } catch {}
-  }, [smoothness]);
+    try { window.localStorage.setItem('juicecut.settings.torusDelay', String(delay)); } catch {}
+  }, [delay]);
 
   const handleCloseTorus = useCallback(() => {
     setTorusOpen(false);
@@ -96,34 +77,6 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
       style={{ width: 360, minHeight: 0 }}
       body={
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 12px 0' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: 260 }}>
-            <span style={{ lineHeight: 1.2, fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>Animation type</span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {ANIMATION_TYPES.map(opt => {
-                const active = animType === opt;
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => setAnimType(opt)}
-                    style={{
-                      padding: '5px 14px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: active ? '1px solid var(--accent-blue)' : '1px solid var(--border-mid)',
-                      background: active ? 'rgba(56,189,248,0.15)' : 'var(--bg-elevated)',
-                      color: active ? 'var(--accent-blue)' : 'var(--text-secondary)',
-                      fontSize: 12,
-                      fontWeight: active ? 600 : 400,
-                      cursor: 'pointer',
-                      transition: 'all 0.12s',
-                    }}
-                  >
-                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
           <div
             style={{
               position: 'relative',
@@ -162,9 +115,9 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
                     onStep={noopNumBool}
                     onRoll={noop}
                     showCloseButton
-                    bounce={bounce}
-                    speed={speed}
-                    smoothness={smoothness}
+                    duration={duration}
+                    easing={easing}
+                    delay={delay}
                     closeOnBackgroundClick={false}
                   />
                 </div>
@@ -204,34 +157,34 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260 }}>
             <Slider
-              label="Bounce"
-              value={bounce}
+              label="Duration"
+              value={duration}
               min={0}
-              max={100}
-              step={1}
-              onChange={setBounce}
-              onReset={() => setBounce(60)}
-              formatValue={v => `${v}%`}
-            />
-            <Slider
-              label="Speed"
-              value={speed}
-              min={50}
-              max={500}
+              max={2000}
               step={10}
-              onChange={setSpeed}
-              onReset={() => setSpeed(250)}
+              onChange={setDuration}
+              onReset={() => setDuration(300)}
               formatValue={v => `${v}ms`}
             />
             <Slider
-              label="Smoothness"
-              value={smoothness}
+              label="Easing"
+              value={easing}
               min={0}
               max={100}
               step={1}
-              onChange={setSmoothness}
-              onReset={() => setSmoothness(50)}
+              onChange={setEasing}
+              onReset={() => setEasing(50)}
               formatValue={v => `${v}%`}
+            />
+            <Slider
+              label="Delay"
+              value={delay}
+              min={-1000}
+              max={1000}
+              step={10}
+              onChange={setDelay}
+              onReset={() => setDelay(0)}
+              formatValue={v => `${v}ms`}
             />
           </div>
         </div>
