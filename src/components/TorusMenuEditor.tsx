@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import DraggableModal from './DraggableModal';
 import TorusMenu from './TorusMenu';
 import { Slider } from './Adjustables';
+import { RotateCcw } from 'lucide-react';
 
 function getSavedDuration(): number {
   try {
@@ -26,6 +27,38 @@ function getSavedDelay(): number {
     if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= -1000 && n <= 1000) return n; }
   } catch {}
   return 0;
+}
+
+// Logarithmic mapping for delay slider: slider 0..1000 → delay -1000..1000
+// Slider 0 = -1000ms, slider 500 = 0ms, slider 1000 = 1000ms
+// Both halves use log scale for magnitude
+function sliderToDelay(slider: number): number {
+  if (slider === 500) return 0;
+  if (slider < 500) {
+    // Left half: slider 0 → -1000, slider 499 → ~-1
+    const t = (500 - slider) / 500; // 1 → 0 as slider goes 0 → 500
+    const logVal = Math.pow(10, t * 3); // 1000 → 1
+    return -Math.round(logVal);
+  } else {
+    // Right half: slider 501 → ~1, slider 1000 → 1000
+    const t = (slider - 500) / 500;
+    const logVal = Math.pow(10, t * 3); // 1 → 1000
+    return Math.round(logVal);
+  }
+}
+
+function delayToSlider(delay: number): number {
+  if (delay === 0) return 500;
+  if (delay < 0) {
+    // Map -1000..-1 to slider 0..499
+    const absVal = Math.max(1, Math.abs(delay));
+    const t = Math.log10(absVal) / 3; // 0..1
+    return Math.round(500 - t * 500); // 500..0
+  } else {
+    // Map 1..1000 to slider 501..1000
+    const t = Math.log10(Math.max(1, delay)) / 3;
+    return Math.round(500 + t * 500);
+  }
 }
 
 export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
@@ -69,6 +102,9 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
   const noopBool = useCallback((_ripple: boolean) => {}, []);
   const noopNumBool = useCallback((_dir: number, _ripple: boolean) => {}, []);
   const dummyTarget = { kind: 'inside' as const, clipId: '__preview__', frame: 0 };
+
+  // Delay slider uses logarithmic mapping
+  const delaySliderValue = delayToSlider(delay);
 
   return (
     <DraggableModal
@@ -176,16 +212,30 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
               onReset={() => setEasing(50)}
               formatValue={v => `${v}%`}
             />
-            <Slider
-              label="Delay"
-              value={delay}
-              min={-1000}
-              max={1000}
-              step={10}
-              onChange={setDelay}
-              onReset={() => setDelay(0)}
-              formatValue={v => `${v}ms`}
-            />
+            {/* Delay slider with logarithmic scale */}
+            <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                <span style={{ flex: 1, lineHeight: 1.2 }}>Delay</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{delay}ms</span>
+                  <button type="button" className="icon-btn" onClick={() => setDelay(0)} title="Reset to default" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                </div>
+              </div>
+              <input
+                type="range"
+                className="settings-range-input"
+                min={0}
+                max={1000}
+                step={1}
+                value={delaySliderValue}
+                onChange={e => setDelay(sliderToDelay(Number(e.target.value)))}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
+                <span>-1000ms</span>
+                <span style={{ color: 'var(--text-muted)' }}>0ms</span>
+                <span>1000ms</span>
+              </div>
+            </div>
           </div>
         </div>
       }
