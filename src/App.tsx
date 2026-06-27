@@ -137,6 +137,15 @@ function AppContent() {
       applyThemeToDocument(saved || 'og-dark');
     } catch {}
   }, []);
+  
+  // Apply GUI scale on mount
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem('juicecut.settings.guiScale');
+      const scale = v ? Number(v) / 100 : 1;
+      document.documentElement.style.setProperty('--gui-scale', scale.toString());
+    } catch {}
+  }, []);
 
   // Apply saved elevatedPanelDarkenAmount on mount
   useEffect(() => {
