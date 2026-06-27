@@ -150,7 +150,7 @@ export default function Timeline({
     if (!zoomAnimatingRef.current) zoomTargetRef.current = zoom;
   }, [zoom]);
   
-  // Ensure playhead has correct height after mount
+  // Ensure playhead has correct height after mount and when GUI scale changes
   useLayoutEffect(() => {
     const updatePlayheadHeight = () => {
       const scrollEl = containerRef.current?.querySelector('.tl-scroll');
@@ -162,12 +162,23 @@ export default function Timeline({
     // Initial update
     updatePlayheadHeight();
     
-    // Add event listener for window resize
+    // Add event listeners
     window.addEventListener('resize', updatePlayheadHeight);
+    
+    // Listen for GUI scale changes
+    const handleGuiScaleChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.key === 'guiScale') {
+        // Small delay to allow DOM to update with new scale
+        setTimeout(updatePlayheadHeight, 50);
+      }
+    };
+    window.addEventListener('juicecut-settings-changed', handleGuiScaleChange);
     
     // Cleanup
     return () => {
       window.removeEventListener('resize', updatePlayheadHeight);
+      window.removeEventListener('juicecut-settings-changed', handleGuiScaleChange);
     };
   }, []);
 
