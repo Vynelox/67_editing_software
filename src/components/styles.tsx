@@ -128,7 +128,13 @@ function getPathLabel(itemId: string | null): string {
     const item = allDisplayItems[currentId];
     if (item) { path.unshift(item.label); currentId = parentMap[currentId]; } else { break; }
   }
-  return 'Styles / ' + path.join(' / ');
+  const fullPath = 'Styles / ' + path.join(' / ');
+  
+  // If the path is too long, truncate the beginning with ellipsis
+  if (fullPath.length > 40) {
+    return '.../' + path.slice(-2).join(' / ');
+  }
+  return fullPath;
 }
 
 const themesByName: Record<string, ThemeColors> = {
