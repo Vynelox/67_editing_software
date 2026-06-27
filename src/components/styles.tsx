@@ -81,6 +81,15 @@ const forestColors: ThemeColors = {
   '--accent-blue': '#4ade80',
 };
 
+const aquaticColors: ThemeColors = {
+  '--bg-panel': '#1A3A52', '--bg-base': '#0F2A3F', '--bg-viewer': '#0A1F2E',
+  '--bg-elevated': '#224865', '--bg-hover': '#2A5575', '--border': '#3A6F8A',
+  '--border-mid': '#4A7F9A', '--splitter': '#0D2432', '--text-primary': '#B0E0FF',
+  '--text-secondary': '#87CEEB', '--text-muted': '#5CA6D1', '--input-field': '#4682B4',
+  '--input-field-bg': '#16324A', '--playneedle': '#00B4D8', '--video-bg': '#081824',
+  '--accent-blue': '#00B4D8',
+};
+
 const folderIcon: string = 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2z';
 const ogDarkIcon: string = 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z';
 const ogLightIcon: string = 'M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z';
@@ -102,7 +111,7 @@ const topLevelItems: string[] = ['vynelox-built-in-folder'];
 
 const allDisplayItems: Record<string, DisplayItem> = {
   'vynelox-built-in-folder': { id: 'vynelox-built-in-folder', label: 'Vynelox built-in', type: 'folder', icon: folderIcon, children: ['plain-folder'] },
-  'plain-folder': { id: 'plain-folder', label: 'plain', type: 'folder', icon: folderIcon, children: ['og-dark', 'og-light', 'monokai', 'lavender', 'cyberpunk', 'oak', 'forest'] },
+  'plain-folder': { id: 'plain-folder', label: 'plain', type: 'folder', icon: folderIcon, children: ['og-dark', 'og-light', 'monokai', 'lavender', 'cyberpunk', 'oak', 'forest', 'aquatic'] },
   'og-dark': { id: 'og-dark', label: 'og dark', type: 'theme', icon: ogDarkIcon },
   'og-light': { id: 'og-light', label: 'og light', type: 'theme', icon: ogLightIcon },
   'monokai': { id: 'monokai', label: 'monokai', type: 'theme', icon: monokaiIcon },
@@ -110,6 +119,7 @@ const allDisplayItems: Record<string, DisplayItem> = {
   'cyberpunk': { id: 'cyberpunk', label: 'cyberpunk', type: 'theme', icon: cyberpunkIcon },
   'oak': { id: 'oak', label: 'oak', type: 'theme', icon: oakIcon },
   'forest': { id: 'forest', label: 'forest', type: 'theme', icon: forestIcon },
+  'aquatic': { id: 'aquatic', label: 'aquatic', type: 'theme', icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' },
 };
 
 export const parentMap: Record<string, string | undefined> = {};
@@ -139,7 +149,7 @@ function getPathLabel(itemId: string | null): string {
 
 const themesByName: Record<string, ThemeColors> = {
   'og-dark': ogDarkColors, 'og-light': ogLightColors, 'monokai': monokaiColors,
-  'lavender': lavenderColors, 'cyberpunk': cyberpunkColors, 'oak': oakColors, 'forest': forestColors,
+  'lavender': lavenderColors, 'cyberpunk': cyberpunkColors, 'oak': oakColors, 'forest': forestColors, 'aquatic': aquaticColors,
 };
 
 function getThemeColors(themeName: string): ThemeColors {
