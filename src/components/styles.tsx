@@ -82,12 +82,12 @@ const forestColors: ThemeColors = {
 };
 
 const aquaticColors: ThemeColors = {
-  '--bg-panel': '#1A3A52', '--bg-base': '#0F2A3F', '--bg-viewer': '#0A1F2E',
-  '--bg-elevated': '#224865', '--bg-hover': '#2A5575', '--border': '#3A6F8A',
-  '--border-mid': '#4A7F9A', '--splitter': '#0D2432', '--text-primary': '#B0E0FF',
-  '--text-secondary': '#87CEEB', '--text-muted': '#5CA6D1', '--input-field': '#4682B4',
-  '--input-field-bg': '#16324A', '--playneedle': '#00B4D8', '--video-bg': '#081824',
-  '--accent-blue': '#00B4D8',
+  '--bg-panel': '#1A3D3D', '--bg-base': '#0F2A2A', '--bg-viewer': '#0A1F1F',
+  '--bg-elevated': '#224848', '--bg-hover': '#2A5555', '--border': '#3A6F6F',
+  '--border-mid': '#4A7F7F', '--splitter': '#0D2323', '--text-primary': '#B2E8B2',
+  '--text-secondary': '#88D8B8', '--text-muted': '#60B89F', '--input-field': '#469985',
+  '--input-field-bg': '#163333', '--playneedle': '#00D8B0', '--video-bg': '#081818',
+  '--accent-blue': '#00D8B0',
 };
 
 const folderIcon: string = 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2z';
