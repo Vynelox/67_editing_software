@@ -119,7 +119,7 @@ const allDisplayItems: Record<string, DisplayItem> = {
   'cyberpunk': { id: 'cyberpunk', label: 'cyberpunk', type: 'theme', icon: cyberpunkIcon },
   'oak': { id: 'oak', label: 'oak', type: 'theme', icon: oakIcon },
   'forest': { id: 'forest', label: 'forest', type: 'theme', icon: forestIcon },
-  'aquatic': { id: 'aquatic', label: 'aquatic', type: 'theme', icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' },
+  'aquatic': { id: 'aquatic', label: 'aquatic', type: 'theme', icon: 'M12 12c0-4 3-7 7-7s7 3 7 7-3 7-7 7-7-3-7-7zm-5 0c0-2.5 2-4.5 4.5-4.5S11 9.5 11 12s-2 4.5-4.5 4.5S2 14.5 2 12zm10 0c0-1.5 1-3 3-3s3 1.5 3 3-1 3-3 3-3-1.5-3-3z' },
 };
 
 export const parentMap: Record<string, string | undefined> = {};
