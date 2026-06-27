@@ -125,20 +125,20 @@ export default function TorusMenu({
   const insideItems: MenuItem[] = interactive
     ? [
         { label: 'Split', icon: <Scissors size={14} />, action: onSplit, color: '#60a5fa' },
-        { label: 'Trim \u2192', icon: <ChevronRight size={14} />, action: () => onTrimLatter(false), color: '#34d399' },
-        { label: 'Trim \u2190', icon: <ChevronLeft size={14} />, action: () => onTrimFormer(false), color: '#34d399' },
-        { label: '\u21DD Ripple \u2192', icon: <ChevronRight size={14} />, action: () => onTrimLatter(true), color: '#fbbf24' },
-        { label: '\u21DC Ripple \u2190', icon: <ChevronLeft size={14} />, action: () => onTrimFormer(true), color: '#fbbf24' },
+        { label: 'Trim', icon: <ChevronRight size={14} />, action: () => onTrimLatter(false), color: '#34d399' },
+        { label: 'Trim', icon: <ChevronLeft size={14} />, action: () => onTrimFormer(false), color: '#34d399' },
+        { label: 'Ripple', icon: <ChevronRight size={14} />, action: () => onTrimLatter(true), color: '#fbbf24' },
+        { label: 'Ripple', icon: <ChevronLeft size={14} />, action: () => onTrimFormer(true), color: '#fbbf24' },
         { label: 'Roll', icon: <Move size={14} />, action: onRoll, color: '#f472b6' },
       ]
     : (propItems ?? []);
 
   const edgeItems: MenuItem[] = interactive
     ? [
-        { label: 'Step +1f', icon: <ChevronRight size={14} />, action: () => onStep(1, false), color: '#60a5fa' },
-        { label: 'Step \u22121f', icon: <ChevronLeft size={14} />, action: () => onStep(-1, false), color: '#60a5fa' },
-        { label: '\u21DD Ripple +1f', icon: <ChevronRight size={14} />, action: () => onStep(1, true), color: '#fbbf24' },
-        { label: '\u21DC Ripple \u22121f', icon: <ChevronLeft size={14} />, action: () => onStep(-1, true), color: '#fbbf24' },
+        { label: '+1f', icon: <ChevronRight size={14} />, action: () => onStep(1, false), color: '#60a5fa' },
+        { label: '-1f', icon: <ChevronLeft size={14} />, action: () => onStep(-1, false), color: '#60a5fa' },
+        { label: 'Ripple +1f', icon: <ChevronRight size={14} />, action: () => onStep(1, true), color: '#fbbf24' },
+        { label: 'Ripple -1f', icon: <ChevronLeft size={14} />, action: () => onStep(-1, true), color: '#fbbf24' },
       ]
     : [];
 
@@ -262,7 +262,7 @@ export default function TorusMenu({
                   justifyContent: 'center',
                   width: '100%',
                   height: '100%',
-                  color: 'var(--text-primary)',
+                  color: item.color,
                   fontSize: 10,
                   lineHeight: 1.1,
                   textAlign: 'center',
@@ -343,9 +343,9 @@ export default function TorusMenu({
 }
 export const insideMenuItems: MenuItem[] = [
   { label: 'Split', icon: <Scissors size={14} />, color: '#60a5fa' },
-  { label: 'Trim →', icon: <ChevronRight size={14} />, color: '#34d399' },
-  { label: 'Trim ←', icon: <ChevronLeft size={14} />, color: '#34d399' },
-  { label: '⇝ Ripple →', icon: <ChevronRight size={14} />, color: '#fbbf24' },
-  { label: '⇜ Ripple ←', icon: <ChevronLeft size={14} />, color: '#fbbf24' },
+  { label: 'Trim', icon: <ChevronRight size={14} />, color: '#34d399' },
+  { label: 'Trim', icon: <ChevronLeft size={14} />, color: '#34d399' },
+  { label: 'Ripple', icon: <ChevronRight size={14} />, color: '#fbbf24' },
+  { label: 'Ripple', icon: <ChevronLeft size={14} />, color: '#fbbf24' },
   { label: 'Roll', icon: <Move size={14} />, color: '#f472b6' },
 ];
