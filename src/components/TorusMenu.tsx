@@ -13,6 +13,11 @@ interface MenuItem {
   color?: string;
 }
 
+interface SizeGraphPoint {
+  time: number;
+  size: number;
+}
+
 interface Props {
   // Mode
   interactive?: boolean;
@@ -41,6 +46,7 @@ interface Props {
   duration?: number;
   easing?: number;
   delay?: number;
+  sizeGraph?: SizeGraphPoint[];
 
   // Shared
   closeOnBackgroundClick?: boolean;
@@ -103,6 +109,15 @@ function getSavedDelay(): number {
   return 0;
 }
 
+function buildSizeGraphKeyframes(points: SizeGraphPoint[]) {
+  const sorted = points.slice().sort((a, b) => a.time - b.time);
+  const frames = sorted.map(point => {
+    const pct = Math.round(point.time * 100);
+    return `${pct}% { opacity: 1; transform: scale(${point.size}); }`;
+  });
+  return `0% { opacity: 0; transform: scale(0); }\n${frames.join('\n')}`;
+}
+
 export default function TorusMenu({
   interactive = false,
   pos = { x: 0, y: 0 },
@@ -117,6 +132,7 @@ export default function TorusMenu({
   duration: durationProp,
   easing: easingProp,
   delay: delayProp,
+  sizeGraph: sizeGraphProp,
   items: propItems,
   cx: propCx,
   cy: propCy,
@@ -130,6 +146,7 @@ export default function TorusMenu({
   const duration = durationProp ?? getSavedDuration();
   const easing = easingProp ?? getSavedEasing();
   const delay = delayProp ?? getSavedDelay();
+  const sizeGraph = sizeGraphProp;
 
   const cx = propCx ?? 120;
   const cy = propCy ?? 120;
@@ -269,6 +286,11 @@ export default function TorusMenu({
     return `cubic-bezier(${x2.toFixed(2)}, 0, 1, ${y2.toFixed(2)})`;
   };
 
+  const hasSizeGraph = Array.isArray(sizeGraph) && sizeGraph.length >= 2;
+  const animationName = hasSizeGraph ? 'torus-sector-pop-graph' : 'torus-sector-pop';
+  const animationTiming = hasSizeGraph ? 'linear' : getEasing();
+  const graphKeyframes = hasSizeGraph ? buildSizeGraphKeyframes(sizeGraph) : null;
+
   // Compute per-sector delay based on delay prop and sector index
   // delay = 0: all sectors animate at once (same as old pop)
   // delay > 0: sectors pop in clockwise one by one
@@ -289,11 +311,7 @@ export default function TorusMenu({
     const sectorDelay = getSectorDelay(index);
     return {
       cursor: 'pointer',
-      animation: `torus-sector-pop ${durationSec}s ${getEasing()} ${sectorDelay.toFixed(3)}s forwards`,
-      opacity: 0,
-      transform: 'scale(0)',
-      transformOrigin: `${cx}px ${cy}px`,
-      transformBox: 'view-box' as const,
+      animation: `${animationName} ${durationSec}s ${animationTiming} ${sectorDelay.toFixed(3)}s forwards`,
     };
   };
 
@@ -371,10 +389,12 @@ export default function TorusMenu({
   return (
     <>
       <style>{`
-        @keyframes torus-sector-pop {
-          0% { opacity: 0; transform: scale(0); }
-          60% { opacity: 1; }
-          100% { opacity: 1; transform: scale(1); }
+        @keyframes ${animationName} {
+          ${hasSizeGraph ? graphKeyframes : `
+            0% { opacity: 0; transform: scale(0); }
+            60% { opacity: 1; }
+            100% { opacity: 1; transform: scale(1); }
+          `}
         }
         .torus-overlay.torus-overlay--no-scroll {
           pointer-events: none;
