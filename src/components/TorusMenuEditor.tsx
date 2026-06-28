@@ -65,18 +65,31 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  const cleanup = () => {
+  const closeAndReturnToSettings = () => {
     try { root.unmount(); } catch (e) {}
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
-    if (onCloseCallback) onCloseCallback();
+    if (onCloseCallback) {
+      // Add a small delay to ensure the current modal is fully closed
+      setTimeout(onCloseCallback, 50);
+    }
   };
-  (window as any).__pushClose?.(cleanup);
-  root.render(<TorusMenuEditorModal onClose={cleanup} />);
-  return cleanup;
+  const closeDirectly = () => {
+    try { root.unmount(); } catch (e) {}
+    if (container.parentNode) container.parentNode.removeChild(container);
+    (window as any).__popClose?.();
+  };
+  (window as any).__pushClose?.(closeDirectly);
+  root.render(<TorusMenuEditorModal onClose={closeDirectly} onBack={closeAndReturnToSettings} />);
+  return closeDirectly;
 }
 
-export default function TorusMenuEditorModal({ onClose }: { onClose: () => void }) {
+export interface TorusMenuEditorModalProps {
+  onClose: () => void;
+  onBack: () => void;
+}
+
+export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEditorModalProps) {
   const [torusOpen, setTorusOpen] = useState(false);
   const [duration, setDuration] = useState(getSavedDuration);
   const [easing, setEasing] = useState(getSavedEasing);
@@ -110,6 +123,14 @@ export default function TorusMenuEditorModal({ onClose }: { onClose: () => void 
     <DraggableModal
       title="Torus Menu Editor"
       onClose={onClose}
+      headerLeft={
+        <button className="icon-btn" onClick={onBack} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, color: 'var(--text-secondary)' }} title="Back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+      }
       style={{ width: 360, minHeight: 0 }}
       body={
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 12px 0' }}>

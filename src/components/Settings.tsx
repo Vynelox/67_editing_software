@@ -273,7 +273,15 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
           )}
           {activeTab === "components" && (
             <div style={{ flex: 1, padding: 16, overflow: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 90px)', gap: '8px 12px', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
-              <button onClick={() => { onClose?.(); OpenTorusMenuEditor(() => { OpenSettings({ tab: 'components' }); }); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'background 0.12s, color 0.12s', width: 90, height: 100, flexShrink: 0 }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+              <button onClick={() => { 
+                onClose?.(); 
+                OpenTorusMenuEditor(() => {
+                  // Add a small delay to ensure the Torus Menu Editor is fully closed
+                  setTimeout(() => {
+                    OpenSettings({ tab: 'components' });
+                  }, 50);
+                }); 
+              }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'background 0.12s, color 0.12s', width: 90, height: 100, flexShrink: 0 }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}>
                   <circle cx="12" cy="12" r="9" />
                   <circle cx="12" cy="12" r="4" />
