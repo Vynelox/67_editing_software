@@ -33,5 +33,19 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
     "vite": "^5.4.2"
+  },
+  "build": {
+    "appId": "com.yourname.myapp",
+    "icon": "src/67_editing_software.ico", 
+    "win": {
+      "icon": "src/67_editing_software.ico",
+      "target": "nsis"
+    },
+    "mac": {
+      "icon": "src/67_editing_software.ico"
+    },
+    "linux": {
+      "icon": "src/67_editing_software.ico"
+    }
   }
 }
