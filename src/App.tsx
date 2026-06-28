@@ -530,7 +530,6 @@ function AppContent() {
           <img src="/src/67_editing_software.ico" alt="67 editing software" style={{ width: 22, height: 22 }} />
           <span>67 editing software</span>
         </div>
-        <div style={{ marginLeft: 'auto' }} />
         <button className="icon-btn" onClick={() => setShowStyle(true)} title="Style">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2C12 2 5 10 5 15c0 3.866 3.134 7 7 7s7-3.134 7-7c0-5-7-13-7-13z"/>
