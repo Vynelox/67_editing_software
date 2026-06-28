@@ -104,9 +104,16 @@ html, body, #root {
   background: var(--bg-panel);
   border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
   transition:
     background var(--theme-transition-duration) var(--theme-transition-timing),
     border-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.app-header button,
+.app-header .status-dot {
+  -webkit-app-region: no-drag;
 }
 
 .app-logo {
