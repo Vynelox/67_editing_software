@@ -144,132 +144,134 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
           </svg>
         </button>
       }
-      style={{ width: 360, minHeight: 0 }}
+      style={{ width: 620, minHeight: 0 }}
       body={
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 12px 0' }}>
-          <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: 260,
-              height: 260,
-            }}
-          >
-            {torusOpen && (
-              <div style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: '100%',
-                height: '100%',
-                zIndex: 5,
-                pointerEvents: 'none',
-              }}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260 }}>
+              <Slider
+                label="Duration"
+                value={duration}
+                min={0}
+                max={2000}
+                step={10}
+                onChange={setDuration}
+                onReset={() => setDuration(300)}
+                formatValue={v => `${v}ms`}
+              />
+              <Slider
+                label="Easing"
+                value={easing}
+                min={0}
+                max={100}
+                step={1}
+                onChange={setEasing}
+                onReset={() => setEasing(50)}
+                formatValue={v => `${v}%`}
+              />
+              <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ flex: 1, lineHeight: 1.2 }}>Delay</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{delay}ms</span>
+                    <button type="button" className="icon-btn" onClick={() => setDelay(0)} title="Reset to default" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  className="settings-range-input"
+                  min={0}
+                  max={1000}
+                  step={1}
+                  value={delaySliderValue}
+                  onChange={e => setDelay(sliderToDelay(Number(e.target.value)))}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
+                  <span>-1000ms</span>
+                  <span style={{ color: 'var(--text-muted)' }}>0ms</span>
+                  <span>1000ms</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: 260,
+                height: 260,
+              }}
+            >
+              {torusOpen && (
                 <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  width: '100%',
+                  height: '100%',
+                  zIndex: 5,
+                  pointerEvents: 'none',
+                }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'auto',
+                  }}>
+                    <TorusMenu
+                      interactive
+                      pos={{ x: 0, y: 0 }}
+                      target={dummyTarget}
+                      onClose={handleCloseTorus}
+                      onSplit={noop}
+                      onTrimLatter={noopBool}
+                      onTrimFormer={noopBool}
+                      onStep={noopNumBool}
+                      onRoll={noop}
+                      showCloseButton
+                      duration={duration}
+                      easing={easing}
+                      delay={delay}
+                      closeOnBackgroundClick={false}
+                    />
+                  </div>
+                </div>
+              )}
+              <button
+                type="button"
+                className="torus-toggle-btn"
+                onClick={() => setTorusOpen(o => !o)}
+                title="Toggle torus menu"
+                style={{
                   position: 'absolute',
                   left: '50%',
                   top: '50%',
                   transform: 'translate(-50%, -50%)',
-                  pointerEvents: 'auto',
-                }}>
-                  <TorusMenu
-                    interactive
-                    pos={{ x: 0, y: 0 }}
-                    target={dummyTarget}
-                    onClose={handleCloseTorus}
-                    onSplit={noop}
-                    onTrimLatter={noopBool}
-                    onTrimFormer={noopBool}
-                    onStep={noopNumBool}
-                    onRoll={noop}
-                    showCloseButton
-                    duration={duration}
-                    easing={easing}
-                    delay={delay}
-                    closeOnBackgroundClick={false}
-                  />
-                </div>
-              </div>
-            )}
-            <button
-              type="button"
-              className="torus-toggle-btn"
-              onClick={() => setTorusOpen(o => !o)}
-              title="Toggle torus menu"
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                border: '1px solid var(--border-mid)',
-                background: 'var(--bg-elevated)',
-                color: 'var(--text-secondary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 3000,
-                fontSize: 14,
-                fontWeight: 600,
-                lineHeight: 1,
-              }}
-            >
-              •••
-            </button>
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  border: '1px solid var(--border-mid)',
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 3000,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                }}
+              >
+                •••
+              </button>
+            </div>
           </div>
           <div style={{ color: 'var(--text-muted)', fontSize: 11, textAlign: 'center' }}>
             Torus Menu Editor
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260 }}>
-            <Slider
-              label="Duration"
-              value={duration}
-              min={0}
-              max={2000}
-              step={10}
-              onChange={setDuration}
-              onReset={() => setDuration(300)}
-              formatValue={v => `${v}ms`}
-            />
-            <Slider
-              label="Easing"
-              value={easing}
-              min={0}
-              max={100}
-              step={1}
-              onChange={setEasing}
-              onReset={() => setEasing(50)}
-              formatValue={v => `${v}%`}
-            />
-            {/* Delay slider with logarithmic scale */}
-            <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                <span style={{ flex: 1, lineHeight: 1.2 }}>Delay</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{delay}ms</span>
-                  <button type="button" className="icon-btn" onClick={() => setDelay(0)} title="Reset to default" style={{ padding: 4 }}><RotateCcw size={14} /></button>
-                </div>
-              </div>
-              <input
-                type="range"
-                className="settings-range-input"
-                min={0}
-                max={1000}
-                step={1}
-                value={delaySliderValue}
-                onChange={e => setDelay(sliderToDelay(Number(e.target.value)))}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
-                <span>-1000ms</span>
-                <span style={{ color: 'var(--text-muted)' }}>0ms</span>
-                <span>1000ms</span>
-              </div>
-            </div>
           </div>
         </div>
       }
