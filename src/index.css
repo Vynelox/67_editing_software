@@ -638,7 +638,6 @@ html, body, #root {
 /* Splitter / Resizer */
 [role="separator"] {
   background: var(--splitter, #2a2d3a);
-  transition: background 0.15s ease;
 }
 [role="separator"]:hover {
   background: var(--bg-hover);
