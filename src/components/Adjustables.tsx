@@ -97,7 +97,6 @@ export function Multiselect<T extends string>({ label, options, value, onChange,
                 fontSize: 12,
                 fontWeight: active ? 600 : 400,
                 cursor: 'pointer',
-                transition: 'all 0.12s',
               }}
             >
               {fmt(opt)}
@@ -189,7 +188,6 @@ export function Keybind({ label, keys, onChange, onReset, onAdd }: KeybindProps)
                 padding: '3px 8px',
                 cursor: 'pointer',
                 outline: 'none',
-                transition: 'border-color 0.12s, background 0.12s',
                 minHeight: 28,
               }}
               title={isEditing ? 'Press keys to assign...' : combo.length === 0 ? 'Click then press keys to assign' : 'Click then press new keys to reassign'}

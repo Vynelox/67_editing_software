@@ -50,9 +50,9 @@ function SettingsCategory({ title, children }: { title: string; children: React.
     <div className="settings-category">
       <button type="button" className="settings-category-header" onClick={() => setExpanded(e => !e)} aria-expanded={expanded}>
         <span className="settings-category-title">{title}</span>
-        <ChevronRight size={14} className="settings-category-arrow" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+        <ChevronRight size={14} className="settings-category-arrow" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }} />
       </button>
-      <div className="settings-category-body" style={{ display: 'grid', gridTemplateRows: expanded ? '1fr' : '0fr', transition: 'grid-template-rows 0.2s ease', overflow: 'hidden' }}>
+      <div className="settings-category-body" style={{ display: 'grid', gridTemplateRows: expanded ? '1fr' : '0fr', overflow: 'hidden' }}>
         <div style={{ overflow: 'hidden' }}>
           <div className="settings-category-body-inner">{children}</div>
         </div>
@@ -228,19 +228,19 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                 <span style={{ lineHeight: 1.2 }}>Viewer controls type</span>
                 <div style={{ display: "flex", gap: 6 }}>
-                  {(['compact', 'centered'] as const).map(opt => { const active = viewerControlsType === opt; return (<button key={opt} type="button" onClick={() => setViewerControlsType(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.12s" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
+                  {(['compact', 'centered'] as const).map(opt => { const active = viewerControlsType === opt; return (<button key={opt} type="button" onClick={() => setViewerControlsType(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                 <span style={{ lineHeight: 1.2 }}>Timecode display</span>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {(['timeline', 'viewer', 'both', 'none'] as const).map(opt => { const active = timecodePanel === opt; return (<button key={opt} type="button" onClick={() => setTimecodePanel(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.12s" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
+                  {(['timeline', 'viewer', 'both', 'none'] as const).map(opt => { const active = timecodePanel === opt; return (<button key={opt} type="button" onClick={() => setTimecodePanel(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                 <span style={{ lineHeight: 1.2 }}>Timeline zoom epicenter</span>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {(['playneedle', 'middle', 'cursor'] as const).map(opt => { const active = zoomEpicenter === opt; return (<button key={opt} type="button" onClick={() => setZoomEpicenter(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.12s" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
+                  {(['playneedle', 'middle', 'cursor'] as const).map(opt => { const active = zoomEpicenter === opt; return (<button key={opt} type="button" onClick={() => setZoomEpicenter(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
                 </div>
               </div>
             </div>
@@ -260,7 +260,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     {shortcuts[action].map((keys, idx) => {
                       const isEditing = editingChip?.action === action && editingChip?.index === idx;
                       return (
-                        <div key={idx} ref={el => { chipRefs.current[`${action}-${idx}`] = el; }} tabIndex={0} onFocus={() => setEditingChip({ action, index: idx })} onBlur={() => { setTimeout(() => setEditingChip(null), 150); }} onKeyDown={(e) => handleChipKeyDown(e, action, idx)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: isEditing ? "var(--bg-hover)" : "var(--bg-elevated)", border: isEditing ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", borderRadius: "var(--radius-sm)", padding: "3px 8px", cursor: "pointer", outline: "none", transition: "border-color 0.12s, background 0.12s", minHeight: 28 }} title={isEditing ? "Press keys to assign..." : keys.length === 0 ? "Click then press keys to assign" : "Click then press new keys to reassign"}>
+                        <div key={idx} ref={el => { chipRefs.current[`${action}-${idx}`] = el; }} tabIndex={0} onFocus={() => setEditingChip({ action, index: idx })} onBlur={() => { setTimeout(() => setEditingChip(null), 150); }} onKeyDown={(e) => handleChipKeyDown(e, action, idx)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: isEditing ? "var(--bg-hover)" : "var(--bg-elevated)", border: isEditing ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", borderRadius: "var(--radius-sm)", padding: "3px 8px", cursor: "pointer", outline: "none", minHeight: 28 }} title={isEditing ? "Press keys to assign..." : keys.length === 0 ? "Click then press keys to assign" : "Click then press new keys to reassign"}>
                           <span style={{ fontSize: 12, color: keys.length > 0 ? "var(--text-primary)" : "var(--text-muted)", fontFamily: "monospace" }}>{isEditing && keys.length === 0 ? "..." : keys.length > 0 ? formatKeys(keys) : "None"}</span>
                           {shortcuts[action].length > 1 && (<button type="button" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: "0 2px", fontSize: 13, lineHeight: 1, display: "flex", alignItems: "center" }} onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }} title="Remove this combination">x</button>)}
                         </div>
@@ -276,12 +276,9 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               <button onClick={() => { 
                 onClose?.(); 
                 OpenTorusMenuEditor(() => {
-                  // Add a small delay to ensure the Torus Menu Editor is fully closed
-                  setTimeout(() => {
-                    OpenSettings({ tab: 'components' });
-                  }, 50);
+                  OpenSettings({ tab: 'components' });
                 }); 
-              }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'background 0.12s, color 0.12s', width: 90, height: 100, flexShrink: 0 }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+              }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer', color: 'var(--text-secondary)', width: 90, height: 100, flexShrink: 0 }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}>
                   <circle cx="12" cy="12" r="9" />
                   <circle cx="12" cy="12" r="4" />

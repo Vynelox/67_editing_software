@@ -69,10 +69,7 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
     try { root.unmount(); } catch (e) {}
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
-    if (onCloseCallback) {
-      // Add a small delay to ensure the current modal is fully closed
-      setTimeout(onCloseCallback, 50);
-    }
+    if (onCloseCallback) onCloseCallback();
   };
   const closeDirectly = () => {
     try { root.unmount(); } catch (e) {}
