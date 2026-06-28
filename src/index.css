@@ -117,6 +117,7 @@ html, body, #root {
   font-weight: 700;
   letter-spacing: -0.3px;
   color: var(--text-primary);
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .app-logo svg {
@@ -129,6 +130,7 @@ html, body, #root {
   font-size: 11px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .workspace {
@@ -216,6 +218,7 @@ html, body, #root {
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--text-secondary);
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 /* Media Pool */
@@ -337,6 +340,7 @@ html, body, #root {
   border: var(--border-width) solid transparent;
   border-radius: calc(6px * var(--scale));
   color: var(--text-secondary);
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing), color var(--theme-transition-duration) var(--theme-transition-timing), border-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 .collapse-toggle:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border); }
 
@@ -375,6 +379,7 @@ html, body, #root {
   color: var(--text-secondary);
   letter-spacing: 1px;
   margin-left: auto;
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .export-btn {
@@ -465,6 +470,7 @@ html, body, #root {
   color: var(--text-muted);
   letter-spacing: 1px;
   flex-shrink: 0;
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .viewer-timecode--full {
@@ -482,6 +488,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .viewer-volume-icon--compact {
@@ -519,7 +526,9 @@ html, body, #root {
   color: var(--text-primary);
   cursor: pointer;
   flex-shrink: 0;
-  transition: filter 0.12s;
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    filter 0.12s;
 }
 
 .viewer-play-btn:hover {
@@ -539,6 +548,8 @@ html, body, #root {
   width: calc(28px * var(--scale));
   height: calc(28px * var(--scale));
   padding: 0;
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing),
+    color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .ctrl-btn:hover {
@@ -627,7 +638,7 @@ html, body, #root {
   left: 50%;
   transform: translateX(-50%);
 }
-.zoom-label { font-size: calc(11px * var(--scale)); color: var(--text-muted); min-width: calc(36px * var(--scale)); text-align: center; }
+.zoom-label { font-size: calc(11px * var(--scale)); color: var(--text-muted); min-width: calc(36px * var(--scale)); text-align: center; transition: color var(--theme-transition-duration) var(--theme-transition-timing); }
 
 .tl-main {
   display: flex;
@@ -739,6 +750,7 @@ html, body, #root {
   font-family: monospace;
   color: var(--text-muted);
   white-space: nowrap;
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .tl-track {
@@ -868,7 +880,7 @@ html, body, #root {
   pointer-events: all;
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--playneedle) 40%, transparent), 0 0 12px color-mix(in srgb, var(--playneedle) 60%, transparent);
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform 0.1s, box-shadow 0.1s, background var(--theme-transition-duration) var(--theme-transition-timing);
   z-index: 41; /* ensure button above ruler but below torus */
 }
 .playhead-btn:focus,
@@ -890,6 +902,7 @@ html, body, #root {
   height: 100%;
   background: var(--playneedle);
   box-shadow: 0 0 6px color-mix(in srgb, var(--playneedle) 60%, transparent), 0 0 2px color-mix(in srgb, var(--playneedle) 40%, transparent);
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing), box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 /* Torus Menu */
@@ -1159,6 +1172,7 @@ html, body, #root {
   color: var(--text-secondary);
   font-size: 13px;
   text-align: left;
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 .color-controls { display: flex; align-items: center; gap: 8px; }
 .color-preview {
@@ -1229,7 +1243,7 @@ input[type="color"] {
 .color-slider-row { display: flex; gap: 8px; align-items: center; }
 .color-slider-row label { width: 18px; color: var(--text-secondary); }
 .color-slider-row input[type="range"] { flex: 1; }
-.color-val { width: 36px; text-align: right; color: var(--text-secondary); font-size: 12px; }
+.color-val { width: 36px; text-align: right; color: var(--text-secondary); font-size: 12px; transition: color var(--theme-transition-duration) var(--theme-transition-timing); }
 
 .color-fullscreen-overlay {
   position: fixed;
@@ -1260,6 +1274,7 @@ input[type="color"] {
   align-items: center;
   font-size: 13px;
   color: var(--text-secondary);
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .settings-number-input {
@@ -1271,6 +1286,7 @@ input[type="color"] {
   border: 1px solid var(--border-mid);
   border-radius: var(--radius-sm);
   font-size: 13px;
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing), color var(--theme-transition-duration) var(--theme-transition-timing), border-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .settings-number-input:focus {
@@ -1285,6 +1301,7 @@ input[type="color"] {
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .settings-checkbox {
@@ -1298,6 +1315,7 @@ input[type="color"] {
   border-radius: var(--radius-sm);
   cursor: pointer;
   position: relative;
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing), border-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 /* Layout tweaks for misc settings: labels left, inputs right */
@@ -1328,6 +1346,7 @@ input[type="color"] {
   outline: none;
   cursor: pointer;
   accent-color: var(--input-field);
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing), accent-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 /* Color picker lightness slider - transparent circle with white ring and black outline */
