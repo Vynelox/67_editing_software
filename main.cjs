@@ -22,5 +22,4 @@ app.whenReady().then(() => {
   ipcMain.on('window-close', () => win.close());
 
   win.loadURL('http://localhost:5173');
-  win.webContents.openDevTools();
 });
