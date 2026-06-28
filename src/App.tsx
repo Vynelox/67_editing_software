@@ -291,6 +291,14 @@ function AppContent() {
     return () => { if (playIntervalRef.current) clearInterval(playIntervalRef.current); };
   }, [playing, totalFrames]);
 
+  // Window controls (Electron only)
+  const sendWindowCommand = useCallback((command: string) => {
+    try {
+      const { ipcRenderer } = (window as any).require('electron');
+      ipcRenderer.send(command);
+    } catch {}
+  }, []);
+
   // Styles back/close: goes back one level if inside a sub-page, otherwise closes
   const handleStyleBackOrClose = useCallback(() => {
     if (stylePage) {
@@ -541,10 +549,10 @@ function AppContent() {
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
         </button>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-          <button className="status-dot" data-color="yellow" title="Yellow" />
-          <button className="status-dot" data-color="green" title="Green" />
-          <button className="status-dot" data-color="red" title="Red" />
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+          <button className="status-dot" data-color="yellow" title="Minimize" onClick={() => sendWindowCommand('window-minimize')} />
+          <button className="status-dot" data-color="green" title="Maximize" onClick={() => sendWindowCommand('window-maximize')} />
+          <button className="status-dot" data-color="red" title="Close" onClick={() => sendWindowCommand('window-close')} />
         </div>
       </header>
       <div

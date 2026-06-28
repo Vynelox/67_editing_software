@@ -1,21 +1,26 @@
-const path = require('path'); // <--- ADD THIS LINE (imports path.join)
-const { app, BrowserWindow } = require('electron');
+const path = require('path');
+const { app, BrowserWindow, ipcMain } = require('electron');
 
 app.whenReady().then(() => {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
-    frame: false, // <--- THIS REMOVES THE NATIVE WINDOWS BAR
-    icon: path.join(__dirname, 'src/67_editing_software.ico'), 
+    frame: false,
+    icon: path.join(__dirname, 'src/67_editing_software.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     }
   });
 
-  // Point Electron to your local React dev server!
+  // Window control handlers
+  ipcMain.on('window-minimize', () => win.minimize());
+  ipcMain.on('window-maximize', () => {
+    if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+  });
+  ipcMain.on('window-close', () => win.close());
+
   win.loadURL('http://localhost:5173');
-  
-  // Open DevTools so you can debug if something breaks
   win.webContents.openDevTools();
 });
