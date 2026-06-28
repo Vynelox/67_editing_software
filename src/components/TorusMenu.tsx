@@ -164,27 +164,57 @@ export default function TorusMenu({
 
   // Interactive-only: scroll-to-close and background-click-to-close
   const ref = useRef<HTMLDivElement>(null);
-  const mouseOnMenuRef = useRef(false);
-  const menuCenterRef = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => {
     if (!interactive) return;
     const timer = setTimeout(() => {
+      // Only attach scroll handler if scrolling is not disabled
+      if (disableScrolling === 'none') {
+        // Don't attach any scroll handler - let scroll propagate naturally
+        return;
+      }
+      
       const scrollHandler = (e: Event) => {
-        if (disableScrolling !== 'none') {
-          if (disableScrolling === 'whole torus menu' && mouseOnMenuRef.current) {
+        if (!ref.current) return;
+        
+        // Get mouse position
+        const mouseX = (window as any).mouseX;
+        const mouseY = (window as any).mouseY;
+        
+        // If we don't know mouse position, close the menu
+        if (mouseX == null || mouseY == null) {
+          onClose();
+          return;
+        }
+        
+        // Use elementFromPoint to detect what's under the mouse
+        const el = document.elementFromPoint(mouseX, mouseY);
+        
+        if (disableScrolling === 'annular sectors only') {
+          // If mouse is over a sector element, block scroll
+          if (el?.closest('.torus-sector')) {
             e.preventDefault();
             e.stopPropagation();
             return;
           }
-          if (disableScrolling === 'annular sectors only') {
-            const target = e.target as HTMLElement;
-            if (target && target.closest('.torus-sector')) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-            }
+          // If mouse is inside the overlay but not on a sector (hollow center), allow scroll
+          if (el && ref.current.contains(el)) {
+            return;
+          }
+          // Otherwise close
+          onClose();
+          return;
+        }
+        
+        if (disableScrolling === 'whole torus menu') {
+          // If mouse is anywhere in the overlay, block scroll
+          if (el && ref.current.contains(el)) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
           }
         }
+        
+        // Outside menu: close
         onClose();
       };
       window.addEventListener('scroll', scrollHandler, true);
@@ -211,28 +241,12 @@ export default function TorusMenu({
         window.addEventListener('mousedown', clickHandler);
       }
 
+      // Store mouse position globally for elementFromPoint access
       const mouseMoveHandler = (e: MouseEvent) => {
-        if (!menuCenterRef.current) return;
-        const { x: menuX, y: menuY } = menuCenterRef.current;
-        const dx = e.clientX - menuX;
-        const dy = e.clientY - menuY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        // For "whole torus menu": mouse is "on menu" if within outer radius (includes hollow center)
-        // For "annular sectors only": mouse is "on menu" only if directly over a sector (between innerR and outerR)
-        mouseOnMenuRef.current = disableScrolling === 'annular sectors only'
-          ? distance >= innerR && distance <= outerR
-          : distance <= outerR;
+        (window as any).mouseX = e.clientX;
+        (window as any).mouseY = e.clientY;
       };
       window.addEventListener('mousemove', mouseMoveHandler, true);
-
-      // Set menu center position for hit testing
-      if (ref.current) {
-        const rect = ref.current.getBoundingClientRect();
-        menuCenterRef.current = {
-          x: rect.left + cx,
-          y: rect.top + cy
-        };
-      }
 
       return () => {
         window.removeEventListener('scroll', scrollHandler, true);
@@ -241,7 +255,7 @@ export default function TorusMenu({
       };
     }, 10);
     return () => clearTimeout(timer);
-  }, [onClose, interactive, closeOnBackgroundClick, disableScrolling, outerR, cx, cy]);
+  }, [onClose, interactive, closeOnBackgroundClick, disableScrolling, outerR, innerR, cx, cy]);
 
   // Animation helpers
   const durationSec = duration / 1000;
@@ -293,7 +307,7 @@ export default function TorusMenu({
   };
 
   const svgContent = (
-    <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`} style={{ pointerEvents: 'none' }}>
+    <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`}>
       <defs>
         <clipPath id="torus-clip">
           <circle cx={cx} cy={cy} r={outerR} />
@@ -340,7 +354,6 @@ export default function TorusMenu({
                   fontSize: 10,
                   lineHeight: 1.1,
                   textAlign: 'center',
-                  pointerEvents: 'none',
                   gap: 1,
                 }}
               >
@@ -363,12 +376,18 @@ export default function TorusMenu({
           60% { opacity: 1; }
           100% { opacity: 1; transform: scale(1); }
         }
+        .torus-overlay.torus-overlay--no-scroll {
+          pointer-events: none;
+        }
+        .torus-overlay.torus-overlay--no-scroll > * {
+          pointer-events: auto;
+        }
       `}</style>
       {interactive ? (
         <div
-          className="torus-overlay"
+          className={`torus-overlay${disableScrolling === 'none' ? ' torus-overlay--no-scroll' : ''}`}
           ref={ref}
-          style={{ left: pos.x - cx, top: pos.y - cy, width: cx * 2, height: cy * 2, transformOrigin: `${cx}px ${cy}px`, transformBox: 'view-box', borderRadius: '50%', overflow: 'hidden', pointerEvents: 'auto', clipPath: `circle(${outerR}px at ${cx}px ${cy}px)` }}
+          style={{ left: pos.x - cx, top: pos.y - cy, width: cx * 2, height: cy * 2, transformOrigin: `${cx}px ${cy}px`, transformBox: 'view-box', borderRadius: '50%', overflow: 'hidden', clipPath: `circle(${outerR}px at ${cx}px ${cy}px)` }}
           onMouseDown={(e) => {
             const targetEl = e.target as HTMLElement;
             if (disableScrolling !== 'annular sectors only' || targetEl.closest('.torus-sector')) {

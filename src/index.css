@@ -81,7 +81,7 @@ html, body, #root {
   /* Scale bar heights (horizontal bars) */
   --bar-height-sm: calc(28px * var(--scale));
   --bar-height-md: calc(36px * var(--scale));
-  --bar-height-lg: calc(44px * var(--scale));
+  --bar-height-lg: calc(36px * var(--scale));
   
   /* Scale bar widths (vertical bars) */
   --bar-width-sm: calc(60px * var(--scale));
