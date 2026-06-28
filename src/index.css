@@ -98,7 +98,7 @@ html, body, #root {
 .app-header {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: 0;
   padding: 0 var(--space-lg);
   height: var(--bar-height-lg);
   background: var(--bg-panel);
