@@ -99,6 +99,7 @@ html, body, #root {
   background: var(--bg-panel);
   border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
+  transition: none !important;
 }
 
 .app-logo {
@@ -211,6 +212,7 @@ html, body, #root {
   background: var(--bg-panel);
   border-right: 1px solid var(--border);
   overflow: hidden;
+  transition: none !important;
 }
 
 .media-list {
@@ -233,7 +235,6 @@ html, body, #root {
   background: var(--bg-panel);
   border: var(--border-width) dashed var(--border-mid);
   border-radius: var(--radius-md);
-  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .empty-drop:hover {
@@ -390,6 +391,7 @@ html, body, #root {
   background: var(--bg-panel);
   flex-shrink: 0;
   height: var(--bar-height-md);
+  transition: none !important;
 }
 
 .viewer-controls--compact {
@@ -563,6 +565,7 @@ html, body, #root {
   min-height: 0;
   position: relative;
   overflow: hidden;
+  transition: none !important;
 }
 
 .tl-toolbar {
@@ -1163,7 +1166,7 @@ input[type="color"] {
 .color-preview-large { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border); }
 .color-hex-row { display: flex; gap: 8px; align-items: center; }
 .color-hex-label { color: var(--text-secondary); font-size: 12px; min-width: 34px; }
-.color-hex-input { flex: 1; padding: 6px 8px; background: var(--bg-panel); color: var(--text-primary); border: 1px solid var(--border-mid); border-radius: 6px; }
+.color-hex-input { flex: 1; padding: 6px 8px; background: var(--bg-panel); color: var(--text-primary); border: 1px solid var(--border-mid); border-radius: 6px; transition: none !important; }
 .color-slider-row { display: flex; gap: 8px; align-items: center; }
 .color-slider-row label { width: 18px; color: var(--text-secondary); }
 .color-slider-row input[type="range"] { flex: 1; }
