@@ -27,8 +27,6 @@ export default function Viewer({
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--video-bg').trim() || '#0a0a0a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const videoClips = clips
       .filter(c => (c.type === 'video' || c.type === 'image') && c.track === 0)
@@ -36,8 +34,6 @@ export default function Viewer({
       .sort((a, b) => a.startFrame - b.startFrame);
 
     if (videoClips.length === 0) {
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--video-bg').trim() || '#0a0a0a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
 
@@ -91,8 +87,6 @@ export default function Viewer({
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--video-bg').trim() || '#0a0a0a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.globalAlpha = alpha;
       const ar = videoEl.videoWidth / videoEl.videoHeight || 16 / 9;
       const cAr = canvas.width / canvas.height;
