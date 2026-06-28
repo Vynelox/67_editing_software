@@ -170,15 +170,15 @@ export default function TorusMenu({
     if (!interactive) return;
     const timer = setTimeout(() => {
       const scrollHandler = (e: Event) => {
-        if (disableScrolling !== 'none' && mouseOnMenuRef.current) {
-          if (disableScrolling === 'whole torus menu') {
+        if (disableScrolling !== 'none') {
+          if (disableScrolling === 'whole torus menu' && mouseOnMenuRef.current) {
             e.preventDefault();
             e.stopPropagation();
             return;
           }
           if (disableScrolling === 'annular sectors only') {
             const target = e.target as HTMLElement;
-            if (target.closest('.torus-sector')) {
+            if (target && target.closest('.torus-sector')) {
               e.preventDefault();
               e.stopPropagation();
               return;
@@ -195,6 +195,15 @@ export default function TorusMenu({
           const target = e.target as HTMLElement;
           if (target.closest('.torus-toggle-btn')) return;
           if (target.closest('.torus-center-btn')) return;
+          
+          if (disableScrolling === 'annular sectors only') {
+            // Close if not clicking on a sector (allow clicking center/outside to close)
+            if (!target.closest('.torus-sector')) {
+              onClose();
+            }
+            return;
+          }
+          
           if (ref.current && !ref.current.contains(target)) {
             onClose();
           }
@@ -208,7 +217,11 @@ export default function TorusMenu({
         const dx = e.clientX - menuX;
         const dy = e.clientY - menuY;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        mouseOnMenuRef.current = distance <= outerR;
+        // For "whole torus menu": mouse is "on menu" if within outer radius (includes hollow center)
+        // For "annular sectors only": mouse is "on menu" only if directly over a sector (between innerR and outerR)
+        mouseOnMenuRef.current = disableScrolling === 'annular sectors only'
+          ? distance >= innerR && distance <= outerR
+          : distance <= outerR;
       };
       window.addEventListener('mousemove', mouseMoveHandler, true);
 
@@ -356,7 +369,12 @@ export default function TorusMenu({
           className="torus-overlay"
           ref={ref}
           style={{ left: pos.x - cx, top: pos.y - cy, width: cx * 2, height: cy * 2, transformOrigin: `${cx}px ${cy}px`, transformBox: 'view-box', borderRadius: '50%', overflow: 'hidden', pointerEvents: 'auto', clipPath: `circle(${outerR}px at ${cx}px ${cy}px)` }}
-          onMouseDown={(e) => { e.stopPropagation(); }}
+          onMouseDown={(e) => {
+            const targetEl = e.target as HTMLElement;
+            if (disableScrolling !== 'annular sectors only' || targetEl.closest('.torus-sector')) {
+              e.stopPropagation();
+            }
+          }}
         >
           {svgContent}
           {showCloseButton && (
