@@ -905,6 +905,38 @@ html, body, #root {
   transition: background var(--theme-transition-duration) var(--theme-transition-timing), box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
+/* Status buttons in header */
+.status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.status-dot:hover {
+  transform: scale(1.3);
+  filter: brightness(1.3);
+}
+.status-dot[data-color="yellow"] {
+  background: #fbbf24;
+}
+.status-dot[data-color="yellow"]:hover {
+  box-shadow: 0 0 8px #fbbf24, 0 0 16px #fbbf24;
+}
+.status-dot[data-color="green"] {
+  background: #34d399;
+}
+.status-dot[data-color="green"]:hover {
+  box-shadow: 0 0 8px #34d399, 0 0 16px #34d399;
+}
+.status-dot[data-color="red"] {
+  background: #f87171;
+}
+.status-dot[data-color="red"]:hover {
+  box-shadow: 0 0 8px #f87171, 0 0 16px #f87171;
+}
+
 /* Torus Menu */
 .torus-overlay {
   position: fixed;
