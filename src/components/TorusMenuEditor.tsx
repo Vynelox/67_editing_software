@@ -133,7 +133,7 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
               width: 26, 
               height: 26, 
               color: 'var(--text-secondary)',
-              pointerEvents: ((window as any).juicecut?.settings?.draggableHeaderButtons ?? true) ? 'auto' : 'none'
+
             }
           }
           title="Back"

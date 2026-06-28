@@ -16,7 +16,7 @@ import {
 import { HistoryProvider, useHistory } from './state/history';
 
 const DEFAULT_IMAGE_DURATION = 5 * FPS;
-const WINDOW_BUTTONS_SPACING = 7; //px
+const WINDOW_BUTTONS_SPACING = 10; //px
 const WINDOW_BUTTONS_SIZE = 15; //px
 const TOP_BAR_MENU_BUTTONS_SPACING = 0; //px
 
