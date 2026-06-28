@@ -153,33 +153,36 @@ export default function Timeline({
     if (!zoomAnimatingRef.current) zoomTargetRef.current = zoom;
   }, [zoom]);
   
-  // Ensure playhead has correct height after mount and when GUI scale changes
+  // Keep the playneedle height synchronized with the visible timeline pane
   useLayoutEffect(() => {
     const updatePlayheadHeight = () => {
-      const scrollEl = containerRef.current?.querySelector('.tl-scroll');
+      const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement | null;
       if (scrollEl) {
-        setPlayheadHeight(scrollEl.clientHeight);
+        const nextHeight = Math.max(1, Math.round(scrollEl.clientHeight));
+        setPlayheadHeight(prev => (prev === nextHeight ? prev : nextHeight));
       }
     };
-    
-    // Initial update
+
     updatePlayheadHeight();
-    
-    // Add event listeners
+
+    const scrollEl = containerRef.current?.querySelector('.tl-scroll') as HTMLElement | null;
+    const resizeObserver = scrollEl ? new ResizeObserver(() => updatePlayheadHeight()) : null;
+    if (resizeObserver && scrollEl) {
+      resizeObserver.observe(scrollEl);
+    }
+
     window.addEventListener('resize', updatePlayheadHeight);
-    
-    // Listen for GUI scale changes
+
     const handleGuiScaleChange = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.key === 'guiScale') {
-        // Small delay to allow DOM to update with new scale
         setTimeout(updatePlayheadHeight, 50);
       }
     };
     window.addEventListener('juicecut-settings-changed', handleGuiScaleChange);
-    
-    // Cleanup
+
     return () => {
+      resizeObserver?.disconnect();
       window.removeEventListener('resize', updatePlayheadHeight);
       window.removeEventListener('juicecut-settings-changed', handleGuiScaleChange);
     };
