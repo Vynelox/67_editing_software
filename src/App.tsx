@@ -17,6 +17,7 @@ import { HistoryProvider, useHistory } from './state/history';
 
 const DEFAULT_IMAGE_DURATION = 5 * FPS;
 const WINDOW_BUTTONS_SPACING = 7; //px
+const WINDOW_BUTTONS_SIZE = 15; //px
 
 // Global close stack for escape key handling (LIFO)
 const closeStack: Array<() => void> = [];
@@ -553,9 +554,9 @@ function AppContent() {
           </svg>
         </button>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: WINDOW_BUTTONS_SPACING, alignItems: 'center' }}>
-          <button className="status-dot" data-color="yellow" title="Minimize" onClick={() => sendWindowCommand('window-minimize')} />
-          <button className="status-dot" data-color="green" title="Maximize" onClick={() => sendWindowCommand('window-maximize')} />
-          <button className="status-dot" data-color="red" title="Close" onClick={() => sendWindowCommand('window-close')} />
+          <button className="status-dot" data-color="yellow" title="Minimize" onClick={() => sendWindowCommand('window-minimize')} style={{ width: WINDOW_BUTTONS_SIZE, height: WINDOW_BUTTONS_SIZE }} />
+          <button className="status-dot" data-color="green" title="Maximize" onClick={() => sendWindowCommand('window-maximize')} style={{ width: WINDOW_BUTTONS_SIZE, height: WINDOW_BUTTONS_SIZE }} />
+          <button className="status-dot" data-color="red" title="Close" onClick={() => sendWindowCommand('window-close')} style={{ width: WINDOW_BUTTONS_SIZE, height: WINDOW_BUTTONS_SIZE }} />
         </div>
       </header>
       <div
