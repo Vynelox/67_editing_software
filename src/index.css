@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  --theme-transition-duration: 0ms;
+  --theme-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
   --bg-base:      #0c0d10;
   --bg-panel:     #13141a;
   --bg-elevated:  #1a1c24;
@@ -99,7 +101,9 @@ html, body, #root {
   background: var(--bg-panel);
   border-bottom: var(--border-width) solid var(--border);
   flex-shrink: 0;
-  transition: none !important;
+  transition:
+    background var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .app-logo {
@@ -212,7 +216,9 @@ html, body, #root {
   background: var(--bg-panel);
   border-right: 1px solid var(--border);
   overflow: hidden;
-  transition: none !important;
+  transition:
+    background var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .media-list {
@@ -391,7 +397,9 @@ html, body, #root {
   background: var(--bg-panel);
   flex-shrink: 0;
   height: var(--bar-height-md);
-  transition: none !important;
+  transition:
+    background var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .viewer-controls--compact {
@@ -565,7 +573,7 @@ html, body, #root {
   min-height: 0;
   position: relative;
   overflow: hidden;
-  transition: none !important;
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .tl-toolbar {
@@ -638,6 +646,7 @@ html, body, #root {
 /* Splitter / Resizer */
 [role="separator"] {
   background: var(--splitter, #2a2d3a);
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing);
 }
 [role="separator"]:hover {
   background: var(--bg-hover);

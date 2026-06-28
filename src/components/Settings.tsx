@@ -140,6 +140,14 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [pnVo, setPnVo] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_v_o"); return v !== null ? Number(v) : 0.4; } catch { return 0.4; } });
   const [pnHb, setPnHb] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_h_b"); return v !== null ? Number(v) : 0.8; } catch { return 0.8; } });
   const [pnHr, setPnHr] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_h_r"); return v !== null ? Number(v) : 1; } catch { return 1; } });
+  const [colorTransitionDuration, setColorTransitionDuration] = useState<number>(() => {
+    try {
+      const v = window.localStorage.getItem("juicecut.settings.colorTransitionDuration");
+      return v !== null ? Number(v) : 0;
+    } catch {
+      return 0;
+    }
+  });
 
   const [shortcuts, setShortcuts] = useState<Record<ShortcutAction, string[][]>>(loadAllShortcuts);
   const [editingChip, setEditingChip] = useState<{ action: ShortcutAction; index: number } | null>(null);
@@ -167,6 +175,22 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_v_o", String(pnVo)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_v_o", value: pnVo } })); } catch {} }, [pnVo]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_h_b", String(pnHb)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_h_b", value: pnHb } })); } catch {} }, [pnHb]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_h_r", String(pnHr)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_h_r", value: pnHr } })); } catch {} }, [pnHr]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("juicecut.settings.colorTransitionDuration", String(colorTransitionDuration));
+      // Make the setting available globally
+      if (!(window as any).juicecut) (window as any).juicecut = {};
+      if (!(window as any).juicecut.settings) (window as any).juicecut.settings = {};
+      (window as any).juicecut.settings.colorTransitionDuration = colorTransitionDuration;
+      
+      // Update transition properties on the document
+      if (document.documentElement) {
+        document.documentElement.style.setProperty('--theme-transition-duration', `${colorTransitionDuration}ms`);
+        document.documentElement.style.setProperty('--theme-transition-timing', 'cubic-bezier(0.4, 0, 0.2, 1)');
+      }
+    } catch {}
+  }, [colorTransitionDuration]);
 
   useEffect(() => {
     if (initialScroll != null && panelRef.current) {
@@ -236,6 +260,16 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               <SettingsCategory title="Miscellaneous">
                 <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v.toFixed(3)}%`} />
                 <SliderSetting label="Draggable modal background blur amount" value={elevatedPanelBlur} min={0} max={100} step={1} onChange={setElevatedPanelBlur} onReset={() => setElevatedPanelBlur(0)} formatValue={v => `${v.toFixed(3)}%`} />
+                <SliderSetting 
+                  label="Color change transition duration"
+                  value={colorTransitionDuration}
+                  min={0}
+                  max={1000}
+                  step={10}
+                  onChange={setColorTransitionDuration}
+                  onReset={() => setColorTransitionDuration(0)}
+                  formatValue={v => `${v}ms`}
+                />
               </SettingsCategory>
             </div>
           )}
@@ -332,6 +366,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
 }
 
 export function OpenSettings(pageData?: any, scroll?: number | null) {
+  // Set initial transition properties if they haven't been set yet
+  if (document.documentElement && !document.documentElement.style.getPropertyValue('--theme-transition-duration')) {
+    const duration = (window as any).juicecut?.settings?.colorTransitionDuration || 0;
+    document.documentElement.style.setProperty('--theme-transition-duration', `${duration}ms`);
+    document.documentElement.style.setProperty('--theme-transition-timing', 'cubic-bezier(0.4, 0, 0.2, 1)');
+  }
+  
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
