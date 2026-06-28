@@ -37,8 +37,15 @@ export default function DraggableModal({ title, body, onClose, className = '', m
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    // Don't start drag if clicking close or minimize buttons
-    if (target.closest('.modal-minimize-btn') || target.closest('[aria-label="Close"]')) return;
+    // Check if we should allow dragging on header buttons
+    const allowDraggableButtons = (window as any).juicecut?.settings?.draggableHeaderButtons ?? true;
+    
+    // Don't start drag if clicking close or minimize buttons (unless allowed)
+    if (!allowDraggableButtons && 
+        (target.closest('.modal-minimize-btn') || target.closest('[aria-label="Close"]') || target.closest('.icon-btn'))) {
+      return;
+    }
+    
     setIsDragging(true);
     // Get the modal element's current screen position
     const modalEl = overlayRef.current?.querySelector('.modal-box') as HTMLElement | null;

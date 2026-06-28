@@ -121,7 +121,23 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
       title="Torus Menu Editor"
       onClose={onClose}
       headerLeft={
-        <button className="icon-btn" onClick={onBack} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, color: 'var(--text-secondary)' }} title="Back">
+        <button
+          className="icon-btn"
+          onClick={onBack} 
+          style={
+            {
+              position: 'absolute', 
+              left: 8, 
+              top: '50%', 
+              transform: 'translateY(-50%)', 
+              width: 26, 
+              height: 26, 
+              color: 'var(--text-secondary)',
+              pointerEvents: ((window as any).juicecut?.settings?.draggableHeaderButtons ?? true) ? 'auto' : 'none'
+            }
+          }
+          title="Back"
+        >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>

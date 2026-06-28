@@ -118,6 +118,24 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [pnT, setPnT] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_t"); return v !== null ? Number(v) : 0.092; } catch { return 0.092; } });
   const [pnJ, setPnJ] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_j"); return v !== null ? Number(v) : 0.049; } catch { return 0.049; } });
   const [pnK, setPnK] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_k"); return v !== null ? Number(v) : 103; } catch { return 103; } });
+  const [draggableHeaderButtons, setDraggableHeaderButtons] = useState<boolean>(() => {
+    try {
+      const v = window.localStorage.getItem("juicecut.settings.draggableHeaderButtons");
+      return v === null ? true : v === "true";
+    } catch {
+      return true;
+    }
+  });
+  
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("juicecut.settings.draggableHeaderButtons", String(draggableHeaderButtons));
+      // Make the setting available globally
+      if (!(window as any).juicecut) (window as any).juicecut = {};
+      if (!(window as any).juicecut.settings) (window as any).juicecut.settings = {};
+      (window as any).juicecut.settings.draggableHeaderButtons = draggableHeaderButtons;
+    } catch {}
+  }, [draggableHeaderButtons]);
   const [pnS, setPnS] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_s"); return v !== null ? Number(v) : 16.4; } catch { return 16.4; } });
   const [pnVo, setPnVo] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_v_o"); return v !== null ? Number(v) : 0.4; } catch { return 0.4; } });
   const [pnHb, setPnHb] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_h_b"); return v !== null ? Number(v) : 0.8; } catch { return 0.8; } });
@@ -150,7 +168,16 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_h_b", String(pnHb)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_h_b", value: pnHb } })); } catch {} }, [pnHb]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_h_r", String(pnHr)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_h_r", value: pnHr } })); } catch {} }, [pnHr]);
 
-  useEffect(() => { if (initialScroll != null && panelRef.current) { const el = panelRef.current.querySelector(".settings-panel-content"); if (el) el.scrollTop = initialScroll; } }, []);
+  useEffect(() => {
+    if (initialScroll != null && panelRef.current) {
+      const el = panelRef.current.querySelector(".settings-panel-content");
+      if (el) el.scrollTop = initialScroll;
+    }
+    // Initialize global settings object
+    if (!(window as any).juicecut) (window as any).juicecut = {};
+    if (!(window as any).juicecut.settings) (window as any).juicecut.settings = {};
+    (window as any).juicecut.settings.draggableHeaderButtons = draggableHeaderButtons;
+  }, []);
 
   const addCombination = (action: ShortcutAction) => { const next = { ...shortcuts, [action]: [...shortcuts[action], []] }; setShortcuts(next); scUpdate(next); const newIndex = next[action].length - 1; setEditingChip({ action, index: newIndex }); setTimeout(() => { chipRefs.current[`${action}-${newIndex}`]?.focus(); }, 0); };
   const removeCombination = (action: ShortcutAction, index: number) => { const arr = shortcuts[action].filter((_, i) => i !== index); const next = { ...shortcuts, [action]: arr.length > 0 ? arr : [[]] }; setShortcuts(next); scUpdate(next); setEditingChip(null); };
@@ -219,6 +246,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <input type="checkbox" className="settings-checkbox" checked={includeResizeInUndo} onChange={e => setIncludeResizeInUndo(e.target.checked)} />
                   <button type="button" className="icon-btn" onClick={() => setIncludeResizeInUndo(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                </div>
+              </div>
+              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
+                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow ←, −, and × buttons in<br />modals' header bar to be draggable</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="checkbox" className="settings-checkbox" checked={draggableHeaderButtons} onChange={e => setDraggableHeaderButtons(e.target.checked)} />
+                  <button type="button" className="icon-btn" onClick={() => setDraggableHeaderButtons(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
             </div>
