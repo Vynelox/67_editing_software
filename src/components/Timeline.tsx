@@ -107,6 +107,9 @@ export default function Timeline({
   const getCancelZoomOnScroll = () => {
     try { const v = window.localStorage.getItem('juicecut.settings.cancelZoomOnScroll'); return v === null ? true : v === 'true'; } catch { return true; }
   };
+  const getTorusScrollingDisabled = (): 'whole torus menu' | 'annular sectors only' | 'none' => {
+    try { return (window.localStorage.getItem('juicecut.settings.torusScrollingDisabled') as 'whole torus menu' | 'annular sectors only' | 'none') || 'none'; } catch { return 'none'; }
+  };
   const [timecodePanel, setTimecodePanel] = useState<string>(() => {
     try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; }
   });
@@ -741,6 +744,7 @@ export default function Timeline({
           onTrimFormer={(ripple) => { if (torusTarget.kind === 'inside') onTrimFormer(torusTarget.clipId, torusTarget.frame, ripple); setTorusTarget(null); setTorusPos(null); }}
           onStep={(dir, ripple) => { onStepEdge(torusTarget.kind === 'edge' ? torusTarget.clipId : null, torusTarget.kind === 'cut' ? [torusTarget.clipAId, torusTarget.clipBId] : null, dir, ripple); setTorusTarget(null); setTorusPos(null); }}
           onRoll={() => { if (torusTarget.kind === 'inside') onRoll(torusTarget.clipId); setTorusTarget(null); setTorusPos(null); }}
+          disableScrolling={getTorusScrollingDisabled()}
         />
       )}
     </div>

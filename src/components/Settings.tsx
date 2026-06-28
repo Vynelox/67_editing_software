@@ -113,6 +113,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   const [scrollZoomSmoothness, setScrollZoomSmoothness] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.scrollZoomSmoothness"); return v ? Number(v) : 70; } catch { return 70; } });
   const [viewerControlsType, setViewerControlsType] = useState<string>(() => { try { return window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'; } catch { return 'compact'; } });
   const [timecodePanel, setTimecodePanel] = useState<string>(() => { try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; } });
+  const [torusScrollingDisabled, setTorusScrollingDisabled] = useState<string>(() => { try { return window.localStorage.getItem('juicecut.settings.torusScrollingDisabled') || 'none'; } catch { return 'none'; } });
   const [elevatedPanelDarken, setElevatedPanelDarken] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.elevatedPanelDarkenAmount"); return v ? Number(v) : 50; } catch { return 50; } });
   const [elevatedPanelBlur, setElevatedPanelBlur] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.elevatedPanelBlurAmount"); return v ? Number(v) : 0; } catch { return 0; } });
   const [pnT, setPnT] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_t"); return v !== null ? Number(v) : 0.092; } catch { return 0.092; } });
@@ -166,6 +167,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.scrollZoomSmoothness", String(scrollZoomSmoothness)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "scrollZoomSmoothness", value: scrollZoomSmoothness } })); } catch {} }, [scrollZoomSmoothness]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.viewerControlsType', viewerControlsType); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'viewerControlsType', value: viewerControlsType } })); } catch {} }, [viewerControlsType]);
   useEffect(() => { try { window.localStorage.setItem('juicecut.settings.timecodePanel', timecodePanel); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'timecodePanel', value: timecodePanel } })); } catch {} }, [timecodePanel]);
+  useEffect(() => { try { window.localStorage.setItem('juicecut.settings.torusScrollingDisabled', torusScrollingDisabled); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'torusScrollingDisabled', value: torusScrollingDisabled } })); } catch {} }, [torusScrollingDisabled]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelDarkenAmount", String(elevatedPanelDarken)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelDarkenAmount", value: elevatedPanelDarken } })); } catch {} }, [elevatedPanelDarken]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.elevatedPanelBlurAmount", String(elevatedPanelBlur)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "elevatedPanelBlurAmount", value: elevatedPanelBlur } })); } catch {} }, [elevatedPanelBlur]);
   useEffect(() => { try { window.localStorage.setItem("juicecut.settings.playneedle_t", String(pnT)); window.dispatchEvent(new CustomEvent("juicecut-settings-changed", { detail: { key: "playneedle_t", value: pnT } })); } catch {} }, [pnT]);
@@ -309,6 +311,12 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 <span style={{ lineHeight: 1.2 }}>Timeline zoom epicenter</span>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {(['playneedle', 'middle', 'cursor'] as const).map(opt => { const active = zoomEpicenter === opt; return (<button key={opt} type="button" onClick={() => setZoomEpicenter(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
+                </div>
+              </div>
+              <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+                <span style={{ lineHeight: 1.2 }}>Disable scrolling when torus menu is open and mouse is on:</span>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {(['whole torus menu', 'annular sectors only', 'none'] as const).map(opt => { const active = torusScrollingDisabled === opt; return (<button key={opt} type="button" onClick={() => setTorusScrollingDisabled(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
                 </div>
               </div>
             </div>

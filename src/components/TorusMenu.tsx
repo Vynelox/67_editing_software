@@ -44,6 +44,9 @@ interface Props {
 
   // Shared
   closeOnBackgroundClick?: boolean;
+
+  // Scroll disabling
+  disableScrolling?: 'whole torus menu' | 'annular sectors only' | 'none';
 }
 
 function annularSectorPath(
@@ -122,6 +125,7 @@ export default function TorusMenu({
   rotationOffset: propRotationOffset,
   onSectorClick,
   closeOnBackgroundClick = true,
+  disableScrolling = 'none',
 }: Props) {
   const duration = durationProp ?? getSavedDuration();
   const easing = easingProp ?? getSavedEasing();
@@ -160,10 +164,29 @@ export default function TorusMenu({
 
   // Interactive-only: scroll-to-close and background-click-to-close
   const ref = useRef<HTMLDivElement>(null);
+  const mouseOnMenuRef = useRef(false);
+  const menuCenterRef = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => {
     if (!interactive) return;
     const timer = setTimeout(() => {
-      const scrollHandler = () => { onClose(); };
+      const scrollHandler = (e: Event) => {
+        if (disableScrolling !== 'none' && mouseOnMenuRef.current) {
+          if (disableScrolling === 'whole torus menu') {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          if (disableScrolling === 'annular sectors only') {
+            const target = e.target as HTMLElement;
+            if (target.closest('.torus-sector')) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+          }
+        }
+        onClose();
+      };
       window.addEventListener('scroll', scrollHandler, true);
 
       let clickHandler: ((e: MouseEvent) => void) | null = null;
@@ -179,13 +202,33 @@ export default function TorusMenu({
         window.addEventListener('mousedown', clickHandler);
       }
 
+      const mouseMoveHandler = (e: MouseEvent) => {
+        if (!menuCenterRef.current) return;
+        const { x: menuX, y: menuY } = menuCenterRef.current;
+        const dx = e.clientX - menuX;
+        const dy = e.clientY - menuY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        mouseOnMenuRef.current = distance <= outerR;
+      };
+      window.addEventListener('mousemove', mouseMoveHandler, true);
+
+      // Set menu center position for hit testing
+      if (ref.current) {
+        const rect = ref.current.getBoundingClientRect();
+        menuCenterRef.current = {
+          x: rect.left + cx,
+          y: rect.top + cy
+        };
+      }
+
       return () => {
         window.removeEventListener('scroll', scrollHandler, true);
         if (clickHandler) window.removeEventListener('mousedown', clickHandler);
+        window.removeEventListener('mousemove', mouseMoveHandler, true);
       };
     }, 10);
     return () => clearTimeout(timer);
-  }, [onClose, interactive, closeOnBackgroundClick]);
+  }, [onClose, interactive, closeOnBackgroundClick, disableScrolling, outerR, cx, cy]);
 
   // Animation helpers
   const durationSec = duration / 1000;
@@ -237,7 +280,13 @@ export default function TorusMenu({
   };
 
   const svgContent = (
-    <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`}>
+    <svg width={cx * 2} height={cy * 2} viewBox={`0 0 ${cx * 2} ${cy * 2}`} style={{ pointerEvents: 'none' }}>
+      <defs>
+        <clipPath id="torus-clip">
+          <circle cx={cx} cy={cy} r={outerR} />
+        </clipPath>
+      </defs>
+      <g clipPath="url(#torus-clip)">
       {items.map((item, i) => {
         const startAngle = i * sectorAngle - Math.PI / 2 + rotationOffset;
         const endAngle = (i + 1) * sectorAngle - Math.PI / 2 + rotationOffset;
@@ -289,6 +338,7 @@ export default function TorusMenu({
           </g>
         );
       })}
+      </g>
     </svg>
   );
 
@@ -305,7 +355,7 @@ export default function TorusMenu({
         <div
           className="torus-overlay"
           ref={ref}
-          style={{ left: pos.x - cx, top: pos.y - cy, transformOrigin: `${cx}px ${cy}px`, transformBox: 'view-box' }}
+          style={{ left: pos.x - cx, top: pos.y - cy, width: cx * 2, height: cy * 2, transformOrigin: `${cx}px ${cy}px`, transformBox: 'view-box', borderRadius: '50%', overflow: 'hidden', pointerEvents: 'auto', clipPath: `circle(${outerR}px at ${cx}px ${cy}px)` }}
           onMouseDown={(e) => { e.stopPropagation(); }}
         >
           {svgContent}
