@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -16,7 +16,7 @@
   --text-primary:   #e8eaf0;
   --text-secondary: #8b8fa8;
   --text-muted:     #4a4d5e;
-  --accent-blue:   #38bdf8;
+  --highlight-color:   #38bdf8;
   --accent-green:  #34d399;
   --accent-amber:  #fbbf24;
   --accent-rose:   #f472b6;
@@ -392,7 +392,7 @@ html, body, #root {
 .export-btn {
   padding: calc(4px * var(--scale)) calc(14px * var(--scale));
   border-radius: var(--radius-md);
-  background: var(--accent-blue);
+  background: var(--highlight-color);
   color: #0a0c14;
   font-size: calc(12px * var(--scale));
   font-weight: 600;
@@ -592,7 +592,7 @@ html, body, #root {
 
 .scrub-progress {
   height: 100%;
-  background: var(--accent-blue);
+  background: var(--highlight-color);
   border-radius: 3px;
   transition: width 0.05s linear;
 }
@@ -604,7 +604,7 @@ html, body, #root {
   width: 12px; height: 12px;
   background: white;
   border-radius: 50%;
-  box-shadow: 0 0 6px var(--accent-blue);
+  box-shadow: 0 0 6px var(--highlight-color);
   pointer-events: none;
 }
 
@@ -803,8 +803,8 @@ html, body, #root {
 }
 
 .tl-clip.selected {
-  box-shadow: 0 0 0 2px var(--accent-blue), 0 0 12px rgba(56, 189, 248, 0.3);
-  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px var(--highlight-color), 0 0 12px rgba(56, 189, 248, 0.3);
+  border-color: var(--highlight-color);
 }
 
 .clip-label {
@@ -1097,7 +1097,7 @@ html, body, #root {
 }
 .roll-controls input[type=range] {
   width: 100%;
-  accent-color: var(--accent-blue);
+  accent-color: var(--highlight-color);
 }
 
 .modal-footer {
@@ -1330,7 +1330,7 @@ input[type="color"] {
 
 .settings-number-input:focus {
   outline: none;
-  border-color: var(--accent-blue);
+  border-color: var(--highlight-color);
 }
 
 .settings-checkbox-field {
@@ -1433,7 +1433,7 @@ input[type="color"] {
 }
 
 .settings-checkbox:checked {
-  border-color: var(--accent-blue);
+  border-color: var(--highlight-color);
 }
 
 .settings-checkbox:checked::after {
@@ -1443,21 +1443,21 @@ input[type="color"] {
   top: 1px;
   width: 5px;
   height: 9px;
-  border: solid var(--accent-blue);
+  border: solid var(--highlight-color);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
 
 .settings-checkbox:focus-visible {
   outline: none;
-  border-color: var(--accent-blue);
+  border-color: var(--highlight-color);
   box-shadow: 0 0 0 2px var(--playhead-glow);
 }
 
 .btn-primary {
   padding: 6px 18px;
   border-radius: var(--radius-md);
-  background: var(--accent-blue);
+  background: var(--highlight-color);
   color: #0a0c14;
   font-size: 12px;
   font-weight: 600;

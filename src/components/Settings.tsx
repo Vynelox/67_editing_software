@@ -1,4 +1,4 @@
-Ôªøimport { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RotateCcw, Plus, ChevronRight } from 'lucide-react';
 import type { ShortcutAction } from './shortcuts';
@@ -251,13 +251,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 <SliderSetting label="Timeline scroll zoom smoothness" value={scrollZoomSmoothness} min={0} max={100} step={1} onChange={setScrollZoomSmoothness} onReset={() => setScrollZoomSmoothness(70)} formatValue={v => `${v.toFixed(3)}%`} />
               </SettingsCategory>
               <SettingsCategory title="Playneedle">
-                <SliderSetting label={<span>t ‚Äî Total thickness of the needle part</span>} value={pnT} min={0} max={0.5} step={0.001} onChange={setPnT} onReset={() => setPnT(0.092)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>j ‚Äî Length of the ribbon at the top</span>} value={pnJ} min={-0.05} max={0.25} step={0.001} onChange={setPnJ} onReset={() => setPnJ(0.049)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>k ‚Äî Falloff of the ribbon (log scale)</span>} value={pnK} min={10} max={1000} step={1} onChange={setPnK} onReset={() => setPnK(103)} logScale formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>s ‚Äî Vertical height of the playneedle button</span>} value={pnS} min={10} max={50} step={0.1} onChange={setPnS} onReset={() => setPnS(16.4)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>v<sub>o</sub> ‚Äî Vertical offset of the playneedle button</span>} value={pnVo} min={0} max={1} step={0.001} onChange={setPnVo} onReset={() => setPnVo(0.4)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>h<sub>b</sub> ‚Äî Horizontal width of the playneedle button</span>} value={pnHb} min={0.5} max={1} step={0.001} onChange={setPnHb} onReset={() => setPnHb(0.8)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>h<sub>r</sub> ‚Äî Horizontal width of the ribbon</span>} value={pnHr} min={0} max={1} step={0.001} onChange={setPnHr} onReset={() => setPnHr(1)} formatValue={v => v.toFixed(3)} />
+                <SliderSetting label={<span>t °™ Total thickness of the needle part</span>} value={pnT} min={0} max={0.5} step={0.001} onChange={setPnT} onReset={() => setPnT(0.092)} formatValue={v => v.toFixed(3)} />
+                <SliderSetting label={<span>j °™ Length of the ribbon at the top</span>} value={pnJ} min={-0.05} max={0.25} step={0.001} onChange={setPnJ} onReset={() => setPnJ(0.049)} formatValue={v => v.toFixed(3)} />
+                <SliderSetting label={<span>k °™ Falloff of the ribbon (log scale)</span>} value={pnK} min={10} max={1000} step={1} onChange={setPnK} onReset={() => setPnK(103)} logScale formatValue={v => v.toFixed(3)} />
+                <SliderSetting label={<span>s °™ Vertical height of the playneedle button</span>} value={pnS} min={10} max={50} step={0.1} onChange={setPnS} onReset={() => setPnS(16.4)} formatValue={v => v.toFixed(3)} />
+                <SliderSetting label={<span>v<sub>o</sub> °™ Vertical offset of the playneedle button</span>} value={pnVo} min={0} max={1} step={0.001} onChange={setPnVo} onReset={() => setPnVo(0.4)} formatValue={v => v.toFixed(3)} />
+                <SliderSetting label={<span>h<sub>b</sub> °™ Horizontal width of the playneedle button</span>} value={pnHb} min={0.5} max={1} step={0.001} onChange={setPnHb} onReset={() => setPnHb(0.8)} formatValue={v => v.toFixed(3)} />
+                <SliderSetting label={<span>h<sub>r</sub> °™ Horizontal width of the ribbon</span>} value={pnHr} min={0} max={1} step={0.001} onChange={setPnHr} onReset={() => setPnHr(1)} formatValue={v => v.toFixed(3)} />
               </SettingsCategory>
               <SettingsCategory title="Miscellaneous">
                 <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v.toFixed(3)}%`} />
@@ -285,7 +285,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
-                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow ‚Üê, ‚àí, and √ó buttons in<br />modals' header bar to be draggable</span>
+                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow °˚, ?, and °¡ buttons in<br />modals' header bar to be draggable</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <input type="checkbox" className="settings-checkbox" checked={draggableHeaderButtons} onChange={e => setDraggableHeaderButtons(e.target.checked)} />
                   <button type="button" className="icon-btn" onClick={() => setDraggableHeaderButtons(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
@@ -298,25 +298,25 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                 <span style={{ lineHeight: 1.2 }}>Viewer controls type</span>
                 <div style={{ display: "flex", gap: 6 }}>
-                  {(['compact', 'centered'] as const).map(opt => { const active = viewerControlsType === opt; return (<button key={opt} type="button" onClick={() => setViewerControlsType(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
+                  {(['compact', 'centered'] as const).map(opt => { const active = viewerControlsType === opt; return (<button key={opt} type="button" onClick={() => setViewerControlsType(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--highlight-color)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--highlight-color)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                 <span style={{ lineHeight: 1.2 }}>Timecode display</span>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {(['timeline', 'viewer', 'both', 'none'] as const).map(opt => { const active = timecodePanel === opt; return (<button key={opt} type="button" onClick={() => setTimecodePanel(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
+                  {(['timeline', 'viewer', 'both', 'none'] as const).map(opt => { const active = timecodePanel === opt; return (<button key={opt} type="button" onClick={() => setTimecodePanel(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--highlight-color)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--highlight-color)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                 <span style={{ lineHeight: 1.2 }}>Timeline zoom epicenter</span>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {(['playneedle', 'middle', 'cursor'] as const).map(opt => { const active = zoomEpicenter === opt; return (<button key={opt} type="button" onClick={() => setZoomEpicenter(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
+                  {(['playneedle', 'middle', 'cursor'] as const).map(opt => { const active = zoomEpicenter === opt; return (<button key={opt} type="button" onClick={() => setZoomEpicenter(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--highlight-color)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--highlight-color)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
                 <span style={{ lineHeight: 1.2 }}>Disable scrolling when torus menu is open and mouse is on:</span>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {(['whole torus menu', 'annular sectors only', 'none'] as const).map(opt => { const active = torusScrollingDisabled === opt; return (<button key={opt} type="button" onClick={() => setTorusScrollingDisabled(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
+                  {(['whole torus menu', 'annular sectors only', 'none'] as const).map(opt => { const active = torusScrollingDisabled === opt; return (<button key={opt} type="button" onClick={() => setTorusScrollingDisabled(opt)} style={{ padding: "5px 14px", borderRadius: "var(--radius-sm)", border: active ? "1px solid var(--highlight-color)" : "1px solid var(--border-mid)", background: active ? "rgba(56,189,248,0.15)" : "var(--bg-elevated)", color: active ? "var(--highlight-color)" : "var(--text-secondary)", fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</button>); })}
                 </div>
               </div>
             </div>
@@ -336,7 +336,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                     {shortcuts[action].map((keys, idx) => {
                       const isEditing = editingChip?.action === action && editingChip?.index === idx;
                       return (
-                        <div key={idx} ref={el => { chipRefs.current[`${action}-${idx}`] = el; }} tabIndex={0} onFocus={() => setEditingChip({ action, index: idx })} onBlur={() => { setTimeout(() => setEditingChip(null), 150); }} onKeyDown={(e) => handleChipKeyDown(e, action, idx)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: isEditing ? "var(--bg-hover)" : "var(--bg-elevated)", border: isEditing ? "1px solid var(--accent-blue)" : "1px solid var(--border-mid)", borderRadius: "var(--radius-sm)", padding: "3px 8px", cursor: "pointer", outline: "none", minHeight: 28 }} title={isEditing ? "Press keys to assign..." : keys.length === 0 ? "Click then press keys to assign" : "Click then press new keys to reassign"}>
+                        <div key={idx} ref={el => { chipRefs.current[`${action}-${idx}`] = el; }} tabIndex={0} onFocus={() => setEditingChip({ action, index: idx })} onBlur={() => { setTimeout(() => setEditingChip(null), 150); }} onKeyDown={(e) => handleChipKeyDown(e, action, idx)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: isEditing ? "var(--bg-hover)" : "var(--bg-elevated)", border: isEditing ? "1px solid var(--highlight-color)" : "1px solid var(--border-mid)", borderRadius: "var(--radius-sm)", padding: "3px 8px", cursor: "pointer", outline: "none", minHeight: 28 }} title={isEditing ? "Press keys to assign..." : keys.length === 0 ? "Click then press keys to assign" : "Click then press new keys to reassign"}>
                           <span style={{ fontSize: 12, color: keys.length > 0 ? "var(--text-primary)" : "var(--text-muted)", fontFamily: "monospace" }}>{isEditing && keys.length === 0 ? "..." : keys.length > 0 ? formatKeys(keys) : "None"}</span>
                           {shortcuts[action].length > 1 && (<button type="button" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: "0 2px", fontSize: 13, lineHeight: 1, display: "flex", alignItems: "center" }} onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }} title="Remove this combination">x</button>)}
                         </div>

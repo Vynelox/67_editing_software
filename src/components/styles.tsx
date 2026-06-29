@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { OpenColorPicker } from './ColorPicker';
 import { colorFields, type ThemeColors, type ColorVarName } from './GlobalStyleSettings';
 import DraggableModal from './DraggableModal';
@@ -24,7 +24,7 @@ const ogDarkColors: ThemeColors = {
   '--border-mid': '#303340', '--splitter': '#08090d', '--text-primary': '#e8eaf0',
   '--text-secondary': '#8b8fa8', '--text-muted': '#4a4d5e', '--input-field': '#2c3349',
   '--input-field-bg': '#16131a', '--playneedle': '#f5f5f5', '--video-bg': '#0a0a0a',
-  '--accent-blue': '#38bdf8',
+  '--highlight-color': '#38bdf8',
 };
 
 const ogLightColors: ThemeColors = {
@@ -33,7 +33,7 @@ const ogLightColors: ThemeColors = {
   '--border-mid': '#d8dade', '--splitter': '#c8c9cd', '--text-primary': '#1a1c24',
   '--text-secondary': '#4a4d5e', '--text-muted': '#8b8fa8', '--input-field': '#4a5568',
   '--input-field-bg': '#e2e4e8', '--playneedle': '#1a1c24', '--video-bg': '#d0d2d8',
-  '--accent-blue': '#0ea5e9',
+  '--highlight-color': '#0ea5e9',
 };
 
 const monokaiColors: ThemeColors = {
@@ -42,7 +42,7 @@ const monokaiColors: ThemeColors = {
   '--border-mid': '#5a5c54', '--splitter': '#161815', '--text-primary': '#f8f8f2',
   '--text-secondary': '#a6e22e', '--text-muted': '#75715e', '--input-field': '#66d9ef',
   '--input-field-bg': '#3b3a32', '--playneedle': '#f92672', '--video-bg': '#131411',
-  '--accent-blue': '#66d9ef',
+  '--highlight-color': '#66d9ef',
 };
 
 const lavenderColors: ThemeColors = {
@@ -51,7 +51,7 @@ const lavenderColors: ThemeColors = {
   '--border-mid': '#7E5DBA', '--splitter': '#15082f', '--text-primary': '#E5DEF1',
   '--text-secondary': '#B1A3D0', '--text-muted': '#8A7B9C', '--input-field': '#7953C2',
   '--input-field-bg': '#27184A', '--playneedle': '#C4A8E8', '--video-bg': '#0d0618',
-  '--accent-blue': '#a78bfa',
+  '--highlight-color': '#a78bfa',
 };
 
 const cyberpunkColors: ThemeColors = {
@@ -60,7 +60,7 @@ const cyberpunkColors: ThemeColors = {
   '--border-mid': '#00F0FF', '--splitter': '#1a0035', '--text-primary': '#F5F5FF',
   '--text-secondary': '#00F0FF', '--text-muted': '#8A2BE2', '--input-field': '#FF00C8',
   '--input-field-bg': '#0A0118', '--playneedle': '#00F0FF', '--video-bg': '#000000',
-  '--accent-blue': '#00F0FF',
+  '--highlight-color': '#00F0FF',
 };
 
 const oakColors: ThemeColors = {
@@ -69,7 +69,7 @@ const oakColors: ThemeColors = {
   '--border-mid': '#857373', '--splitter': '#231c1c', '--text-primary': '#D4C4C4',
   '--text-secondary': '#A99A9A', '--text-muted': '#807070', '--input-field': '#b0796d',
   '--input-field-bg': '#3F3737', '--playneedle': '#d2899d', '--video-bg': '#150e0e',
-  '--accent-blue': '#f59e0b',
+  '--highlight-color': '#f59e0b',
 };
 
 const forestColors: ThemeColors = {
@@ -78,7 +78,7 @@ const forestColors: ThemeColors = {
   '--border-mid': '#609181', '--splitter': '#0b1f1a', '--text-primary': '#D8E8D8',
   '--text-secondary': '#A7C2A7', '--text-muted': '#7D9E7D', '--input-field': '#5F9EA0',
   '--input-field-bg': '#223D34', '--playneedle': '#61ff9f', '--video-bg': '#050f08',
-  '--accent-blue': '#4ade80',
+  '--highlight-color': '#4ade80',
 };
 
 const aquaticColors: ThemeColors = {
@@ -87,7 +87,7 @@ const aquaticColors: ThemeColors = {
   '--border-mid': '#4A7F7F', '--splitter': '#0D2323', '--text-primary': '#B2E8B2',
   '--text-secondary': '#88D8B8', '--text-muted': '#60B89F', '--input-field': '#469985',
   '--input-field-bg': '#163333', '--playneedle': '#00D8B0', '--video-bg': '#081818',
-  '--accent-blue': '#00D8B0',
+  '--highlight-color': '#00D8B0',
 };
 
 const folderIcon: string = 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2z';

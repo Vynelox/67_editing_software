@@ -497,7 +497,7 @@ export default function GraphEditor({
         </g>
         <text x={svgWidth / 2} y={GRAPH_HEIGHT - 10} textAnchor="middle" fontSize={11} fill="var(--text-secondary)">{X_label}</text>
         <text x={GRAPH_PADDING - 15} y={GRAPH_PADDING - 14} textAnchor="start" fontSize={11} fill="var(--text-secondary)">{Y_label}</text>
-        <path d={graphPath} fill="none" stroke="var(--accent-blue)" strokeWidth={2} />
+        <path d={graphPath} fill="none" stroke="var(--highlight-color)" strokeWidth={2} />
         {sortedGraph.map((point, index) => {
           if (index < sortedGraph.length - 1) {
             const nextPoint = sortedGraph[index + 1];
@@ -555,7 +555,7 @@ export default function GraphEditor({
                   cy={handleY}
                   r={EASE_HANDLE_DIAMETER_PX / 2}
                   fill="none"
-                  stroke="var(--accent-blue)"
+                  stroke="var(--highlight-color)"
                   strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
                   onPointerDown={e => {
                     e.stopPropagation();
@@ -578,8 +578,8 @@ export default function GraphEditor({
               cx={svgPoint.x}
               cy={svgPoint.y}
               r={isSelected ? 6 : 5}
-              fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--accent-blue)' : 'var(--bg)'}
-              stroke="var(--accent-blue)"
+              fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--highlight-color)' : 'var(--bg)'}
+              stroke="var(--highlight-color)"
               strokeWidth={isSelected ? 2 : 1}
               style={{ cursor: index === 0 || index === sortedGraph.length - 1 ? 'default' : 'grab', zIndex: 10 }}
               onPointerDown={e => {
