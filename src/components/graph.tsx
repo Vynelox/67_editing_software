@@ -90,11 +90,13 @@ export default function GraphEditor({
   onChange,
   Y_label = 'value',
   X_label = 'time',
+  onEasingChange,
 }: {
   graph: SizeGraphPoint[];
   onChange: Dispatch<SetStateAction<SizeGraphPoint[]>>;
   Y_label?: string;
   X_label?: string;
+  onEasingChange?: (offsets: number[]) => void;
 }) {
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [svgWidth, setSvgWidth] = useState(260);
@@ -112,7 +114,14 @@ export default function GraphEditor({
         const nextPoint = sortedGraph[index + 1];
         const point1Svg = graphPointToSvg(point, svgWidth);
         const point2Svg = graphPointToSvg(nextPoint, svgWidth);
-        return (point1Svg.y + point2Svg.y) / 2; // Start at midpoint between the two Y values
+        const midY = (point1Svg.y + point2Svg.y) / 2;
+        const minY = Math.min(point1Svg.y, point2Svg.y);
+        const maxY = Math.max(point1Svg.y, point2Svg.y);
+        
+        // Constrain midpoint to valid range that keeps curve within bounds
+        const handlerMinY = (2 * minY + point1Svg.y + point2Svg.y) / 4;
+        const handlerMaxY = (2 * maxY + point1Svg.y + point2Svg.y) / 4;
+        return clamp(midY, handlerMinY, handlerMaxY);
       }
       return 0;
     });
@@ -161,8 +170,14 @@ export default function GraphEditor({
         const minY = Math.min(svgPoint1.y, svgPoint2.y);
         const maxY = Math.max(svgPoint1.y, svgPoint2.y);
         
-        // Constrain to the Y range of the two adjacent points
-        const constrainedY = clamp(desiredY, minY, maxY);
+        // To ensure the Bezier curve stays within [minY, maxY], the control point cy must also stay within bounds
+        // cy = (4*handlerY - y0 - y1) / 2
+        // For cy to be in [minY, maxY]:
+        // handlerY must be in [(2*minY + y0 + y1) / 4, (2*maxY + y0 + y1) / 4]
+        const handlerMinY = (2 * minY + svgPoint1.y + svgPoint2.y) / 4;
+        const handlerMaxY = (2 * maxY + svgPoint1.y + svgPoint2.y) / 4;
+        
+        const constrainedY = clamp(desiredY, handlerMinY, handlerMaxY);
         
         setEasingOffsets(prev => {
           const next = [...prev];
