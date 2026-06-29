@@ -6,11 +6,8 @@ export interface SizeGraphPoint {
   size: number;
 }
 
-const GRAPH_WIDTH = 260; //graph canvas
 const GRAPH_HEIGHT = 180;
 const GRAPH_PADDING = 40; //left padding, THIS AFFECTS CLIPPING
-const GRAPH_PLOT_WIDTH = GRAPH_WIDTH - GRAPH_PADDING * 2;
-const GRAPH_PLOT_HEIGHT = GRAPH_HEIGHT - GRAPH_PADDING * 2;
 const MIN_TIME_DELTA = 0.01;
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
@@ -46,24 +43,32 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function graphPointToSvg(point: SizeGraphPoint) {
+function getGraphMetrics(graphWidth: number) {
+  const plotWidth = Math.max(0, graphWidth - GRAPH_PADDING * 2);
+  const plotHeight = Math.max(0, GRAPH_HEIGHT - GRAPH_PADDING * 2);
+  return { plotWidth, plotHeight };
+}
+
+function graphPointToSvg(point: SizeGraphPoint, graphWidth: number) {
+  const { plotWidth, plotHeight } = getGraphMetrics(graphWidth);
   return {
-    x: GRAPH_PADDING + point.time * GRAPH_PLOT_WIDTH,
-    y: GRAPH_PADDING + (1 - point.size) * GRAPH_PLOT_HEIGHT,
+    x: GRAPH_PADDING + point.time * plotWidth,
+    y: GRAPH_PADDING + (1 - point.size) * plotHeight,
   };
 }
 
-function graphCoordsFromEvent(event: { clientX: number; clientY: number }, svg: SVGSVGElement | null) {
+function graphCoordsFromEvent(event: { clientX: number; clientY: number }, svg: SVGSVGElement | null, graphWidth: number) {
   if (!svg) return null;
   const rect = svg.getBoundingClientRect();
-  const x = clamp((event.clientX - rect.left - GRAPH_PADDING) / GRAPH_PLOT_WIDTH, 0, 1);
-  const y = clamp(1 - (event.clientY - rect.top - GRAPH_PADDING) / GRAPH_PLOT_HEIGHT, 0, 1);
+  const { plotWidth, plotHeight } = getGraphMetrics(graphWidth);
+  const x = clamp((event.clientX - rect.left - GRAPH_PADDING) / plotWidth, 0, 1);
+  const y = clamp(1 - (event.clientY - rect.top - GRAPH_PADDING) / plotHeight, 0, 1);
   return { time: x, size: y };
 }
 
-function buildSmoothCurvePath(points: SizeGraphPoint[]) {
+function buildSmoothCurvePath(points: SizeGraphPoint[], graphWidth: number) {
   if (points.length === 0) return '';
-  const svgPoints = points.map(graphPointToSvg);
+  const svgPoints = points.map(point => graphPointToSvg(point, graphWidth));
   let d = `M ${svgPoints[0].x} ${svgPoints[0].y}`;
   for (let i = 1; i < svgPoints.length; i++) {
     d += ` L ${svgPoints[i].x} ${svgPoints[i].y}`;
@@ -74,22 +79,28 @@ function buildSmoothCurvePath(points: SizeGraphPoint[]) {
 export default function GraphEditor({
   graph,
   onChange,
+  Y_label = 'value',
+  X_label = 'time',
 }: {
   graph: SizeGraphPoint[];
   onChange: Dispatch<SetStateAction<SizeGraphPoint[]>>;
+  Y_label?: string;
+  X_label?: string;
 }) {
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
+  const [svgWidth, setSvgWidth] = useState(260);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const draggingPointIndex = useRef<number | null>(null);
 
   const sortedGraph = useMemo(() => graph.slice().sort((a, b) => a.time - b.time), [graph]);
-  const graphPath = useMemo(() => buildSmoothCurvePath(sortedGraph), [sortedGraph]);
+  const graphPath = useMemo(() => buildSmoothCurvePath(sortedGraph, svgWidth), [sortedGraph, svgWidth]);
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
       const index = draggingPointIndex.current;
       if (index === null) return;
-      const coords = graphCoordsFromEvent(e, svgRef.current);
+      const coords = graphCoordsFromEvent(e, svgRef.current, svgWidth);
       if (!coords) return;
       onChange(prev => {
         const next = prev.slice().sort((a, b) => a.time - b.time);
@@ -121,22 +132,40 @@ export default function GraphEditor({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [onChange]);
+  }, [onChange, svgWidth]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => {
+      const nextWidth = container.clientWidth || 260;
+      setSvgWidth(prev => (prev === nextWidth ? prev : nextWidth));
+    };
+
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const plotHeight = GRAPH_HEIGHT - GRAPH_PADDING * 2;
+  const plotWidth = Math.max(0, svgWidth - GRAPH_PADDING * 2);
 
   return (
-    <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10, width: '100%' }}>
+    <div ref={containerRef} className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10, width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-        <span style={{ flex: 1, lineHeight: 1.2 }}>Size over time</span>
+        <span style={{ flex: 1, lineHeight: 1.2 }}>{Y_label} over {X_label}</span>
         <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}>Click to add anchors</span>
       </div>
       <svg
         ref={svgRef}
-        width={GRAPH_WIDTH}
+        width="100%"
         height={GRAPH_HEIGHT}
-        viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
+        viewBox={`0 0 ${svgWidth} ${GRAPH_HEIGHT}`}
         onPointerDown={e => {
           if ((e.target as SVGElement).tagName.toLowerCase() === 'circle') return;
-          const coords = graphCoordsFromEvent(e, svgRef.current);
+          const coords = graphCoordsFromEvent(e, svgRef.current, svgWidth);
           if (!coords) return;
           const time = clamp(coords.time, 0.01, 0.99);
           if (sortedGraph.some(p => Math.abs(p.time - time) < MIN_TIME_DELTA)) return;
@@ -148,16 +177,18 @@ export default function GraphEditor({
           draggingPointIndex.current = newIndex;
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
-        style={{ display: 'block', margin: '0 auto', maxWidth: '100%', height: 'auto', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', cursor: 'crosshair' }}
+        style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', cursor: 'crosshair' }}
       >
-        <rect x={0} y={0} width={GRAPH_WIDTH} height={GRAPH_HEIGHT} fill="transparent" />
+        <rect x={0} y={0} width={svgWidth} height={GRAPH_HEIGHT} fill="transparent" />
         <g stroke="var(--border-mid)" strokeWidth={1} fill="none">
           <line x1={GRAPH_PADDING} y1={GRAPH_PADDING} x2={GRAPH_PADDING} y2={GRAPH_HEIGHT - GRAPH_PADDING} />
-          <line x1={GRAPH_PADDING} y1={GRAPH_HEIGHT - GRAPH_PADDING} x2={GRAPH_WIDTH - GRAPH_PADDING} y2={GRAPH_HEIGHT - GRAPH_PADDING} />
+          <line x1={GRAPH_PADDING} y1={GRAPH_HEIGHT - GRAPH_PADDING} x2={svgWidth - GRAPH_PADDING} y2={GRAPH_HEIGHT - GRAPH_PADDING} />
         </g>
+        <text x={svgWidth / 2} y={GRAPH_HEIGHT - 10} textAnchor="middle" fontSize={11} fill="var(--text-secondary)">{X_label}</text>
+        <text x={GRAPH_PADDING - 15} y={GRAPH_PADDING - 14} textAnchor="start" fontSize={11} fill="var(--text-secondary)">{Y_label}</text>
         <path d={graphPath} fill="none" stroke="var(--accent-blue)" strokeWidth={2} />
         {sortedGraph.map((point, index) => {
-          const svgPoint = graphPointToSvg(point);
+          const svgPoint = graphPointToSvg(point, svgWidth);
           const isSelected = selectedPointIndex === index;
           return (
             <circle
@@ -205,7 +236,7 @@ export default function GraphEditor({
           );
         })}
         {Array.from({ length: 5 }).map((_, index) => {
-          const y = GRAPH_PADDING + index * (GRAPH_PLOT_HEIGHT / 4);
+          const y = GRAPH_PADDING + index * (plotHeight / 4);
           return (
             <g key={`y-tick-${index}`}>
               <line x1={GRAPH_PADDING - 6} y1={y} x2={GRAPH_PADDING} y2={y} stroke="var(--border-mid)" strokeWidth={1} />
@@ -214,7 +245,7 @@ export default function GraphEditor({
           );
         })}
         {Array.from({ length: 5 }).map((_, index) => {
-          const x = GRAPH_PADDING + index * (GRAPH_PLOT_WIDTH / 4);
+          const x = GRAPH_PADDING + index * (plotWidth / 4);
           return (
             <g key={`x-tick-${index}`}>
               <line x1={x} y1={GRAPH_HEIGHT - GRAPH_PADDING} x2={x} y2={GRAPH_HEIGHT - GRAPH_PADDING + 6} stroke="var(--border-mid)" strokeWidth={1} />

@@ -162,7 +162,7 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
                 onReset={() => setDuration(300)}
                 formatValue={v => `${v}ms`}
               />
-              <GraphEditor graph={sizeGraph} onChange={setSizeGraph} />
+              <GraphEditor graph={sizeGraph} onChange={setSizeGraph} Y_label="size" X_label="time" />
               <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <span style={{ flex: 1, lineHeight: 1.2 }}>Delay</span>
