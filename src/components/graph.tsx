@@ -67,22 +67,51 @@ function graphCoordsFromEvent(event: { clientX: number; clientY: number }, svg: 
 }
 
 function buildSmoothCurvePath(points: SizeGraphPoint[], graphWidth: number, easingOffsets: number[] = []) {
-  if (points.length === 0) return '';
-  const svgPoints = points.map(point => graphPointToSvg(point, graphWidth));
-  let d = `M ${svgPoints[0].x} ${svgPoints[0].y}`;
-  for (let i = 1; i < svgPoints.length; i++) {
-    const prevPoint = svgPoints[i - 1];
-    const currPoint = svgPoints[i];
-    const handlerY = easingOffsets[i - 1] || (prevPoint.y + currPoint.y) / 2;
-    
-    // Calculate control point so the bezier curve passes through handlerY at t=0.5
-    // At t=0.5: curve_y = (y0 + 2*cy + y1) / 4
-    // Solving for cy: cy = (4*handlerY - y0 - y1) / 2
-    const controlX = (prevPoint.x + currPoint.x) / 2;
-    const controlY = (4 * handlerY - prevPoint.y - currPoint.y) / 2;
-    d += ` Q ${controlX} ${controlY} ${currPoint.x} ${currPoint.y}`;
-  }
-  return d;
+   if (points.length === 0) return '';
+   const samples = 10;
+   let d = ``;
+   d += `M ${graphPointToSvg(points[0], graphWidth).x} ${graphPointToSvg(points[0], graphWidth).y}`;
+   for (let i = 1; i < points.length; i++) {
+     const pointA = points[i - 1];
+     const pointB = points[i];
+     const svgPointA = graphPointToSvg(pointA, graphWidth);
+     const svgPointB = graphPointToSvg(pointB, graphWidth);
+     const handlerY = easingOffsets[i - 1] || (svgPointA.y + svgPointB.y) / 2;
+     
+     const minY = Math.min(svgPointA.y, svgPointB.y);
+     const maxY = Math.max(svgPointA.y, svgPointB.y);
+     const handlerMinY = (2 * minY + svgPointA.y + svgPointB.y) / 4;
+     const handlerMaxY = (2 * maxY + svgPointA.y + svgPointB.y) / 4;
+     
+     const midpointY = (svgPointA.y + svgPointB.y) / 2;
+     let handleValue = 0;
+     const range = handlerMaxY - handlerMinY;
+     if (range > 0) {
+       handleValue = (handlerY - midpointY) * 2 / range;
+     }
+     handleValue = Math.max(-1, Math.min(1, handleValue));
+     
+     const strength = 3;
+     const { plotWidth, plotHeight } = getGraphMetrics(graphWidth);
+     
+     for (let s = 0; s <= samples; s++) {
+       const t = s / samples;
+       let curvedProgress = t;
+       if (handleValue < 0) {
+         const power = 1 - (handleValue * strength);
+         curvedProgress = Math.pow(t, power);
+       } else if (handleValue > 0) {
+         const power = 1 + (handleValue * strength);
+         curvedProgress = 1 - Math.pow(1 - t, power);
+       }
+       const finalY = pointA.size + (pointB.size - pointA.size) * curvedProgress;
+       const finalX = pointA.time + (pointB.time - pointA.time) * t;
+       const svgX = GRAPH_PADDING + finalX * plotWidth;
+       const svgY = GRAPH_PADDING + (1 - finalY) * plotHeight;
+       d += ` L ${svgX} ${svgY}`;
+     }
+   }
+   return d;
 }
 
 export default function GraphEditor({
