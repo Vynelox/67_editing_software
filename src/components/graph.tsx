@@ -17,6 +17,7 @@ export interface GraphSnapshot {
 const GRAPH_HEIGHT = 180;
 const GRAPH_PADDING = 40; //left padding, THIS AFFECTS CLIPPING
 const MIN_TIME_DELTA = 0.01;
+const EASE_HANDLE_DIAMETER_PX = 7;
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
   { time: 0, size: 0 },
@@ -545,13 +546,13 @@ export default function GraphEditor({
                 <circle
                   cx={midSvg.x}
                   cy={handleY}
-                  r={4}
+                  r={EASE_HANDLE_DIAMETER_PX / 2 + 1}
                   fill="var(--bg-elevated)"
                 />
                 <circle
                   cx={midSvg.x}
                   cy={handleY}
-                  r={3}
+                  r={EASE_HANDLE_DIAMETER_PX / 2}
                   fill="none"
                   stroke="var(--input-field)"
                   strokeWidth={2}
