@@ -17,7 +17,8 @@ export interface GraphSnapshot {
 const GRAPH_HEIGHT = 180;
 const GRAPH_PADDING = 40; //left padding, THIS AFFECTS CLIPPING
 const MIN_TIME_DELTA = 0.01;
-const EASE_HANDLE_DIAMETER_PX = 7;
+const EASE_HANDLE_DIAMETER_PX = 6; //default 6px
+const EASE_HANDLE_RING_THICKNESS_PX = 2; //default 2px
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
   { time: 0, size: 0 },
@@ -555,7 +556,7 @@ export default function GraphEditor({
                   r={EASE_HANDLE_DIAMETER_PX / 2}
                   fill="none"
                   stroke="var(--input-field)"
-                  strokeWidth={2}
+                  strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
                   onPointerDown={e => {
                     e.stopPropagation();
                     beginDragSnapshot();
