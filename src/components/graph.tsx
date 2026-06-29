@@ -11,6 +11,7 @@ const GRAPH_HEIGHT = 180;
 const GRAPH_PADDING = 20;
 const GRAPH_PLOT_WIDTH = GRAPH_WIDTH - GRAPH_PADDING * 2;
 const GRAPH_PLOT_HEIGHT = GRAPH_HEIGHT - GRAPH_PADDING * 2;
+const MIN_TIME_DELTA = 0.01;
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
   { time: 0, size: 0 },
@@ -63,35 +64,11 @@ function graphCoordsFromEvent(event: { clientX: number; clientY: number }, svg: 
 function buildSmoothCurvePath(points: SizeGraphPoint[]) {
   if (points.length === 0) return '';
   const svgPoints = points.map(graphPointToSvg);
-  if (svgPoints.length === 1) return `M ${svgPoints[0].x} ${svgPoints[0].y}`;
-
   let d = `M ${svgPoints[0].x} ${svgPoints[0].y}`;
-  for (let i = 0; i < svgPoints.length - 1; i++) {
-    const p0 = svgPoints[i - 1] ?? svgPoints[i];
-    const p1 = svgPoints[i];
-    const p2 = svgPoints[i + 1];
-    const p3 = svgPoints[i + 2] ?? p2;
-    const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
-    const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+  for (let i = 1; i < svgPoints.length; i++) {
+    d += ` L ${svgPoints[i].x} ${svgPoints[i].y}`;
   }
   return d;
-}
-
-function buildCurveAnchors(points: SizeGraphPoint[]) {
-  const anchors: Array<{ x: number; y: number }> = [];
-  const svgPoints = points.map(graphPointToSvg);
-  for (let i = 0; i < svgPoints.length - 1; i++) {
-    const p0 = svgPoints[i - 1] ?? svgPoints[i];
-    const p1 = svgPoints[i];
-    const p2 = svgPoints[i + 1];
-    const p3 = svgPoints[i + 2] ?? p2;
-    anchors.push({ x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 });
-    anchors.push({ x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 });
-  }
-  return anchors;
 }
 
 export default function GraphEditor({
@@ -107,7 +84,6 @@ export default function GraphEditor({
 
   const sortedGraph = useMemo(() => graph.slice().sort((a, b) => a.time - b.time), [graph]);
   const graphPath = useMemo(() => buildSmoothCurvePath(sortedGraph), [sortedGraph]);
-  const graphAnchors = useMemo(() => buildCurveAnchors(sortedGraph), [sortedGraph]);
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
@@ -117,8 +93,9 @@ export default function GraphEditor({
       if (!coords) return;
       onChange(prev => {
         const next = prev.slice().sort((a, b) => a.time - b.time);
-        const minTime = index > 0 ? next[index - 1].time + 0.01 : 0;
-        const maxTime = index < next.length - 1 ? next[index + 1].time - 0.01 : 1;
+        const minTime = index > 0 ? next[index - 1].time + MIN_TIME_DELTA : 0;
+        const maxTime = index < next.length - 1 ? next[index + 1].time - MIN_TIME_DELTA : 1;
+        if (minTime > maxTime) return next;
         next[index] = {
           time: clamp(coords.time, minTime, maxTime),
           size: clamp(coords.size, 0, 1),
@@ -150,15 +127,19 @@ export default function GraphEditor({
         width={GRAPH_WIDTH}
         height={GRAPH_HEIGHT}
         viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-        onClick={e => {
+        onPointerDown={e => {
           if ((e.target as SVGElement).tagName.toLowerCase() === 'circle') return;
           const coords = graphCoordsFromEvent(e, svgRef.current);
           if (!coords) return;
           const time = clamp(coords.time, 0.01, 0.99);
+          if (sortedGraph.some(p => Math.abs(p.time - time) < MIN_TIME_DELTA)) return;
           const size = clamp(coords.size, 0, 1);
           const next = [...sortedGraph, { time, size }].sort((a, b) => a.time - b.time);
+          const newIndex = next.findIndex(p => p.time === time && p.size === size);
           onChange(next);
-          setSelectedPointIndex(next.findIndex(p => p.time === time && p.size === size));
+          setSelectedPointIndex(newIndex);
+          draggingPointIndex.current = newIndex;
+          e.currentTarget.setPointerCapture(e.pointerId);
         }}
         style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', cursor: 'crosshair' }}
       >
@@ -186,9 +167,6 @@ export default function GraphEditor({
           );
         })}
         <path d={graphPath} fill="none" stroke="var(--accent-blue)" strokeWidth={2} />
-        {graphAnchors.map((anchor, index) => (
-          <circle key={`anchor-${index}`} cx={anchor.x} cy={anchor.y} r={3} fill="rgba(59,130,246,0.3)" />
-        ))}
         {sortedGraph.map((point, index) => {
           const svgPoint = graphPointToSvg(point);
           const isSelected = selectedPointIndex === index;
