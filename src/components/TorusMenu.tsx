@@ -111,11 +111,12 @@ function getSavedDelay(): number {
 
 function buildSizeGraphKeyframes(points: SizeGraphPoint[]) {
   const sorted = points.slice().sort((a, b) => a.time - b.time);
+  const firstPoint = sorted[0] ?? { time: 0, size: 0 };
   const frames = sorted.map(point => {
     const pct = Math.round(point.time * 100);
     return `${pct}% { opacity: 1; transform: scale(${point.size}); }`;
   });
-  return `0% { opacity: 0; transform: scale(0); }\n${frames.join('\n')}`;
+  return `0% { opacity: 1; transform: scale(${firstPoint.size}); }\n${frames.join('\n')}`;
 }
 
 export default function TorusMenu({
@@ -311,7 +312,8 @@ export default function TorusMenu({
     const sectorDelay = getSectorDelay(index);
     return {
       cursor: 'pointer',
-      animation: `${animationName} ${durationSec}s ${animationTiming} ${sectorDelay.toFixed(3)}s forwards`,
+      animation: `${animationName} ${durationSec}s ${animationTiming} ${sectorDelay.toFixed(3)}s`,
+      animationFillMode: 'both',
     };
   };
 
