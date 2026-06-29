@@ -93,6 +93,13 @@ export default function GraphEditor({
       if (!coords) return;
       onChange(prev => {
         const next = prev.slice().sort((a, b) => a.time - b.time);
+        if (index === 0 || index === next.length - 1) {
+          next[index] = {
+            ...next[index],
+            size: clamp(coords.size, 0, 1),
+          };
+          return next;
+        }
         const minTime = index > 0 ? next[index - 1].time + MIN_TIME_DELTA : 0;
         const maxTime = index < next.length - 1 ? next[index + 1].time - MIN_TIME_DELTA : 1;
         if (minTime > maxTime) return next;
