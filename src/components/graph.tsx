@@ -247,6 +247,15 @@ export default function GraphEditor({
     }
     preDragSnapshot.current = null;
   }, [getCurrentSnapshot, pushHistorySnapshot]);
+
+  // Refs to hold latest versions of handleUndo and handleRedo for stable event listener
+  const handleUndoRef = useRef(handleUndo);
+  const handleRedoRef = useRef(handleRedo);
+
+  useEffect(() => {
+    handleUndoRef.current = handleUndo;
+    handleRedoRef.current = handleRedo;
+  }, [handleUndo, handleRedo]);
   
   useEffect(() => {
     const initialOffsets = sortedGraph.map((point, index) => {
@@ -297,21 +306,22 @@ export default function GraphEditor({
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
         return;
       }
+      console.log('Key pressed:', e.key, 'Ctrl:', e.ctrlKey, 'Match undo:', isShortcutMatch('undo', e));
       if (isShortcutMatch('undo', e)) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        handleUndo();
+        handleUndoRef.current();
         return;
       }
       if (isShortcutMatch('redo', e)) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        handleRedo();
+        handleRedoRef.current();
       }
     };
     window.addEventListener('keydown', handler, true);
     return () => window.removeEventListener('keydown', handler, true);
-  }, [handleUndo, handleRedo]);
+  }, []);
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {

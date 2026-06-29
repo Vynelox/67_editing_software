@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@browserbasehq/mcp": "^3.0.0",
     "@supabase/supabase-js": "^2.57.4",
     "allotment": "^1.20.5",
     "lucide-react": "^0.344.0",
@@ -36,7 +37,7 @@
   },
   "build": {
     "appId": "com.yourname.myapp",
-    "icon": "src/67_editing_software.ico", 
+    "icon": "src/67_editing_software.ico",
     "win": {
       "icon": "src/67_editing_software.ico",
       "target": "nsis"
