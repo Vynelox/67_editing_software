@@ -77,6 +77,26 @@ export function resetDefaultShortcuts(action: ShortcutAction) {
 
 export function reloadShortcuts() { cache = load(); }
 
+export function formatShortcutCombo(keys: string[]): string {
+  const sorted = [...keys].sort((a, b) => {
+    const order = ["ctrl", "shift", "alt", "meta"];
+    const ia = order.indexOf(a.toLowerCase());
+    const ib = order.indexOf(b.toLowerCase());
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+    return a.localeCompare(b);
+  });
+  return sorted.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(" + ");
+}
+
+export function formatShortcutLabel(action: ShortcutAction): string {
+  return getShortcutKeys(action)
+    .filter(combo => combo.length > 0)
+    .map(formatShortcutCombo)
+    .join(", ");
+}
+
 if (typeof window !== "undefined") {
   window.addEventListener("juicecut-settings-changed", ((e: CustomEvent) => {
     if (e.detail?.key === "keyboardShortcuts") cache = e.detail.value;

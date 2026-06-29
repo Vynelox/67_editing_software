@@ -1,9 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
+import { Undo2, Redo2 } from 'lucide-react';
+import { useLocalHistory } from '../state/history';
+import { formatShortcutLabel, isShortcutMatch } from './shortcuts';
 
 export interface SizeGraphPoint {
   time: number;
   size: number;
+}
+
+export interface GraphSnapshot {
+  graph: SizeGraphPoint[];
+  easingOffsets: number[];
 }
 
 const GRAPH_HEIGHT = 180;
@@ -41,6 +49,17 @@ export function getSavedSizeGraph(): SizeGraphPoint[] {
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+function cloneGraphSnapshot(graph: SizeGraphPoint[], easingOffsets: number[]): GraphSnapshot {
+  return {
+    graph: graph.map(p => ({ ...p })),
+    easingOffsets: [...easingOffsets],
+  };
+}
+
+function snapshotsEqual(a: GraphSnapshot, b: GraphSnapshot): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 // Helper function for Power Curve easing
@@ -184,8 +203,50 @@ export default function GraphEditor({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const draggingPointIndex = useRef<number | null>(null);
   const draggingEasingIndex = useRef<number | null>(null);
+  const preDragSnapshot = useRef<GraphSnapshot | null>(null);
+  const graphRef = useRef(graph);
+  const easingOffsetsRef = useRef(easingOffsets);
+  const graphHistory = useLocalHistory<GraphSnapshot>('graph');
+
+  useEffect(() => { graphRef.current = graph; }, [graph]);
+  useEffect(() => { easingOffsetsRef.current = easingOffsets; }, [easingOffsets]);
 
   const sortedGraph = useMemo(() => graph.slice().sort((a, b) => a.time - b.time), [graph]);
+
+  const getCurrentSnapshot = useCallback((): GraphSnapshot => {
+    const sorted = graphRef.current.slice().sort((a, b) => a.time - b.time);
+    return cloneGraphSnapshot(sorted, easingOffsetsRef.current);
+  }, []);
+
+  const restoreSnapshot = useCallback((snap: GraphSnapshot) => {
+    onChange(snap.graph);
+    setEasingOffsets(snap.easingOffsets);
+  }, [onChange]);
+
+  const handleUndo = useCallback(() => {
+    graphHistory.undo(getCurrentSnapshot(), restoreSnapshot);
+  }, [graphHistory, getCurrentSnapshot, restoreSnapshot]);
+
+  const handleRedo = useCallback(() => {
+    graphHistory.redo(getCurrentSnapshot(), restoreSnapshot);
+  }, [graphHistory, getCurrentSnapshot, restoreSnapshot]);
+
+  const pushHistorySnapshot = useCallback((snapshot: GraphSnapshot) => {
+    graphHistory.push(snapshot);
+  }, [graphHistory]);
+
+  const beginDragSnapshot = useCallback(() => {
+    preDragSnapshot.current = getCurrentSnapshot();
+  }, [getCurrentSnapshot]);
+
+  const commitDragSnapshot = useCallback(() => {
+    if (!preDragSnapshot.current) return;
+    const current = getCurrentSnapshot();
+    if (!snapshotsEqual(preDragSnapshot.current, current)) {
+      pushHistorySnapshot(preDragSnapshot.current);
+    }
+    preDragSnapshot.current = null;
+  }, [getCurrentSnapshot, pushHistorySnapshot]);
   
   useEffect(() => {
     const initialOffsets = sortedGraph.map((point, index) => {
@@ -229,6 +290,28 @@ export default function GraphEditor({
   useEffect(() => {
     onEasingChange?.(segmentHandleValues);
   }, [segmentHandleValues, onEasingChange]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      if (isShortcutMatch('undo', e)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        handleUndo();
+        return;
+      }
+      if (isShortcutMatch('redo', e)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
+  }, [handleUndo, handleRedo]);
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
@@ -288,6 +371,10 @@ export default function GraphEditor({
     };
 
     const handlePointerUp = () => {
+      const wasDragging = draggingPointIndex.current !== null || draggingEasingIndex.current !== null;
+      if (wasDragging) {
+        commitDragSnapshot();
+      }
       draggingPointIndex.current = null;
       draggingEasingIndex.current = null;
     };
@@ -298,7 +385,7 @@ export default function GraphEditor({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [onChange, svgWidth]);
+  }, [onChange, svgWidth, commitDragSnapshot]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -317,11 +404,35 @@ export default function GraphEditor({
 
   const plotHeight = GRAPH_HEIGHT - GRAPH_PADDING * 2;
   const plotWidth = Math.max(0, svgWidth - GRAPH_PADDING * 2);
+  const undoShortcutLabel = formatShortcutLabel('undo');
+  const redoShortcutLabel = formatShortcutLabel('redo');
 
   return (
     <div ref={containerRef} className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10, width: '100%', position: 'relative', zIndex: 0 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
         <span style={{ flex: 1, lineHeight: 1.2 }}>{Y_label} over {X_label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={handleUndo}
+            disabled={!graphHistory.canUndo}
+            title={`Undo (${undoShortcutLabel})`}
+            style={{ padding: 4, opacity: graphHistory.canUndo ? 1 : 0.4 }}
+          >
+            <Undo2 size={14} />
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={handleRedo}
+            disabled={!graphHistory.canRedo}
+            title={`Redo (${redoShortcutLabel})`}
+            style={{ padding: 4, opacity: graphHistory.canRedo ? 1 : 0.4 }}
+          >
+            <Redo2 size={14} />
+          </button>
+        </div>
       </div>
       <svg
         ref={svgRef}
@@ -335,6 +446,7 @@ export default function GraphEditor({
           const time = clamp(coords.time, 0.01, 0.99);
           if (sortedGraph.some(p => Math.abs(p.time - time) < MIN_TIME_DELTA)) return;
           const size = clamp(coords.size, 0, 1);
+          pushHistorySnapshot(cloneGraphSnapshot(sortedGraph, easingOffsets));
           const next = [...sortedGraph, { time, size }].sort((a, b) => a.time - b.time);
           const newIndex = next.findIndex(p => p.time === time && p.size === size);
           onChange(next);
@@ -408,6 +520,7 @@ export default function GraphEditor({
                 style={{ cursor: 'ns-resize', zIndex: 5 }}
                 onPointerDown={e => {
                   e.stopPropagation();
+                  beginDragSnapshot();
                   draggingEasingIndex.current = index;
                   e.currentTarget.setPointerCapture(e.pointerId);
                 }}
@@ -431,6 +544,7 @@ export default function GraphEditor({
               style={{ cursor: index === 0 || index === sortedGraph.length - 1 ? 'default' : 'grab', zIndex: 10 }}
               onPointerDown={e => {
                 e.stopPropagation();
+                beginDragSnapshot();
                 draggingPointIndex.current = index;
                 setSelectedPointIndex(index);
                 e.currentTarget.setPointerCapture(e.pointerId);
@@ -443,6 +557,7 @@ export default function GraphEditor({
                 e.preventDefault();
                 e.stopPropagation();
                 if (index === 0 || index === sortedGraph.length - 1) return;
+                pushHistorySnapshot(cloneGraphSnapshot(sortedGraph, easingOffsets));
                 onChange(prev => {
                   const next = prev.slice().sort((a, b) => a.time - b.time);
                   next.splice(index, 1);
@@ -454,6 +569,7 @@ export default function GraphEditor({
                 e.preventDefault();
                 e.stopPropagation();
                 if (index === 0 || index === sortedGraph.length - 1) return;
+                pushHistorySnapshot(cloneGraphSnapshot(sortedGraph, easingOffsets));
                 onChange(prev => {
                   const next = prev.slice().sort((a, b) => a.time - b.time);
                   next.splice(index, 1);
