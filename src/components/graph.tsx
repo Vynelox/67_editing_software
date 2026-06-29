@@ -68,7 +68,7 @@ function graphCoordsFromEvent(event: { clientX: number; clientY: number }, svg: 
 
 function buildSmoothCurvePath(points: SizeGraphPoint[], graphWidth: number, easingOffsets: number[] = []) {
    if (points.length === 0) return '';
-   const samples = 10;
+   const samples = 30;
    let d = ``;
    d += `M ${graphPointToSvg(points[0], graphWidth).x} ${graphPointToSvg(points[0], graphWidth).y}`;
    for (let i = 1; i < points.length; i++) {
@@ -295,7 +295,35 @@ export default function GraphEditor({
             const minY = Math.min(point1Svg.y, point2Svg.y);
             const maxY = Math.max(point1Svg.y, point2Svg.y);
             // easingOffsets now stores actual Y positions
-            const handleY = easingOffsets[index] || midSvg.y;
+            // Compute handleY to match the curve's midpoint at t=0.5
+            let handleY = midSvg.y;
+            if (easingOffsets[index] !== undefined) {
+              const handlerY = easingOffsets[index];
+              const minY = Math.min(point1Svg.y, point2Svg.y);
+              const maxY = Math.max(point1Svg.y, point2Svg.y);
+              const handlerMinY = (2 * minY + point1Svg.y + point2Svg.y) / 4;
+              const handlerMaxY = (2 * maxY + point1Svg.y + point2Svg.y) / 4;
+              const midpointY = (point1Svg.y + point2Svg.y) / 2;
+              const range = handlerMaxY - handlerMinY;
+              let handleValue = 0;
+              if (range > 0) {
+                handleValue = -(handlerY - midpointY) * 2 / range; // Negated to keep direction correct
+              }
+              handleValue = Math.max(-1, Math.min(1, handleValue));
+              
+              const strength = 3;
+              const t = 0.5; // midpoint
+              let curvedProgress = t;
+              if (handleValue < 0) {
+                const power = 1 - (handleValue * strength);
+                curvedProgress = Math.pow(t, power);
+              } else if (handleValue > 0) {
+                const power = 1 + (handleValue * strength);
+                curvedProgress = 1 - Math.pow(1 - t, power);
+              }
+              const finalY = point.size + (nextPoint.size - point.size) * curvedProgress;
+              handleY = GRAPH_PADDING + (1 - finalY) * plotHeight;
+            }
             
             return (
               <circle
