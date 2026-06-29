@@ -172,6 +172,28 @@ export default function GraphEditor({
                 e.stopPropagation();
                 setSelectedPointIndex(index);
               }}
+              onContextMenu={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (index === 0 || index === sortedGraph.length - 1) return;
+                onChange(prev => {
+                  const next = prev.slice().sort((a, b) => a.time - b.time);
+                  next.splice(index, 1);
+                  return next;
+                });
+                setSelectedPointIndex(null);
+              }}
+              onDoubleClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (index === 0 || index === sortedGraph.length - 1) return;
+                onChange(prev => {
+                  const next = prev.slice().sort((a, b) => a.time - b.time);
+                  next.splice(index, 1);
+                  return next;
+                });
+                setSelectedPointIndex(null);
+              }}
             />
           );
         })}
