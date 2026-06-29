@@ -6,9 +6,9 @@ export interface SizeGraphPoint {
   size: number;
 }
 
-const GRAPH_WIDTH = 240;
+const GRAPH_WIDTH = 260; //graph canvas
 const GRAPH_HEIGHT = 180;
-const GRAPH_PADDING = 28;
+const GRAPH_PADDING = 40; //left padding, THIS AFFECTS CLIPPING
 const GRAPH_PLOT_WIDTH = GRAPH_WIDTH - GRAPH_PADDING * 2;
 const GRAPH_PLOT_HEIGHT = GRAPH_HEIGHT - GRAPH_PADDING * 2;
 const MIN_TIME_DELTA = 0.01;
@@ -117,7 +117,7 @@ export default function GraphEditor({
   }, [onChange]);
 
   return (
-    <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}>
+    <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10, width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <span style={{ flex: 1, lineHeight: 1.2 }}>Size over time</span>
         <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}>Click to add anchors</span>
@@ -202,7 +202,7 @@ export default function GraphEditor({
           return (
             <g key={`y-tick-${index}`}>
               <line x1={GRAPH_PADDING - 6} y1={y} x2={GRAPH_PADDING} y2={y} stroke="var(--border-mid)" strokeWidth={1} />
-              <text x={GRAPH_PADDING - 10} y={y + 4} textAnchor="end" fontSize={10} fill="var(--text-secondary)">{`${Math.round((1 - index * 0.25) * 100)}%`}</text>
+              <text x={GRAPH_PADDING - 14} y={y + 4} textAnchor="end" fontSize={10} fill="var(--text-secondary)">{`${Math.round((1 - index * 0.25) * 100)}%`}</text>
             </g>
           );
         })}
