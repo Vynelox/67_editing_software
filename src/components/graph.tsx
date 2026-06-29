@@ -87,7 +87,7 @@ function buildSmoothCurvePath(points: SizeGraphPoint[], graphWidth: number, easi
      let handleValue = 0;
      const range = handlerMaxY - handlerMinY;
      if (range > 0) {
-       handleValue = (handlerY - midpointY) * 2 / range;
+       handleValue = -(handlerY - midpointY) * 2 / range; // Negated to fix inverted drag direction
      }
      handleValue = Math.max(-1, Math.min(1, handleValue));
      
