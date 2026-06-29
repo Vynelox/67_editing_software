@@ -134,6 +134,27 @@ function AppContent() {
   const [showStyle, setShowStyle] = useState(false);
   const [stylePage, setStylePage] = useState<string | null>(null);
 
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 2) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu, true);
+    document.addEventListener('mousedown', handleMouseDown, true);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu, true);
+      document.removeEventListener('mousedown', handleMouseDown, true);
+    };
+  }, []);
+
   // Apply saved theme on mount
   useEffect(() => {
     try {

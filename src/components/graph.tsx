@@ -6,9 +6,9 @@ export interface SizeGraphPoint {
   size: number;
 }
 
-const GRAPH_WIDTH = 260;
+const GRAPH_WIDTH = 240;
 const GRAPH_HEIGHT = 180;
-const GRAPH_PADDING = 20;
+const GRAPH_PADDING = 28;
 const GRAPH_PLOT_WIDTH = GRAPH_WIDTH - GRAPH_PADDING * 2;
 const GRAPH_PLOT_HEIGHT = GRAPH_HEIGHT - GRAPH_PADDING * 2;
 const MIN_TIME_DELTA = 0.01;
@@ -141,31 +141,13 @@ export default function GraphEditor({
           draggingPointIndex.current = newIndex;
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
-        style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', cursor: 'crosshair' }}
+        style={{ display: 'block', margin: '0 auto', maxWidth: '100%', height: 'auto', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', cursor: 'crosshair' }}
       >
         <rect x={0} y={0} width={GRAPH_WIDTH} height={GRAPH_HEIGHT} fill="transparent" />
         <g stroke="var(--border-mid)" strokeWidth={1} fill="none">
           <line x1={GRAPH_PADDING} y1={GRAPH_PADDING} x2={GRAPH_PADDING} y2={GRAPH_HEIGHT - GRAPH_PADDING} />
           <line x1={GRAPH_PADDING} y1={GRAPH_HEIGHT - GRAPH_PADDING} x2={GRAPH_WIDTH - GRAPH_PADDING} y2={GRAPH_HEIGHT - GRAPH_PADDING} />
         </g>
-        {Array.from({ length: 5 }).map((_, index) => {
-          const y = GRAPH_PADDING + index * (GRAPH_PLOT_HEIGHT / 4);
-          return (
-            <g key={`y-tick-${index}`}>
-              <line x1={GRAPH_PADDING - 6} y1={y} x2={GRAPH_PADDING} y2={y} stroke="var(--border-mid)" strokeWidth={1} />
-              <text x={GRAPH_PADDING - 10} y={y + 4} textAnchor="end" fontSize={10} fill="var(--text-secondary)">{`${(1 - index * 0.25).toFixed(2)}`}</text>
-            </g>
-          );
-        })}
-        {Array.from({ length: 5 }).map((_, index) => {
-          const x = GRAPH_PADDING + index * (GRAPH_PLOT_WIDTH / 4);
-          return (
-            <g key={`x-tick-${index}`}>
-              <line x1={x} y1={GRAPH_HEIGHT - GRAPH_PADDING} x2={x} y2={GRAPH_HEIGHT - GRAPH_PADDING + 6} stroke="var(--border-mid)" strokeWidth={1} />
-              <text x={x} y={GRAPH_HEIGHT - GRAPH_PADDING + 18} textAnchor="middle" fontSize={10} fill="var(--text-secondary)">{`${index * 25}%`}</text>
-            </g>
-          );
-        })}
         <path d={graphPath} fill="none" stroke="var(--accent-blue)" strokeWidth={2} />
         {sortedGraph.map((point, index) => {
           const svgPoint = graphPointToSvg(point);
@@ -191,6 +173,24 @@ export default function GraphEditor({
                 setSelectedPointIndex(index);
               }}
             />
+          );
+        })}
+        {Array.from({ length: 5 }).map((_, index) => {
+          const y = GRAPH_PADDING + index * (GRAPH_PLOT_HEIGHT / 4);
+          return (
+            <g key={`y-tick-${index}`}>
+              <line x1={GRAPH_PADDING - 6} y1={y} x2={GRAPH_PADDING} y2={y} stroke="var(--border-mid)" strokeWidth={1} />
+              <text x={GRAPH_PADDING - 10} y={y + 4} textAnchor="end" fontSize={10} fill="var(--text-secondary)">{`${Math.round((1 - index * 0.25) * 100)}%`}</text>
+            </g>
+          );
+        })}
+        {Array.from({ length: 5 }).map((_, index) => {
+          const x = GRAPH_PADDING + index * (GRAPH_PLOT_WIDTH / 4);
+          return (
+            <g key={`x-tick-${index}`}>
+              <line x1={x} y1={GRAPH_HEIGHT - GRAPH_PADDING} x2={x} y2={GRAPH_HEIGHT - GRAPH_PADDING + 6} stroke="var(--border-mid)" strokeWidth={1} />
+              <text x={x} y={GRAPH_HEIGHT - GRAPH_PADDING + 18} textAnchor="middle" fontSize={10} fill="var(--text-secondary)">{`${index * 25}%`}</text>
+            </g>
           );
         })}
       </svg>
