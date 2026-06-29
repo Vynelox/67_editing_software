@@ -313,20 +313,10 @@ export default function GraphEditor({
       console.log('=== KEYDOWN EVENT ===');
       console.log('Key:', e.key, 'Code:', e.code);
       console.log('Modifiers: Ctrl=', e.ctrlKey, 'Shift=', e.shiftKey, 'Alt=', e.altKey);
-      const matchUndo = isShortcutMatch('undo', e);
-      const matchRedo = isShortcutMatch('redo', e);
-      console.log('Match undo:', matchUndo);
-      console.log('Match redo:', matchRedo);
+      console.log('Match undo:', isShortcutMatch('undo', e));
+      console.log('Match redo:', isShortcutMatch('redo', e));
       console.log('graphHistory.canUndo:', graphHistory.canUndo);
       console.log('handleUndoRef.current exists:', !!handleUndoRef.current);
-      // Debug: check the actual shortcut keys stored
-      try {
-        console.log('Undo shortcuts from cache:', JSON.stringify(getShortcutKeys('undo')));
-        console.log('Event key (lowered):', e.key.toLowerCase());
-        console.log('ctrlKey:', e.ctrlKey, 'metaKey:', e.metaKey);
-      } catch (err) {
-        console.error('Debug error:', err);
-      }
       
       if (isShortcutMatch('undo', e)) {
         console.log('>>> UNDO SHORTCUT MATCHED! Calling handleUndoRef.current()');
