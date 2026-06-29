@@ -541,22 +541,28 @@ export default function GraphEditor({
             }
             
             return (
-              <circle
-                key={`easing-${index}`}
-                cx={midSvg.x}
-                cy={handleY}
-                r={4}
-                fill="var(--accent-pink)"
-                stroke="var(--accent-pink)"
-                strokeWidth={1}
-                style={{ cursor: 'ns-resize', zIndex: 5 }}
-                onPointerDown={e => {
-                  e.stopPropagation();
-                  beginDragSnapshot();
-                  draggingEasingIndex.current = index;
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                }}
-              />
+              <g key={`easing-${index}`} style={{ cursor: 'ns-resize', zIndex: 5 }}>
+                <circle
+                  cx={midSvg.x}
+                  cy={handleY}
+                  r={4}
+                  fill="var(--bg-elevated)"
+                />
+                <circle
+                  cx={midSvg.x}
+                  cy={handleY}
+                  r={3}
+                  fill="none"
+                  stroke="var(--input-field)"
+                  strokeWidth={2}
+                  onPointerDown={e => {
+                    e.stopPropagation();
+                    beginDragSnapshot();
+                    draggingEasingIndex.current = index;
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  }}
+                />
+              </g>
             );
           }
           return null;
