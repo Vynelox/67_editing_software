@@ -314,6 +314,8 @@ export default function TorusMenu({
       cursor: 'pointer',
       animation: `${animationName} ${durationSec}s ${animationTiming} ${sectorDelay.toFixed(3)}s`,
       animationFillMode: 'both',
+      transformOrigin: `${cx}px ${cy}px`,
+      transformBox: 'view-box',
     };
   };
 
