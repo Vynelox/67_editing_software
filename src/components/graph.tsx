@@ -555,7 +555,7 @@ export default function GraphEditor({
                   cy={handleY}
                   r={EASE_HANDLE_DIAMETER_PX / 2}
                   fill="none"
-                  stroke="var(--input-field)"
+                  stroke="var(--accent-blue)"
                   strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
                   onPointerDown={e => {
                     e.stopPropagation();
