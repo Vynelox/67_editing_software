@@ -216,65 +216,6 @@ export default function GraphEditor({
           );
         })}
       </svg>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-        Time runs from 0 to 100% of the duration slider. By default the menu reaches full size at 75% of the animation and stays at 1 through the end.
-      </div>
-      {selectedPointIndex !== null && (
-        <div style={{ display: 'grid', gap: 8, padding: '4px 0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 11 }}>
-            <span>Selected anchor</span>
-            <span>{`${Math.round(sortedGraph[selectedPointIndex].time * 100)}% / ${sortedGraph[selectedPointIndex].size.toFixed(2)}`}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ minWidth: 60, fontSize: 11 }}>Size</span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={1}
-              value={Math.round(sortedGraph[selectedPointIndex].size * 100)}
-              onChange={e => {
-                const value = clamp(Number(e.target.value) / 100, 0, 1);
-                onChange(prev => {
-                  const next = prev.slice().sort((a, b) => a.time - b.time);
-                  next[selectedPointIndex] = { ...next[selectedPointIndex], size: value };
-                  return next;
-                });
-              }}
-            />
-          </div>
-          {selectedPointIndex > 0 && selectedPointIndex < sortedGraph.length - 1 && (
-            <button
-              type="button"
-              className="icon-btn"
-              style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => {
-                onChange(prev => {
-                  const next = prev.slice().sort((a, b) => a.time - b.time);
-                  next.splice(selectedPointIndex as number, 1);
-                  return next;
-                });
-                setSelectedPointIndex(null);
-              }}
-            >
-              Remove anchor
-            </button>
-          )}
-        </div>
-      )}
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={() => {
-            onChange(DEFAULT_TORUS_SIZE_GRAPH);
-            setSelectedPointIndex(null);
-          }}
-          style={{ width: '100%', justifyContent: 'center' }}
-        >
-          Reset graph
-        </button>
-      </div>
     </div>
   );
 }
