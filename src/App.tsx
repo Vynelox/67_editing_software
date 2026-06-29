@@ -296,6 +296,12 @@ function AppContent() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Skip if graph editor already handled undo/redo via capture phase
+      if ((window as any).__graphUndoRedoHandled) {
+        (window as any).__graphUndoRedoHandled = false;
+        return;
+      }
+      
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
       if (e.ctrlKey && e.key.toLowerCase() === 'a') { e.preventDefault(); return; }

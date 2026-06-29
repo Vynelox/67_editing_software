@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { Undo2, Redo2 } from 'lucide-react';
 import { useLocalHistory } from '../state/history';
-import { formatShortcutLabel, isShortcutMatch } from './shortcuts';
+import { formatShortcutLabel, getShortcutKeys, isShortcutMatch } from './shortcuts';
 
 export interface SizeGraphPoint {
   time: number;
@@ -224,10 +224,12 @@ export default function GraphEditor({
   }, [onChange]);
 
   const handleUndo = useCallback(() => {
+    console.log('handleUndo called. canUndo:', graphHistory.canUndo);
     graphHistory.undo(getCurrentSnapshot(), restoreSnapshot);
   }, [graphHistory, getCurrentSnapshot, restoreSnapshot]);
 
   const handleRedo = useCallback(() => {
+    console.log('handleRedo called. canRedo:', graphHistory.canRedo);
     graphHistory.redo(getCurrentSnapshot(), restoreSnapshot);
   }, [graphHistory, getCurrentSnapshot, restoreSnapshot]);
 
@@ -304,21 +306,51 @@ export default function GraphEditor({
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        console.log('Keyboard shortcut blocked: focus is in input/textarea');
         return;
       }
-      console.log('Key pressed:', e.key, 'Ctrl:', e.ctrlKey, 'Match undo:', isShortcutMatch('undo', e));
+      
+      console.log('=== KEYDOWN EVENT ===');
+      console.log('Key:', e.key, 'Code:', e.code);
+      console.log('Modifiers: Ctrl=', e.ctrlKey, 'Shift=', e.shiftKey, 'Alt=', e.altKey);
+      const matchUndo = isShortcutMatch('undo', e);
+      const matchRedo = isShortcutMatch('redo', e);
+      console.log('Match undo:', matchUndo);
+      console.log('Match redo:', matchRedo);
+      console.log('graphHistory.canUndo:', graphHistory.canUndo);
+      console.log('handleUndoRef.current exists:', !!handleUndoRef.current);
+      // Debug: check the actual shortcut keys stored
+      try {
+        console.log('Undo shortcuts from cache:', JSON.stringify(getShortcutKeys('undo')));
+        console.log('Event key (lowered):', e.key.toLowerCase());
+        console.log('ctrlKey:', e.ctrlKey, 'metaKey:', e.metaKey);
+      } catch (err) {
+        console.error('Debug error:', err);
+      }
+      
       if (isShortcutMatch('undo', e)) {
+        console.log('>>> UNDO SHORTCUT MATCHED! Calling handleUndoRef.current()');
         e.preventDefault();
         e.stopImmediatePropagation();
-        handleUndoRef.current();
+        (window as any).__graphUndoRedoHandled = true;
+        try {
+          handleUndoRef.current();
+          console.log('>>> handleUndoRef.current() completed');
+        } catch (err) {
+          console.error('>>> ERROR in handleUndoRef.current():', err);
+        }
         return;
       }
+      
       if (isShortcutMatch('redo', e)) {
+        console.log('>>> REDO SHORTCUT MATCHED!');
         e.preventDefault();
         e.stopImmediatePropagation();
+        (window as any).__graphUndoRedoHandled = true;
         handleRedoRef.current();
       }
     };
+    
     window.addEventListener('keydown', handler, true);
     return () => window.removeEventListener('keydown', handler, true);
   }, []);

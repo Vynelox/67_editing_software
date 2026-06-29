@@ -51,18 +51,19 @@ export function useLocalHistory<T>(scope: string, max = 200): HistoryStack<T> {
   }, [scope, max]);
 
   const undo = useCallback((currentSnapshot: T, restore: (snap: T) => void) => {
+    console.log('[history:undo] Called');
     setUndoStack(prev => {
+      console.log('[history:undo] Stack length:', prev.length);
       if (prev.length === 0) {
-        logHistoryAction(scope, 'undo', { result: 'noop', reason: 'empty undo stack' });
+        console.log('[history:undo] Stack empty, noop');
         return prev;
       }
       const copy = [...prev];
       const toRestore = copy.pop()!;
-      logHistoryAction(scope, 'undo', {
-        undoDepthAfter: copy.length,
-      });
+      console.log('[history:undo] Popped snapshot, calling restore() inside setter');
       setRedoStack(r => r.concat([currentSnapshot]));
       restore(toRestore);
+      console.log('[history:undo] restore() done');
       return copy;
     });
   }, [scope]);
