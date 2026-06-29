@@ -43,6 +43,56 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
+// Helper function for Power Curve easing
+function evaluateSegment(t: number, handleValue: number): number {
+  const strength = 3;
+  if (handleValue < 0) {
+    const power = 1 - (handleValue * strength);
+    return Math.pow(t, power);
+  } else if (handleValue > 0) {
+    const power = 1 + (handleValue * strength);
+    return 1 - Math.pow(1 - t, power);
+  }
+  return t; // Linear fallback
+}
+
+// Evaluate the graph at a given normalized time (0-1)
+// Returns the interpolated size value using Power Curve easing for each segment
+export function evaluateGraphAtTime(time: number, points: SizeGraphPoint[]): number {
+  if (!points || points.length === 0) return 0;
+  if (points.length === 1) return points[0].size;
+  
+  // Clamp time to [0, 1]
+  const clampedTime = Math.max(0, Math.min(1, time));
+  
+  // Find the segment containing this time
+  for (let i = 0; i < points.length - 1; i++) {
+    const pointA = points[i];
+    const pointB = points[i + 1];
+    
+    if (clampedTime >= pointA.time && clampedTime <= pointB.time) {
+      // Normalize t within the segment
+      const segmentDuration = pointB.time - pointA.time;
+      const t = segmentDuration > 0 ? (clampedTime - pointA.time) / segmentDuration : 0;
+      
+      // Calculate handleValue for this segment based on the midpoint constraint
+      // The handle is positioned at the midpoint of the segment
+      const midpointT = 0.5;
+      const midpointSize = pointA.size + (pointB.size - pointA.size) * midpointT;
+      
+      // For now, use a default handleValue of 0 (linear)
+      // This will be computed from the easingOffsets if available
+      const handleValue = 0;
+      
+      const curvedProgress = evaluateSegment(t, handleValue);
+      return pointA.size + (pointB.size - pointA.size) * curvedProgress;
+    }
+  }
+  
+  // If time is beyond the last point, return last point's value
+  return points[points.length - 1].size;
+}
+
 function getGraphMetrics(graphWidth: number) {
   const plotWidth = Math.max(0, graphWidth - GRAPH_PADDING * 2);
   const plotHeight = Math.max(0, GRAPH_HEIGHT - GRAPH_PADDING * 2);
@@ -158,6 +208,27 @@ export default function GraphEditor({
   }, [sortedGraph.length, svgWidth]);
   
   const graphPath = useMemo(() => buildSmoothCurvePath(sortedGraph, svgWidth, easingOffsets), [sortedGraph, svgWidth, easingOffsets]);
+
+  const segmentHandleValues = useMemo(() => {
+    return sortedGraph.slice(0, -1).map((pointA, index) => {
+      const pointB = sortedGraph[index + 1];
+      const svgPointA = graphPointToSvg(pointA, svgWidth);
+      const svgPointB = graphPointToSvg(pointB, svgWidth);
+      const handlerY = easingOffsets[index] ?? (svgPointA.y + svgPointB.y) / 2;
+      const midpointY = (svgPointA.y + svgPointB.y) / 2;
+      const minY = Math.min(svgPointA.y, svgPointB.y);
+      const maxY = Math.max(svgPointA.y, svgPointB.y);
+      const handlerMinY = (2 * minY + svgPointA.y + svgPointB.y) / 4;
+      const handlerMaxY = (2 * maxY + svgPointA.y + svgPointB.y) / 4;
+      const range = handlerMaxY - handlerMinY;
+      if (range <= 0) return 0;
+      return clamp(-(handlerY - midpointY) * 2 / range, -1, 1);
+    });
+  }, [sortedGraph, easingOffsets, svgWidth]);
+
+  useEffect(() => {
+    onEasingChange?.(segmentHandleValues);
+  }, [segmentHandleValues, onEasingChange]);
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {

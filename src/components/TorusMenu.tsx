@@ -1,5 +1,7 @@
 import { useEffect, useRef, ReactNode } from 'react';
 import { Scissors, ChevronLeft, ChevronRight, Move } from 'lucide-react';
+import { getSavedSizeGraph, SizeGraphPoint } from './graph';
+import { evaluateGraphWithHandles, getSavedSegmentHandleValues } from '../utils/torusGraphEasing';
 
 type TorusTarget =
   | { kind: 'inside'; clipId: string; frame: number }
@@ -11,11 +13,6 @@ interface MenuItem {
   icon: React.ReactNode;
   action: () => void;
   color?: string;
-}
-
-interface SizeGraphPoint {
-  time: number;
-  size: number;
 }
 
 interface Props {
@@ -47,6 +44,7 @@ interface Props {
   easing?: number;
   delay?: number;
   sizeGraph?: SizeGraphPoint[];
+  segmentHandleValues?: number[];
 
   // Shared
   closeOnBackgroundClick?: boolean;
@@ -109,16 +107,6 @@ function getSavedDelay(): number {
   return 0;
 }
 
-function buildSizeGraphKeyframes(points: SizeGraphPoint[]) {
-  const sorted = points.slice().sort((a, b) => a.time - b.time);
-  const firstPoint = sorted[0] ?? { time: 0, size: 0 };
-  const frames = sorted.map(point => {
-    const pct = Math.round(point.time * 100);
-    return `${pct}% { opacity: 1; transform: scale(${point.size}); }`;
-  });
-  return `0% { opacity: 1; transform: scale(${firstPoint.size}); }\n${frames.join('\n')}`;
-}
-
 export default function TorusMenu({
   interactive = false,
   pos = { x: 0, y: 0 },
@@ -134,6 +122,7 @@ export default function TorusMenu({
   easing: easingProp,
   delay: delayProp,
   sizeGraph: sizeGraphProp,
+  segmentHandleValues: segmentHandleValuesProp,
   items: propItems,
   cx: propCx,
   cy: propCy,
@@ -147,7 +136,8 @@ export default function TorusMenu({
   const duration = durationProp ?? getSavedDuration();
   const easing = easingProp ?? getSavedEasing();
   const delay = delayProp ?? getSavedDelay();
-  const sizeGraph = sizeGraphProp;
+  const sizeGraph = sizeGraphProp ?? getSavedSizeGraph();
+  const segmentHandleValues = segmentHandleValuesProp ?? getSavedSegmentHandleValues();
 
   const cx = propCx ?? 120;
   const cy = propCy ?? 120;
@@ -182,6 +172,7 @@ export default function TorusMenu({
 
   // Interactive-only: scroll-to-close and background-click-to-close
   const ref = useRef<HTMLDivElement>(null);
+  const sectorGroupRefs = useRef<(SVGGElement | null)[]>([]);
   useEffect(() => {
     if (!interactive) return;
     const timer = setTimeout(() => {
@@ -288,9 +279,6 @@ export default function TorusMenu({
   };
 
   const hasSizeGraph = Array.isArray(sizeGraph) && sizeGraph.length >= 2;
-  const animationName = hasSizeGraph ? 'torus-sector-pop-graph' : 'torus-sector-pop';
-  const animationTiming = hasSizeGraph ? 'linear' : getEasing();
-  const graphKeyframes = hasSizeGraph ? buildSizeGraphKeyframes(sizeGraph) : null;
 
   // Compute per-sector delay based on delay prop and sector index
   // delay = 0: all sectors animate at once (same as old pop)
@@ -309,15 +297,85 @@ export default function TorusMenu({
   };
 
   const getSectorStyle = (index: number): React.CSSProperties => {
+    if (hasSizeGraph) {
+      return { cursor: 'pointer' };
+    }
     const sectorDelay = getSectorDelay(index);
     return {
       cursor: 'pointer',
-      animation: `${animationName} ${durationSec}s ${animationTiming} ${sectorDelay.toFixed(3)}s`,
+      animation: `torus-sector-pop ${durationSec}s ${getEasing()} ${sectorDelay.toFixed(3)}s`,
       animationFillMode: 'both',
       transformOrigin: `${cx}px ${cy}px`,
       transformBox: 'view-box',
     };
   };
+
+  const getGroupStyle = (): React.CSSProperties | undefined => {
+    if (!hasSizeGraph) return undefined;
+    const initialSize = sizeGraph![0]?.size ?? 0;
+    return {
+      transformOrigin: `${cx}px ${cy}px`,
+      transformBox: 'view-box',
+      opacity: 0,
+      transform: `scale(${initialSize})`,
+    };
+  };
+
+  useEffect(() => {
+    if (!hasSizeGraph) return;
+
+    const sortedGraph = sizeGraph!.slice().sort((a, b) => a.time - b.time);
+    const initialSize = sortedGraph[0]?.size ?? 0;
+    const animDuration = Math.max(duration, 1);
+    let frameId = 0;
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      let stillAnimating = false;
+
+      items.forEach((_, index) => {
+        const group = sectorGroupRefs.current[index];
+        if (!group) return;
+
+        const delayMs = getSectorDelay(index) * 1000;
+        const elapsed = now - startTime - delayMs;
+
+        if (elapsed < 0) {
+          group.style.opacity = '0';
+          group.style.transform = `scale(${initialSize})`;
+          stillAnimating = true;
+          return;
+        }
+
+        const linearProgress = Math.min(1, elapsed / animDuration);
+        const size = evaluateGraphWithHandles(
+          linearProgress,
+          sortedGraph,
+          segmentHandleValues,
+          index === 0,
+        );
+
+        group.style.opacity = '1';
+        group.style.transform = `scale(${size})`;
+
+        if (linearProgress < 1) stillAnimating = true;
+      });
+
+      if (stillAnimating) {
+        frameId = requestAnimationFrame(tick);
+      }
+    };
+
+    sectorGroupRefs.current.forEach(group => {
+      if (group) {
+        group.style.opacity = '0';
+        group.style.transform = `scale(${initialSize})`;
+      }
+    });
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [hasSizeGraph, sizeGraph, segmentHandleValues, duration, delay, items.length, cx, cy]);
 
   const handleSectorClick = (item: MenuItem) => {
     if (interactive) {
@@ -345,7 +403,11 @@ export default function TorusMenu({
         const labelY = cy + labelR * Math.sin(midAngle);
 
         return (
-          <g key={item.label}>
+          <g
+            key={item.label}
+            ref={el => { sectorGroupRefs.current[i] = el; }}
+            style={getGroupStyle()}
+          >
             <path
               d={annularSectorPath(cx, cy, innerR, outerR, startAngle, endAngle)}
               fill="var(--input-field-bg)"
@@ -390,15 +452,13 @@ export default function TorusMenu({
     </svg>
   );
 
-  return (
+return (
     <>
       <style>{`
-        @keyframes ${animationName} {
-          ${hasSizeGraph ? graphKeyframes : `
-            0% { opacity: 0; transform: scale(0); }
-            60% { opacity: 1; }
-            100% { opacity: 1; transform: scale(1); }
-          `}
+        @keyframes torus-sector-pop {
+          0% { opacity: 0; transform: scale(0); }
+          60% { opacity: 1; }
+          100% { opacity: 1; transform: scale(1); }
         }
         .torus-overlay.torus-overlay--no-scroll {
           pointer-events: none;

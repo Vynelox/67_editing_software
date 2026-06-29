@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import GraphEditor, { DEFAULT_TORUS_SIZE_GRAPH, getSavedSizeGraph, SizeGraphPoint } from './graph';
+import { getSavedSegmentHandleValues, saveSegmentHandleValues } from '../utils/torusGraphEasing';
 import DraggableModal from './DraggableModal';
 import TorusMenu from './TorusMenu';
 import { Slider } from './Adjustables';
@@ -91,6 +92,7 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
   const [torusOpen, setTorusOpen] = useState(false);
   const [duration, setDuration] = useState(getSavedDuration);
   const [sizeGraph, setSizeGraph] = useState<SizeGraphPoint[]>(getSavedSizeGraph);
+  const [segmentHandleValues, setSegmentHandleValues] = useState<number[]>(getSavedSegmentHandleValues);
   const [delay, setDelay] = useState(getSavedDelay);
 
   const sortedSizeGraph = useMemo(() => sizeGraph.slice().sort((a, b) => a.time - b.time), [sizeGraph]);
@@ -102,6 +104,10 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.torusSizeGraph', JSON.stringify(sortedSizeGraph)); } catch {}
   }, [sortedSizeGraph]);
+
+  useEffect(() => {
+    saveSegmentHandleValues(segmentHandleValues);
+  }, [segmentHandleValues]);
 
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.torusDelay', String(delay)); } catch {}
@@ -162,7 +168,13 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
                 onReset={() => setDuration(300)}
                 formatValue={v => `${v}ms`}
               />
-              <GraphEditor graph={sizeGraph} onChange={setSizeGraph} Y_label="size" X_label="time" />
+              <GraphEditor
+                graph={sizeGraph}
+                onChange={setSizeGraph}
+                onEasingChange={setSegmentHandleValues}
+                Y_label="size"
+                X_label="time"
+              />
               <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <span style={{ flex: 1, lineHeight: 1.2 }}>Delay</span>
@@ -228,6 +240,7 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
                       showCloseButton
                       duration={duration}
                       sizeGraph={sortedSizeGraph}
+                      segmentHandleValues={segmentHandleValues}
                       delay={delay}
                       closeOnBackgroundClick={false}
                     />
