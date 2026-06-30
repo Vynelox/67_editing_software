@@ -55,6 +55,12 @@ html, body, #root {
     color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
+/* Universal color transition for all elements using CSS color variables
+   This ensures --text-secondary and --text-muted changes animate smoothly */
+* {
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
 /* GUI Scale - scales visual elements without affecting layout */
 #root {
   --scale: var(--gui-scale);
