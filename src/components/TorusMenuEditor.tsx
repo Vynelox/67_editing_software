@@ -278,9 +278,6 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
               </button>
             </div>
           </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 11, textAlign: 'center' }}>
-            Torus Menu Editor
-          </div>
         </div>
       }
     />
