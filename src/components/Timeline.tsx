@@ -31,6 +31,19 @@ const TRACK_H = 64;
 const HEADER_H = 32;
 const PX_PER_FRAME = 4;
 const PLAYHEAD_MAX_WIDTH = 20;
+// Retrieve saved playneedle width (in pixels) for timeline preview
+// Playneedle width for timeline preview (retrieved from settings)
+const pnWidth = getSavedPnWidth();
+
+// Retrieve saved playneedle width (in pixels) for timeline preview
+function getSavedPnWidth(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_width');
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 100 && n <= 500) return n; }
+  } catch {}
+  // Default matches editor preview width
+  return 260;
+}
 
 function frameToX(frame: number, zoom: number) { return frame * PX_PER_FRAME * zoom; }
 function xToFrame(x: number, zoom: number) { return Math.round(x / (PX_PER_FRAME * zoom)); }
@@ -709,9 +722,9 @@ export default function Timeline({
               className="tl-playhead"
               style={{
                 position: 'absolute',
-                left: playheadX - PLAYHEAD_MAX_WIDTH / 2,
+                left: playheadX - pnWidth / 2,
                 top: 0,
-                width: PLAYHEAD_MAX_WIDTH,
+                width: pnWidth,
                 height: '100%',
                 zIndex: 40,
                 pointerEvents: 'none',
@@ -725,7 +738,7 @@ export default function Timeline({
               >
                 <FormulaPlayneedle
                   height={playheadHeight}
-                  maxWidth={PLAYHEAD_MAX_WIDTH}
+                  maxWidth={pnWidth}
                   color="var(--playneedle)"
                   glowColor="color-mix(in srgb, var(--playneedle) 60%, transparent)"
                   params={playneedleParams}

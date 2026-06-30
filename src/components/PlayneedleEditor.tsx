@@ -61,6 +61,16 @@ function getSavedPnHr(): number {
   return 1;
 }
 
+// Retrieve saved playneedle width (in pixels) for the editor UI
+function getSavedPnWidth(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_width');
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 100 && n <= 500) return n; }
+  } catch {}
+  // Default width matches the current hard‑coded value used elsewhere
+  return 260;
+}
+
 export function OpenPlayneedleEditor(onCloseCallback?: () => void) {
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -87,13 +97,16 @@ export interface PlayneedleEditorModalProps {
 }
 
 export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEditorModalProps) {
-  const [pnT, setPnT] = useState(getSavedPnT);
-  const [pnJ, setPnJ] = useState(getSavedPnJ);
-  const [pnK, setPnK] = useState(getSavedPnK);
-  const [pnS, setPnS] = useState(getSavedPnS);
-  const [pnVo, setPnVo] = useState(getSavedPnVo);
-  const [pnHb, setPnHb] = useState(getSavedPnHb);
-  const [pnHr, setPnHr] = useState(getSavedPnHr);
+  // Core playneedle parameters
+  const [pnT, setPnT] = useState<number>(getSavedPnT);
+  const [pnJ, setPnJ] = useState<number>(getSavedPnJ);
+  const [pnK, setPnK] = useState<number>(getSavedPnK);
+  const [pnS, setPnS] = useState<number>(getSavedPnS);
+  const [pnVo, setPnVo] = useState<number>(getSavedPnVo);
+  const [pnHb, setPnHb] = useState<number>(getSavedPnHb);
+  const [pnHr, setPnHr] = useState<number>(getSavedPnHr);
+  // UI width for the editor preview (also used by timeline)
+  const [pnWidth, setPnWidth] = useState<number>(getSavedPnWidth);
 
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.playneedle_t', String(pnT)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_t', value: pnT } })); } catch {}
@@ -122,6 +135,11 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.playneedle_h_r', String(pnHr)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_h_r', value: pnHr } })); } catch {}
   }, [pnHr]);
+
+  // Persist width changes
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playneedle_width', String(pnWidth)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_width', value: pnWidth } })); } catch {}
+  }, [pnWidth]);
 
   const params = useMemo(() => ({
     t: pnT,
@@ -224,16 +242,27 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
                 onReset={() => setPnHb(0.8)}
                 formatValue={v => v.toFixed(3)}
               />
-              <Slider
-                label={<span>h<sub>r</sub> ！ Horizontal width of the ribbon</span>}
-                value={pnHr}
-                min={0}
-                max={1}
-                step={0.001}
-                onChange={setPnHr}
-                onReset={() => setPnHr(1)}
-                formatValue={v => v.toFixed(3)}
-              />
+               <Slider
+                 label={<span>h<sub>r</sub> ！ Horizontal width of the ribbon</span>}
+                 value={pnHr}
+                 min={0}
+                 max={1}
+                 step={0.001}
+                 onChange={setPnHr}
+                 onReset={() => setPnHr(1)}
+                 formatValue={v => v.toFixed(3)}
+               />
+               {/* New slider for overall playneedle width in pixels */}
+               <Slider
+                 label={<span>Playneedle width (px)</span>}
+                 value={pnWidth}
+                 min={100}
+                 max={500}
+                 step={1}
+                 onChange={setPnWidth}
+                 onReset={() => setPnWidth(260)}
+                 formatValue={v => `${v}px`}
+               />
             </div>
 
             <div
