@@ -19,6 +19,7 @@ const GRAPH_PADDING = 40; //left padding, THIS AFFECTS CLIPPING
 const MIN_TIME_DELTA = 0.01;
 const EASE_HANDLE_DIAMETER_PX = 6; //default 6px
 const EASE_HANDLE_RING_THICKNESS_PX = 2; //default 2px
+const GRAPH_LINE_COLOR = 'var(--automation-line)';
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
   { time: 0, size: 0 },
@@ -497,7 +498,7 @@ export default function GraphEditor({
         </g>
         <text x={svgWidth / 2} y={GRAPH_HEIGHT - 10} textAnchor="middle" fontSize={11} fill="var(--text-secondary)">{X_label}</text>
         <text x={GRAPH_PADDING - 15} y={GRAPH_PADDING - 14} textAnchor="start" fontSize={11} fill="var(--text-secondary)">{Y_label}</text>
-        <path d={graphPath} fill="none" stroke="var(--automation-line)" strokeWidth={2} />
+        <path d={graphPath} fill="none" stroke={GRAPH_LINE_COLOR} strokeWidth={2} />
         {sortedGraph.map((point, index) => {
           if (index < sortedGraph.length - 1) {
             const nextPoint = sortedGraph[index + 1];
@@ -555,7 +556,7 @@ export default function GraphEditor({
                   cy={handleY}
                   r={EASE_HANDLE_DIAMETER_PX / 2}
                   fill="none"
-                  stroke="var(--automation-line)"
+                  stroke={GRAPH_LINE_COLOR}
                   strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
                   onPointerDown={e => {
                     e.stopPropagation();
