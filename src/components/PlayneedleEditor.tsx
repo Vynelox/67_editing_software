@@ -1,0 +1,262 @@
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { createRoot } from 'react-dom/client';
+import FormulaPlayneedle from './FormulaPlayneedle';
+import DraggableModal from './DraggableModal';
+import { Slider } from './Adjustables';
+import { RotateCcw } from 'lucide-react';
+
+function getSavedPnT(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_t');
+    if (v !== null) { const n = parseFloat(v); if (!isNaN(n) && n >= 0 && n <= 0.5) return n; }
+  } catch {}
+  return 0.092;
+}
+
+function getSavedPnJ(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_j');
+    if (v !== null) { const n = parseFloat(v); if (!isNaN(n) && n >= -0.05 && n <= 0.25) return n; }
+  } catch {}
+  return 0.049;
+}
+
+function getSavedPnK(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_k');
+    if (v !== null) { const n = parseFloat(v); if (!isNaN(n) && n >= 10 && n <= 1000) return n; }
+  } catch {}
+  return 103;
+}
+
+function getSavedPnS(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_s');
+    if (v !== null) { const n = parseFloat(v); if (!isNaN(n) && n >= 10 && n <= 50) return n; }
+  } catch {}
+  return 16.4;
+}
+
+function getSavedPnVo(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_v_o');
+    if (v !== null) { const n = parseFloat(v); if (!isNaN(n) && n >= 0 && n <= 1) return n; }
+  } catch {}
+  return 0.4;
+}
+
+function getSavedPnHb(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_h_b');
+    if (v !== null) { const n = parseFloat(v); if (!isNaN(n) && n >= 0.5 && n <= 1) return n; }
+  } catch {}
+  return 0.8;
+}
+
+function getSavedPnHr(): number {
+  try {
+    const v = window.localStorage.getItem('juicecut.settings.playneedle_h_r');
+    if (v !== null) { const n = parseFloat(v); if (!isNaN(n) && n >= 0 && n <= 1) return n; }
+  } catch {}
+  return 1;
+}
+
+export function OpenPlayneedleEditor(onCloseCallback?: () => void) {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const closeAndReturnToSettings = () => {
+    try { root.unmount(); } catch (e) {}
+    if (container.parentNode) container.parentNode.removeChild(container);
+    (window as any).__popClose?.();
+    if (onCloseCallback) onCloseCallback();
+  };
+  const closeDirectly = () => {
+    try { root.unmount(); } catch (e) {}
+    if (container.parentNode) container.parentNode.removeChild(container);
+    (window as any).__popClose?.();
+  };
+  (window as any).__pushClose?.(closeDirectly);
+  root.render(<PlayneedleEditorModal onClose={closeDirectly} onBack={closeAndReturnToSettings} />);
+  return closeDirectly;
+}
+
+export interface PlayneedleEditorModalProps {
+  onClose: () => void;
+  onBack: () => void;
+}
+
+export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEditorModalProps) {
+  const [pnT, setPnT] = useState(getSavedPnT);
+  const [pnJ, setPnJ] = useState(getSavedPnJ);
+  const [pnK, setPnK] = useState(getSavedPnK);
+  const [pnS, setPnS] = useState(getSavedPnS);
+  const [pnVo, setPnVo] = useState(getSavedPnVo);
+  const [pnHb, setPnHb] = useState(getSavedPnHb);
+  const [pnHr, setPnHr] = useState(getSavedPnHr);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playneedle_t', String(pnT)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_t', value: pnT } })); } catch {}
+  }, [pnT]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playneedle_j', String(pnJ)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_j', value: pnJ } })); } catch {}
+  }, [pnJ]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playneedle_k', String(pnK)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_k', value: pnK } })); } catch {}
+  }, [pnK]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playneedle_s', String(pnS)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_s', value: pnS } })); } catch {}
+  }, [pnS]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playneedle_v_o', String(pnVo)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_v_o', value: pnVo } })); } catch {}
+  }, [pnVo]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playneedle_h_b', String(pnHb)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_h_b', value: pnHb } })); } catch {}
+  }, [pnHb]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('juicecut.settings.playneedle_h_r', String(pnHr)); window.dispatchEvent(new CustomEvent('juicecut-settings-changed', { detail: { key: 'playneedle_h_r', value: pnHr } })); } catch {}
+  }, [pnHr]);
+
+  const params = useMemo(() => ({
+    t: pnT,
+    j: pnJ,
+    k: pnK,
+    s: pnS,
+    v_o: pnVo,
+    h_b: pnHb,
+    h_r: pnHr,
+  }), [pnT, pnJ, pnK, pnS, pnVo, pnHb, pnHr]);
+
+  return (
+    <DraggableModal
+      title="Playneedle Editor"
+      onClose={onClose}
+      headerLeft={
+        <button
+          className="icon-btn"
+          onClick={onBack} 
+          style={{
+            position: 'absolute', 
+            left: 8, 
+            top: '50%', 
+            transform: 'translateY(-50%)', 
+            width: 26, 
+            height: 26, 
+            color: 'var(--text-secondary)',
+          }}
+          title="Back"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+      }
+      style={{ width: 620, minHeight: 0 }}
+      body={
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 12px 0' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260 }}>
+              <Slider
+                label={<span>t ！ Total thickness of the needle part</span>}
+                value={pnT}
+                min={0}
+                max={0.5}
+                step={0.001}
+                onChange={setPnT}
+                onReset={() => setPnT(0.092)}
+                formatValue={v => v.toFixed(3)}
+              />
+              <Slider
+                label={<span>j ！ Length of the ribbon at the top</span>}
+                value={pnJ}
+                min={-0.05}
+                max={0.25}
+                step={0.001}
+                onChange={setPnJ}
+                onReset={() => setPnJ(0.049)}
+                formatValue={v => v.toFixed(3)}
+              />
+              <Slider
+                label={<span>k ！ Falloff of the ribbon (log scale)</span>}
+                value={pnK}
+                min={10}
+                max={1000}
+                step={1}
+                onChange={setPnK}
+                onReset={() => setPnK(103)}
+                logScale
+                formatValue={v => v.toFixed(3)}
+              />
+              <Slider
+                label={<span>s ！ Vertical height of the playneedle button</span>}
+                value={pnS}
+                min={10}
+                max={50}
+                step={0.1}
+                onChange={setPnS}
+                onReset={() => setPnS(16.4)}
+                formatValue={v => v.toFixed(3)}
+              />
+              <Slider
+                label={<span>v<sub>o</sub> ！ Vertical offset of the playneedle button</span>}
+                value={pnVo}
+                min={0}
+                max={1}
+                step={0.001}
+                onChange={setPnVo}
+                onReset={() => setPnVo(0.4)}
+                formatValue={v => v.toFixed(3)}
+              />
+              <Slider
+                label={<span>h<sub>b</sub> ！ Horizontal width of the playneedle button</span>}
+                value={pnHb}
+                min={0.5}
+                max={1}
+                step={0.001}
+                onChange={setPnHb}
+                onReset={() => setPnHb(0.8)}
+                formatValue={v => v.toFixed(3)}
+              />
+              <Slider
+                label={<span>h<sub>r</sub> ！ Horizontal width of the ribbon</span>}
+                value={pnHr}
+                min={0}
+                max={1}
+                step={0.001}
+                onChange={setPnHr}
+                onReset={() => setPnHr(1)}
+                formatValue={v => v.toFixed(3)}
+              />
+            </div>
+
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: 260,
+                height: 260,
+              }}
+            >
+              <FormulaPlayneedle
+                height={260}
+                maxWidth={260}
+                color="var(--text-primary)"
+                glowColor="rgba(56, 189, 248, 0.4)"
+                params={params}
+              />
+            </div>
+          </div>
+        </div>
+      }
+    />
+  );
+}

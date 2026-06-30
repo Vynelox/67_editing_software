@@ -229,6 +229,7 @@ export default function TorusMenu({
       window.addEventListener('scroll', scrollHandler, true);
 
       let clickHandler: ((e: MouseEvent) => void) | null = null;
+      let pointerDownHandler: ((e: PointerEvent) => void) | null = null;
       if (closeOnBackgroundClick) {
         clickHandler = (e: MouseEvent) => {
           const target = e.target as HTMLElement;
@@ -248,6 +249,25 @@ export default function TorusMenu({
           }
         };
         window.addEventListener('mousedown', clickHandler);
+
+        // Also handle pointerdown for splitters and other pointer-based interactions
+        pointerDownHandler = (e: PointerEvent) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('.torus-toggle-btn')) return;
+          if (target.closest('.torus-center-btn')) return;
+          
+          if (disableScrolling === 'annular sectors only') {
+            if (!target.closest('.torus-sector')) {
+              onClose();
+            }
+            return;
+          }
+          
+          if (ref.current && !ref.current.contains(target)) {
+            onClose();
+          }
+        };
+        window.addEventListener('pointerdown', pointerDownHandler);
       }
 
       // Store mouse position globally for elementFromPoint access
@@ -260,6 +280,7 @@ export default function TorusMenu({
       return () => {
         window.removeEventListener('scroll', scrollHandler, true);
         if (clickHandler) window.removeEventListener('mousedown', clickHandler);
+        if (pointerDownHandler) window.removeEventListener('pointerdown', pointerDownHandler);
         window.removeEventListener('mousemove', mouseMoveHandler, true);
       };
     }, 10);

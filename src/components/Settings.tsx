@@ -6,6 +6,7 @@ import { getShortcutKeys as scGetKeys, updateShortcuts as scUpdate, resetDefault
 import DraggableModal from './DraggableModal';
 import TorusMenu, { insideMenuItems } from './TorusMenu';
 import { OpenTorusMenuEditor } from './TorusMenuEditor';
+import { OpenPlayneedleEditor } from './PlayneedleEditor';
 
 type SettingsTab = "sliders" | "checkboxes" | "shortcuts" | "multiselects" | "components";
 
@@ -251,13 +252,9 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 <SliderSetting label="Timeline scroll zoom smoothness" value={scrollZoomSmoothness} min={0} max={100} step={1} onChange={setScrollZoomSmoothness} onReset={() => setScrollZoomSmoothness(70)} formatValue={v => `${v.toFixed(3)}%`} />
               </SettingsCategory>
               <SettingsCategory title="Playneedle">
-                <SliderSetting label={<span>t ¡ª Total thickness of the needle part</span>} value={pnT} min={0} max={0.5} step={0.001} onChange={setPnT} onReset={() => setPnT(0.092)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>j ¡ª Length of the ribbon at the top</span>} value={pnJ} min={-0.05} max={0.25} step={0.001} onChange={setPnJ} onReset={() => setPnJ(0.049)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>k ¡ª Falloff of the ribbon (log scale)</span>} value={pnK} min={10} max={1000} step={1} onChange={setPnK} onReset={() => setPnK(103)} logScale formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>s ¡ª Vertical height of the playneedle button</span>} value={pnS} min={10} max={50} step={0.1} onChange={setPnS} onReset={() => setPnS(16.4)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>v<sub>o</sub> ¡ª Vertical offset of the playneedle button</span>} value={pnVo} min={0} max={1} step={0.001} onChange={setPnVo} onReset={() => setPnVo(0.4)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>h<sub>b</sub> ¡ª Horizontal width of the playneedle button</span>} value={pnHb} min={0.5} max={1} step={0.001} onChange={setPnHb} onReset={() => setPnHb(0.8)} formatValue={v => v.toFixed(3)} />
-                <SliderSetting label={<span>h<sub>r</sub> ¡ª Horizontal width of the ribbon</span>} value={pnHr} min={0} max={1} step={0.001} onChange={setPnHr} onReset={() => setPnHr(1)} formatValue={v => v.toFixed(3)} />
+                <div style={{ padding: 8, color: 'var(--text-muted)', fontSize: 12, textAlign: 'center' }}>
+                  Playneedle settings moved to <strong>Components â†’ Playneedle Editor</strong>
+                </div>
               </SettingsCategory>
               <SettingsCategory title="Miscellaneous">
                 <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v.toFixed(3)}%`} />
@@ -285,7 +282,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
-                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow ¡û, ?, and ¡Á buttons in<br />modals' header bar to be draggable</span>
+                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow â—‹, ?, and ï½ž buttons in<br />modals' header bar to be draggable</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <input type="checkbox" className="settings-checkbox" checked={draggableHeaderButtons} onChange={e => setDraggableHeaderButtons(e.target.checked)} />
                   <button type="button" className="icon-btn" onClick={() => setDraggableHeaderButtons(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
@@ -364,6 +361,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <line x1="17" y1="12" x2="21" y2="12" />
                 </svg>
                 <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', textAlign: 'center' }}>Torus Menu Editor</span>
+              </button>
+              <button onClick={() => { 
+                onClose?.(); 
+                OpenPlayneedleEditor(() => {
+                  OpenSettings({ tab: 'components' });
+                }); 
+              }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-md)', padding: '12px 16px', cursor: 'pointer', color: 'var(--text-secondary)', width: 90, height: 100, flexShrink: 0 }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                <svg width="36" height="36" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}>
+                  <path d="M50 10 C50 10, 50 50, 50 50 C50 50, 50 90, 50 90 C50 90, 50 130, 50 130 C50 130, 50 170, 50 170" stroke="currentColor" strokeWidth="2" fill="none"/>
+                  <ellipse cx="50" cy="170" rx="15" ry="8" fill="currentColor" opacity="0.3"/>
+                  <path d="M35 100 Q50 80 65 100" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.5"/>
+                  <path d="M35 120 Q50 100 65 120" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.5"/>
+                </svg>
+                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', textAlign: 'center' }}>Playneedle Editor</span>
               </button>
             </div>
           )}
