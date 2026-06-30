@@ -8,6 +8,9 @@ import TorusMenu, { insideMenuItems } from './TorusMenu';
 import { OpenTorusMenuEditor } from './TorusMenuEditor';
 import { OpenPlayneedleEditor } from './PlayneedleEditor';
 
+// Gap in pixels between each slider component in the Settings sliders tab
+const SLIDER_GAP_PX = 15; //default 15 px
+
 type SettingsTab = "sliders" | "checkboxes" | "shortcuts" | "multiselects" | "components";
 
 interface Props {
@@ -55,7 +58,7 @@ function SettingsCategory({ title, children }: { title: string; children: React.
       </button>
       <div className="settings-category-body" style={{ display: 'grid', gridTemplateRows: expanded ? '1fr' : '0fr', overflow: 'hidden' }}>
         <div style={{ overflow: 'hidden' }}>
-          <div className="settings-category-body-inner">{children}</div>
+        <div className="settings-category-body-inner" style={{ display: "flex", flexDirection: "column", gap: SLIDER_GAP_PX }}>{children}</div>
         </div>
       </div>
     </div>
