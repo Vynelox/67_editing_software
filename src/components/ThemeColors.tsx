@@ -63,8 +63,8 @@ export const oakColors: ThemeColors = {
 export const forestColors: ThemeColors = {
   '--bg-panel': '#1A332A', '--bg-base': '#0F261E', '--bg-viewer': '#0A1C15',
   '--bg-elevated': '#2B4D40', '--bg-hover': '#3C6656', '--border': '#4A7A6C',
-  '--border-mid': '#609181', '--splitter': '#0b1f1a', '--text-primary': '#D8E8D8',
-  '--text-secondary': '#A7C2A7', '--text-muted': '#7D9E7D', '--input-field': '#5F9EA0',
+  '--border-mid': '#609181', '--splitter': '#0b1f1a', '--text-primary': '#B2E8B2',
+  '--text-secondary': '#88D888', '--text-muted': '#60B860', '--input-field': '#5F9EA0',
   '--input-field-bg': '#223D34', '--playneedle': '#61ff9f', '--video-bg': '#050f08',
   '--highlight-color': '#4ade80',
   '--automation-line': '#4ade80',
