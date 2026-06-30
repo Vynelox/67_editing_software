@@ -43,7 +43,7 @@ export const lavenderColors: ThemeColors = {
 export const cyberpunkColors: ThemeColors = {
   '--bg-panel': '#0D0221', '--bg-base': '#05010F', '--bg-viewer': '#000000',
   '--bg-elevated': '#1A0440', '--bg-hover': '#240650', '--border': '#FF00C8',
-  '--border-mid': '#00F0FF', '--splitter': '#1a0035', '--text-primary': '#F5F5FF',
+  '--border-mid': '#00F0FF', '--splitter': '#1a0035', '--text-primary': '#39FF14',
   '--text-secondary': '#00F0FF', '--text-muted': '#8A2BE2', '--input-field': '#FF00C8',
   '--input-field-bg': '#0A0118', '--playneedle': '#00F0FF', '--video-bg': '#000000',
   '--highlight-color': '#00F0FF',
