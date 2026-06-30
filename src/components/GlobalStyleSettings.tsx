@@ -7,7 +7,7 @@ export type ColorVarName =
   | '--bg-panel'
   | '--bg-base'
   | '--bg-viewer'
-  | '--bg-elevated'
+  | '--bg-elevated' //draggable modal background
   | '--bg-hover'
   | '--border'
   | '--border-mid'

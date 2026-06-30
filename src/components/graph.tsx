@@ -20,6 +20,7 @@ const MIN_TIME_DELTA = 0.01;
 const EASE_HANDLE_DIAMETER_PX = 6; //default 6px
 const EASE_HANDLE_RING_THICKNESS_PX = 2; //default 2px
 const GRAPH_LINE_COLOR = 'var(--automation-line)';
+const EASE_HANDLE_COLOR = 'var(--automation-line)';
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
   { time: 0, size: 0 },
@@ -556,7 +557,7 @@ export default function GraphEditor({
                   cy={handleY}
                   r={EASE_HANDLE_DIAMETER_PX / 2}
                   fill="none"
-                  stroke={GRAPH_LINE_COLOR}
+                  stroke={EASE_HANDLE_COLOR}
                   strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
                   onPointerDown={e => {
                     e.stopPropagation();
