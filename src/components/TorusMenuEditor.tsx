@@ -7,6 +7,13 @@ import TorusMenu from './TorusMenu';
 import { Slider } from './Adjustables';
 import { RotateCcw } from 'lucide-react';
 
+const GRAPH_PADDING_LEFT = 10; //THIS CONTROLS THE CLIPPING
+
+const TORUS_GRAPH_CONFIG: GraphConfig = {
+  ...DEFAULT_GRAPH_CONFIG,
+  padding: GRAPH_PADDING_LEFT,
+};
+
 function getSavedDuration(): number {
   try {
     const v = window.localStorage.getItem('juicecut.settings.torusDuration');
@@ -172,7 +179,7 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
                 graph={sizeGraph}
                 onChange={setSizeGraph}
                 onEasingChange={setSegmentHandleValues}
-                config={DEFAULT_GRAPH_CONFIG}
+                config={TORUS_GRAPH_CONFIG}
                 Y_label="size"
                 X_label="time"
               />
