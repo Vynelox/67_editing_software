@@ -8,9 +8,13 @@ import { Slider } from './Adjustables';
 import { RotateCcw } from 'lucide-react';
 
 const GRAPH_PADDING_LEFT = 10; //THIS CONTROLS THE CLIPPING
+const GRAPH_WIDTH = 100; //kind of a useless variable, doesn't do anything
+const GRAPH_HEIGHT = 100; //THIS is a useful variable
 
 const TORUS_GRAPH_CONFIG: GraphConfig = {
   ...DEFAULT_GRAPH_CONFIG,
+  width: GRAPH_WIDTH,
+  height: GRAPH_HEIGHT,
   padding: GRAPH_PADDING_LEFT,
 };
 
