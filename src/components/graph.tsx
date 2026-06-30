@@ -174,8 +174,9 @@ function buildSmoothCurvePath(config: GraphConfig, points: SizeGraphPoint[], gra
     const midpointY = (svgPointA.y + svgPointB.y) / 2;
     let handleValue = 0;
     const range = handlerMaxY - handlerMinY;
+    const segmentDirection = Math.sign(pointB.size - pointA.size); // +1 for upward, -1 for downward
     if (range > 0) {
-      handleValue = -(handlerY - midpointY) * 2 / range; // Negated to fix inverted drag direction
+      handleValue = -(handlerY - midpointY) * 2 / range * segmentDirection;
     }
     handleValue = Math.max(-1, Math.min(1, handleValue));
     
@@ -315,7 +316,8 @@ export default function GraphEditor({
       const handlerMaxY = (2 * maxY + svgPointA.y + svgPointB.y) / 4;
       const range = handlerMaxY - handlerMinY;
       if (range <= 0) return 0;
-      return clamp(-(handlerY - midpointY) * 2 / range, -1, 1);
+      const segmentDirection = Math.sign(pointB.size - pointA.size);
+      return clamp(-(handlerY - midpointY) * 2 / range * segmentDirection, -1, 1);
     });
   }, [sortedGraph, easingOffsets, svgWidth, config]);
 
@@ -540,8 +542,9 @@ export default function GraphEditor({
               const midpointY = (point1Svg.y + point2Svg.y) / 2;
               const range = handlerMaxY - handlerMinY;
               let handleValue = 0;
+              const segmentDirection = Math.sign(nextPoint.size - point.size);
               if (range > 0) {
-                handleValue = -(handlerY - midpointY) * 2 / range; // Negated to keep direction correct
+                handleValue = -(handlerY - midpointY) * 2 / range * segmentDirection;
               }
               handleValue = Math.max(-1, Math.min(1, handleValue));
               
