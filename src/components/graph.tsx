@@ -24,6 +24,7 @@ const EASE_HANDLE_COLOR = 'var(--automation-line)';
 const AUTOMATION_ANCHOR_OUTER_COL = 'var(--automation-line)';
 const AUTOMATION_ANCHOR_INNER_COL = 'var(--input-field-bg)';
 const AUTOMATION_ANCHOR_DIAMETER_PX = 12; //default 10px
+const AUTOMATION_ANCHOR_BORDER_THICKNESS_PX = 2; //default 2px
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
   { time: 0, size: 0 },
@@ -585,7 +586,7 @@ export default function GraphEditor({
               r={AUTOMATION_ANCHOR_DIAMETER_PX / 2}
               fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--highlight-color)' : AUTOMATION_ANCHOR_INNER_COL}
               stroke={AUTOMATION_ANCHOR_OUTER_COL}
-              strokeWidth={isSelected ? 2 : 1}
+              strokeWidth={AUTOMATION_ANCHOR_BORDER_THICKNESS_PX}
               style={{ cursor: index === 0 || index === sortedGraph.length - 1 ? 'default' : 'grab', zIndex: 10 }}
               onPointerDown={e => {
                 e.stopPropagation();
