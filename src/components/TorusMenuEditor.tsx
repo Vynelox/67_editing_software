@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import GraphEditor, { DEFAULT_TORUS_SIZE_GRAPH, getSavedSizeGraph, SizeGraphPoint } from './graph';
+import GraphEditor, { DEFAULT_TORUS_SIZE_GRAPH, getSavedSizeGraph, SizeGraphPoint, GraphConfig, DEFAULT_GRAPH_CONFIG } from './graph';
 import { getSavedSegmentHandleValues, saveSegmentHandleValues } from '../utils/torusGraphEasing';
 import DraggableModal from './DraggableModal';
 import TorusMenu from './TorusMenu';
@@ -172,6 +172,7 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
                 graph={sizeGraph}
                 onChange={setSizeGraph}
                 onEasingChange={setSegmentHandleValues}
+                config={DEFAULT_GRAPH_CONFIG}
                 Y_label="size"
                 X_label="time"
               />

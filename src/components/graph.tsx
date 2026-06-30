@@ -14,17 +14,35 @@ export interface GraphSnapshot {
   easingOffsets: number[];
 }
 
-const GRAPH_HEIGHT = 180;
-const GRAPH_PADDING = 40; //left padding, THIS AFFECTS CLIPPING
-const MIN_TIME_DELTA = 0.01;
-const EASE_HANDLE_DIAMETER_PX = 6; //default 6px
-const EASE_HANDLE_RING_THICKNESS_PX = 2; //default 2px
-const GRAPH_LINE_COLOR = 'var(--automation-line)';
-const EASE_HANDLE_COLOR = 'var(--automation-line)';
-const AUTOMATION_ANCHOR_OUTER_COL = 'var(--automation-line)';
-const AUTOMATION_ANCHOR_INNER_COL = 'var(--input-field-bg)';
-const AUTOMATION_ANCHOR_DIAMETER_PX = 12; //default 10px
-const AUTOMATION_ANCHOR_BORDER_THICKNESS_PX = 2; //default 2px
+export interface GraphConfig {
+  width: number;
+  height: number;
+  padding: number;
+  minTimeDelta: number;
+  easeHandleDiameterPx: number;
+  easeHandleRingThicknessPx: number;
+  graphLineColor: string;
+  easeHandleColor: string;
+  anchorOuterColor: string;
+  anchorInnerColor: string;
+  anchorDiameterPx: number;
+  anchorBorderThicknessPx: number;
+}
+
+export const DEFAULT_GRAPH_CONFIG: GraphConfig = {
+  width: 260,
+  height: 180,
+  padding: 40,
+  minTimeDelta: 0.01,
+  easeHandleDiameterPx: 6,
+  easeHandleRingThicknessPx: 2,
+  graphLineColor: 'var(--automation-line)',
+  easeHandleColor: 'var(--automation-line)',
+  anchorOuterColor: 'var(--automation-line)',
+  anchorInnerColor: 'var(--input-field-bg)',
+  anchorDiameterPx: 12,
+  anchorBorderThicknessPx: 2,
+};
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
   { time: 0, size: 0 },
@@ -120,92 +138,94 @@ export function evaluateGraphAtTime(time: number, points: SizeGraphPoint[]): num
   return points[points.length - 1].size;
 }
 
-function getGraphMetrics(graphWidth: number) {
-  const plotWidth = Math.max(0, graphWidth - GRAPH_PADDING * 2);
-  const plotHeight = Math.max(0, GRAPH_HEIGHT - GRAPH_PADDING * 2);
+function getGraphMetrics(config: GraphConfig, graphWidth: number) {
+  const plotWidth = Math.max(0, graphWidth - config.padding * 2);
+  const plotHeight = Math.max(0, config.height - config.padding * 2);
   return { plotWidth, plotHeight };
 }
 
-function graphPointToSvg(point: SizeGraphPoint, graphWidth: number) {
-  const { plotWidth, plotHeight } = getGraphMetrics(graphWidth);
+function graphPointToSvg(config: GraphConfig, point: SizeGraphPoint, graphWidth: number) {
+  const { plotWidth, plotHeight } = getGraphMetrics(config, graphWidth);
   return {
-    x: GRAPH_PADDING + point.time * plotWidth,
-    y: GRAPH_PADDING + (1 - point.size) * plotHeight,
+    x: config.padding + point.time * plotWidth,
+    y: config.padding + (1 - point.size) * plotHeight,
   };
 }
 
-function graphCoordsFromEvent(event: { clientX: number; clientY: number }, svg: SVGSVGElement | null, graphWidth: number) {
+function graphCoordsFromEvent(config: GraphConfig, event: { clientX: number; clientY: number }, svg: SVGSVGElement | null, graphWidth: number) {
   if (!svg) return null;
   const rect = svg.getBoundingClientRect();
-  const { plotWidth, plotHeight } = getGraphMetrics(graphWidth);
-  const x = clamp((event.clientX - rect.left - GRAPH_PADDING) / plotWidth, 0, 1);
-  const y = clamp(1 - (event.clientY - rect.top - GRAPH_PADDING) / plotHeight, 0, 1);
+  const { plotWidth, plotHeight } = getGraphMetrics(config, graphWidth);
+  const x = clamp((event.clientX - rect.left - config.padding) / plotWidth, 0, 1);
+  const y = clamp(1 - (event.clientY - rect.top - config.padding) / plotHeight, 0, 1);
   return { time: x, size: y };
 }
 
-function buildSmoothCurvePath(points: SizeGraphPoint[], graphWidth: number, easingOffsets: number[] = []) {
-   if (points.length === 0) return '';
-   const samples = 30;
-   let d = ``;
-   d += `M ${graphPointToSvg(points[0], graphWidth).x} ${graphPointToSvg(points[0], graphWidth).y}`;
-   for (let i = 1; i < points.length; i++) {
-     const pointA = points[i - 1];
-     const pointB = points[i];
-     const svgPointA = graphPointToSvg(pointA, graphWidth);
-     const svgPointB = graphPointToSvg(pointB, graphWidth);
-     const handlerY = easingOffsets[i - 1] || (svgPointA.y + svgPointB.y) / 2;
-     
-     const minY = Math.min(svgPointA.y, svgPointB.y);
-     const maxY = Math.max(svgPointA.y, svgPointB.y);
-     const handlerMinY = (2 * minY + svgPointA.y + svgPointB.y) / 4;
-     const handlerMaxY = (2 * maxY + svgPointA.y + svgPointB.y) / 4;
-     
-     const midpointY = (svgPointA.y + svgPointB.y) / 2;
-     let handleValue = 0;
-     const range = handlerMaxY - handlerMinY;
-     if (range > 0) {
-       handleValue = -(handlerY - midpointY) * 2 / range; // Negated to fix inverted drag direction
-     }
-     handleValue = Math.max(-1, Math.min(1, handleValue));
-     
-     const strength = 3;
-     const { plotWidth, plotHeight } = getGraphMetrics(graphWidth);
-     
-     for (let s = 0; s <= samples; s++) {
-       const t = s / samples;
-       let curvedProgress = t;
-       if (handleValue < 0) {
-         const power = 1 - (handleValue * strength);
-         curvedProgress = Math.pow(t, power);
-       } else if (handleValue > 0) {
-         const power = 1 + (handleValue * strength);
-         curvedProgress = 1 - Math.pow(1 - t, power);
-       }
-       const finalY = pointA.size + (pointB.size - pointA.size) * curvedProgress;
-       const finalX = pointA.time + (pointB.time - pointA.time) * t;
-       const svgX = GRAPH_PADDING + finalX * plotWidth;
-       const svgY = GRAPH_PADDING + (1 - finalY) * plotHeight;
-       d += ` L ${svgX} ${svgY}`;
-     }
-   }
-   return d;
+function buildSmoothCurvePath(config: GraphConfig, points: SizeGraphPoint[], graphWidth: number, easingOffsets: number[] = []) {
+  if (points.length === 0) return '';
+  const samples = 30;
+  let d = ``;
+  d += `M ${graphPointToSvg(config, points[0], graphWidth).x} ${graphPointToSvg(config, points[0], graphWidth).y}`;
+  for (let i = 1; i < points.length; i++) {
+    const pointA = points[i - 1];
+    const pointB = points[i];
+    const svgPointA = graphPointToSvg(config, pointA, graphWidth);
+    const svgPointB = graphPointToSvg(config, pointB, graphWidth);
+    const handlerY = easingOffsets[i - 1] || (svgPointA.y + svgPointB.y) / 2;
+    
+    const minY = Math.min(svgPointA.y, svgPointB.y);
+    const maxY = Math.max(svgPointA.y, svgPointB.y);
+    const handlerMinY = (2 * minY + svgPointA.y + svgPointB.y) / 4;
+    const handlerMaxY = (2 * maxY + svgPointA.y + svgPointB.y) / 4;
+    
+    const midpointY = (svgPointA.y + svgPointB.y) / 2;
+    let handleValue = 0;
+    const range = handlerMaxY - handlerMinY;
+    if (range > 0) {
+      handleValue = -(handlerY - midpointY) * 2 / range; // Negated to fix inverted drag direction
+    }
+    handleValue = Math.max(-1, Math.min(1, handleValue));
+    
+    const strength = 3;
+    const { plotWidth, plotHeight } = getGraphMetrics(config, graphWidth);
+    
+    for (let s = 0; s <= samples; s++) {
+      const t = s / samples;
+      let curvedProgress = t;
+      if (handleValue < 0) {
+        const power = 1 - (handleValue * strength);
+        curvedProgress = Math.pow(t, power);
+      } else if (handleValue > 0) {
+        const power = 1 + (handleValue * strength);
+        curvedProgress = 1 - Math.pow(1 - t, power);
+      }
+      const finalY = pointA.size + (pointB.size - pointA.size) * curvedProgress;
+      const finalX = pointA.time + (pointB.time - pointA.time) * t;
+      const svgX = config.padding + finalX * plotWidth;
+      const svgY = config.padding + (1 - finalY) * plotHeight;
+      d += ` L ${svgX} ${svgY}`;
+    }
+  }
+  return d;
 }
 
 export default function GraphEditor({
   graph,
   onChange,
+  config = DEFAULT_GRAPH_CONFIG,
   Y_label = 'value',
   X_label = 'time',
   onEasingChange,
 }: {
   graph: SizeGraphPoint[];
   onChange: Dispatch<SetStateAction<SizeGraphPoint[]>>;
+  config?: GraphConfig;
   Y_label?: string;
   X_label?: string;
   onEasingChange?: (offsets: number[]) => void;
 }) {
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
-  const [svgWidth, setSvgWidth] = useState(260);
+  const [svgWidth, setSvgWidth] = useState(config.width);
   const [easingOffsets, setEasingOffsets] = useState<number[]>([]);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -271,8 +291,8 @@ export default function GraphEditor({
     const initialOffsets = sortedGraph.map((point, index) => {
       if (index < sortedGraph.length - 1) {
         const nextPoint = sortedGraph[index + 1];
-        const point1Svg = graphPointToSvg(point, svgWidth);
-        const point2Svg = graphPointToSvg(nextPoint, svgWidth);
+        const point1Svg = graphPointToSvg(config, point, svgWidth);
+        const point2Svg = graphPointToSvg(config, nextPoint, svgWidth);
         const midY = (point1Svg.y + point2Svg.y) / 2;
         const minY = Math.min(point1Svg.y, point2Svg.y);
         const maxY = Math.max(point1Svg.y, point2Svg.y);
@@ -285,15 +305,15 @@ export default function GraphEditor({
       return 0;
     });
     setEasingOffsets(initialOffsets);
-  }, [sortedGraph.length, svgWidth]);
+  }, [sortedGraph.length, svgWidth, config]);
   
-  const graphPath = useMemo(() => buildSmoothCurvePath(sortedGraph, svgWidth, easingOffsets), [sortedGraph, svgWidth, easingOffsets]);
+  const graphPath = useMemo(() => buildSmoothCurvePath(config, sortedGraph, svgWidth, easingOffsets), [sortedGraph, svgWidth, easingOffsets, config]);
 
   const segmentHandleValues = useMemo(() => {
     return sortedGraph.slice(0, -1).map((pointA, index) => {
       const pointB = sortedGraph[index + 1];
-      const svgPointA = graphPointToSvg(pointA, svgWidth);
-      const svgPointB = graphPointToSvg(pointB, svgWidth);
+      const svgPointA = graphPointToSvg(config, pointA, svgWidth);
+      const svgPointB = graphPointToSvg(config, pointB, svgWidth);
       const handlerY = easingOffsets[index] ?? (svgPointA.y + svgPointB.y) / 2;
       const midpointY = (svgPointA.y + svgPointB.y) / 2;
       const minY = Math.min(svgPointA.y, svgPointB.y);
@@ -304,7 +324,7 @@ export default function GraphEditor({
       if (range <= 0) return 0;
       return clamp(-(handlerY - midpointY) * 2 / range, -1, 1);
     });
-  }, [sortedGraph, easingOffsets, svgWidth]);
+  }, [sortedGraph, easingOffsets, svgWidth, config]);
 
   useEffect(() => {
     onEasingChange?.(segmentHandleValues);
@@ -359,7 +379,7 @@ export default function GraphEditor({
       const easingIndex = draggingEasingIndex.current;
       
       if (pointIndex !== null) {
-        const coords = graphCoordsFromEvent(e, svgRef.current, svgWidth);
+        const coords = graphCoordsFromEvent(config, e, svgRef.current, svgWidth);
         if (!coords) return;
         onChange(prev => {
           const next = prev.slice().sort((a, b) => a.time - b.time);
@@ -370,8 +390,8 @@ export default function GraphEditor({
             };
             return next;
           }
-          const minTime = pointIndex > 0 ? next[pointIndex - 1].time + MIN_TIME_DELTA : 0;
-          const maxTime = pointIndex < next.length - 1 ? next[pointIndex + 1].time - MIN_TIME_DELTA : 1;
+          const minTime = pointIndex > 0 ? next[pointIndex - 1].time + config.minTimeDelta : 0;
+          const maxTime = pointIndex < next.length - 1 ? next[pointIndex + 1].time - config.minTimeDelta : 1;
           if (minTime > maxTime) return next;
           next[pointIndex] = {
             time: clamp(coords.time, minTime, maxTime),
@@ -387,8 +407,8 @@ export default function GraphEditor({
         // Get the two adjacent points to constrain the handler
         const point1 = sortedGraph[easingIndex];
         const point2 = sortedGraph[easingIndex + 1];
-        const svgPoint1 = graphPointToSvg(point1, svgWidth);
-        const svgPoint2 = graphPointToSvg(point2, svgWidth);
+        const svgPoint1 = graphPointToSvg(config, point1, svgWidth);
+        const svgPoint2 = graphPointToSvg(config, point2, svgWidth);
         
         const minY = Math.min(svgPoint1.y, svgPoint2.y);
         const maxY = Math.max(svgPoint1.y, svgPoint2.y);
@@ -425,14 +445,14 @@ export default function GraphEditor({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [onChange, svgWidth, commitDragSnapshot]);
+  }, [onChange, svgWidth, commitDragSnapshot, config, sortedGraph]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const updateWidth = () => {
-      const nextWidth = container.clientWidth || 260;
+      const nextWidth = container.clientWidth || config.width;
       setSvgWidth(prev => (prev === nextWidth ? prev : nextWidth));
     };
 
@@ -440,10 +460,10 @@ export default function GraphEditor({
     const resizeObserver = new ResizeObserver(updateWidth);
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [config.width]);
 
-  const plotHeight = GRAPH_HEIGHT - GRAPH_PADDING * 2;
-  const plotWidth = Math.max(0, svgWidth - GRAPH_PADDING * 2);
+  const plotHeight = config.height - config.padding * 2;
+  const plotWidth = Math.max(0, svgWidth - config.padding * 2);
   const undoShortcutLabel = formatShortcutLabel('undo');
   const redoShortcutLabel = formatShortcutLabel('redo');
 
@@ -477,14 +497,14 @@ export default function GraphEditor({
       <svg
         ref={svgRef}
         width="100%"
-        height={GRAPH_HEIGHT}
-        viewBox={`0 0 ${svgWidth} ${GRAPH_HEIGHT}`}
+        height={config.height}
+        viewBox={`0 0 ${svgWidth} ${config.height}`}
         onPointerDown={e => {
           if ((e.target as SVGElement).tagName.toLowerCase() === 'circle') return;
-          const coords = graphCoordsFromEvent(e, svgRef.current, svgWidth);
+          const coords = graphCoordsFromEvent(config, e, svgRef.current, svgWidth);
           if (!coords) return;
           const time = clamp(coords.time, 0.01, 0.99);
-          if (sortedGraph.some(p => Math.abs(p.time - time) < MIN_TIME_DELTA)) return;
+          if (sortedGraph.some(p => Math.abs(p.time - time) < config.minTimeDelta)) return;
           const size = clamp(coords.size, 0, 1);
           pushHistorySnapshot(cloneGraphSnapshot(sortedGraph, easingOffsets));
           const next = [...sortedGraph, { time, size }].sort((a, b) => a.time - b.time);
@@ -496,12 +516,12 @@ export default function GraphEditor({
         }}
         style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', cursor: 'crosshair' }}
       >
-        <rect x={0} y={0} width={svgWidth} height={GRAPH_HEIGHT} fill="transparent" />
+        <rect x={0} y={0} width={svgWidth} height={config.height} fill="transparent" />
         <g stroke="var(--border-mid)" strokeWidth={1} fill="none">
-          <line x1={GRAPH_PADDING} y1={GRAPH_PADDING} x2={GRAPH_PADDING} y2={GRAPH_HEIGHT - GRAPH_PADDING} />
-          <line x1={GRAPH_PADDING} y1={GRAPH_HEIGHT - GRAPH_PADDING} x2={svgWidth - GRAPH_PADDING} y2={GRAPH_HEIGHT - GRAPH_PADDING} />
+          <line x1={config.padding} y1={config.padding} x2={config.padding} y2={config.height - config.padding} />
+          <line x1={config.padding} y1={config.height - config.padding} x2={svgWidth - config.padding} y2={config.height - config.padding} />
         </g>
-        <path d={graphPath} fill="none" stroke={GRAPH_LINE_COLOR} strokeWidth={2} />
+        <path d={graphPath} fill="none" stroke={config.graphLineColor} strokeWidth={2} />
         {sortedGraph.map((point, index) => {
           if (index < sortedGraph.length - 1) {
             const nextPoint = sortedGraph[index + 1];
@@ -509,9 +529,9 @@ export default function GraphEditor({
               time: (point.time + nextPoint.time) / 2,
               size: (point.size + nextPoint.size) / 2,
             };
-            const midSvg = graphPointToSvg(midPoint, svgWidth);
-            const point1Svg = graphPointToSvg(point, svgWidth);
-            const point2Svg = graphPointToSvg(nextPoint, svgWidth);
+            const midSvg = graphPointToSvg(config, midPoint, svgWidth);
+            const point1Svg = graphPointToSvg(config, point, svgWidth);
+            const point2Svg = graphPointToSvg(config, nextPoint, svgWidth);
             
             const minY = Math.min(point1Svg.y, point2Svg.y);
             const maxY = Math.max(point1Svg.y, point2Svg.y);
@@ -543,7 +563,7 @@ export default function GraphEditor({
                 curvedProgress = 1 - Math.pow(1 - t, power);
               }
               const finalY = point.size + (nextPoint.size - point.size) * curvedProgress;
-              handleY = GRAPH_PADDING + (1 - finalY) * plotHeight;
+              handleY = config.padding + (1 - finalY) * plotHeight;
             }
             
             return (
@@ -551,16 +571,16 @@ export default function GraphEditor({
                 <circle
                   cx={midSvg.x}
                   cy={handleY}
-                  r={EASE_HANDLE_DIAMETER_PX / 2 + 1}
+                  r={config.easeHandleDiameterPx / 2 + 1}
                   fill="var(--bg-elevated)"
                 />
                 <circle
                   cx={midSvg.x}
                   cy={handleY}
-                  r={EASE_HANDLE_DIAMETER_PX / 2}
+                  r={config.easeHandleDiameterPx / 2}
                   fill="none"
-                  stroke={EASE_HANDLE_COLOR}
-                  strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
+                  stroke={config.easeHandleColor}
+                  strokeWidth={config.easeHandleRingThicknessPx}
                   onPointerDown={e => {
                     e.stopPropagation();
                     beginDragSnapshot();
@@ -574,17 +594,17 @@ export default function GraphEditor({
           return null;
         })}
         {sortedGraph.map((point, index) => {
-          const svgPoint = graphPointToSvg(point, svgWidth);
+          const svgPoint = graphPointToSvg(config, point, svgWidth);
           const isSelected = selectedPointIndex === index;
           return (
             <circle
               key={`point-${index}`}
               cx={svgPoint.x}
               cy={svgPoint.y}
-              r={AUTOMATION_ANCHOR_DIAMETER_PX / 2}
-              fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--highlight-color)' : AUTOMATION_ANCHOR_INNER_COL}
-              stroke={AUTOMATION_ANCHOR_OUTER_COL}
-              strokeWidth={AUTOMATION_ANCHOR_BORDER_THICKNESS_PX}
+              r={config.anchorDiameterPx / 2}
+              fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--highlight-color)' : config.anchorInnerColor}
+              stroke={config.anchorOuterColor}
+              strokeWidth={config.anchorBorderThicknessPx}
               style={{ cursor: index === 0 || index === sortedGraph.length - 1 ? 'default' : 'grab', zIndex: 10 }}
               onPointerDown={e => {
                 e.stopPropagation();
