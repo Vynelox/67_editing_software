@@ -25,6 +25,7 @@ const ogDarkColors: ThemeColors = {
   '--text-secondary': '#8b8fa8', '--text-muted': '#4a4d5e', '--input-field': '#2c3349',
   '--input-field-bg': '#16131a', '--playneedle': '#f5f5f5', '--video-bg': '#0a0a0a',
   '--highlight-color': '#38bdf8',
+  '--automation-line': '#38bdf8',
 };
 
 const ogLightColors: ThemeColors = {
@@ -34,6 +35,7 @@ const ogLightColors: ThemeColors = {
   '--text-secondary': '#4a4d5e', '--text-muted': '#8b8fa8', '--input-field': '#4a5568',
   '--input-field-bg': '#e2e4e8', '--playneedle': '#1a1c24', '--video-bg': '#d0d2d8',
   '--highlight-color': '#0ea5e9',
+  '--automation-line': '#0ea5e9',
 };
 
 const monokaiColors: ThemeColors = {
@@ -43,6 +45,7 @@ const monokaiColors: ThemeColors = {
   '--text-secondary': '#a6e22e', '--text-muted': '#75715e', '--input-field': '#66d9ef',
   '--input-field-bg': '#3b3a32', '--playneedle': '#f92672', '--video-bg': '#131411',
   '--highlight-color': '#66d9ef',
+  '--automation-line': '#66d9ef',
 };
 
 const lavenderColors: ThemeColors = {
@@ -52,6 +55,7 @@ const lavenderColors: ThemeColors = {
   '--text-secondary': '#B1A3D0', '--text-muted': '#8A7B9C', '--input-field': '#7953C2',
   '--input-field-bg': '#27184A', '--playneedle': '#C4A8E8', '--video-bg': '#0d0618',
   '--highlight-color': '#a78bfa',
+  '--automation-line': '#a78bfa',
 };
 
 const cyberpunkColors: ThemeColors = {
@@ -61,6 +65,7 @@ const cyberpunkColors: ThemeColors = {
   '--text-secondary': '#00F0FF', '--text-muted': '#8A2BE2', '--input-field': '#FF00C8',
   '--input-field-bg': '#0A0118', '--playneedle': '#00F0FF', '--video-bg': '#000000',
   '--highlight-color': '#00F0FF',
+  '--automation-line': '#00F0FF',
 };
 
 const oakColors: ThemeColors = {
@@ -70,6 +75,7 @@ const oakColors: ThemeColors = {
   '--text-secondary': '#A99A9A', '--text-muted': '#807070', '--input-field': '#b0796d',
   '--input-field-bg': '#3F3737', '--playneedle': '#d2899d', '--video-bg': '#150e0e',
   '--highlight-color': '#f59e0b',
+  '--automation-line': '#f59e0b',
 };
 
 const forestColors: ThemeColors = {
@@ -79,6 +85,7 @@ const forestColors: ThemeColors = {
   '--text-secondary': '#A7C2A7', '--text-muted': '#7D9E7D', '--input-field': '#5F9EA0',
   '--input-field-bg': '#223D34', '--playneedle': '#61ff9f', '--video-bg': '#050f08',
   '--highlight-color': '#4ade80',
+  '--automation-line': '#4ade80',
 };
 
 const aquaticColors: ThemeColors = {
@@ -88,6 +95,7 @@ const aquaticColors: ThemeColors = {
   '--text-secondary': '#88D8B8', '--text-muted': '#60B89F', '--input-field': '#469985',
   '--input-field-bg': '#163333', '--playneedle': '#00D8B0', '--video-bg': '#081818',
   '--highlight-color': '#00D8B0',
+  '--automation-line': '#00D8B0',
 };
 
 const folderIcon: string = 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2z';
