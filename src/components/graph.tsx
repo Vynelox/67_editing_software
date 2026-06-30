@@ -19,29 +19,22 @@ export interface GraphConfig {
   height: number;
   padding: number;
   minTimeDelta: number;
-  easeHandleDiameterPx: number;
-  easeHandleRingThicknessPx: number;
-  graphLineColor: string;
-  easeHandleColor: string;
-  anchorOuterColor: string;
-  anchorInnerColor: string;
-  anchorDiameterPx: number;
-  anchorBorderThicknessPx: number;
 }
+
+export const EASE_HANDLE_DIAMETER_PX = 6;
+export const EASE_HANDLE_RING_THICKNESS_PX = 2;
+export const GRAPH_LINE_COLOR = 'var(--automation-line)';
+export const EASE_HANDLE_COLOR = 'var(--automation-line)';
+export const ANCHOR_OUTER_COLOR = 'var(--automation-line)';
+export const ANCHOR_INNER_COLOR = 'var(--input-field-bg)';
+export const ANCHOR_DIAMETER_PX = 12;
+export const ANCHOR_BORDER_THICKNESS_PX = 2;
 
 export const DEFAULT_GRAPH_CONFIG: GraphConfig = {
   width: 260,
   height: 180,
   padding: 40,
   minTimeDelta: 0.01,
-  easeHandleDiameterPx: 6,
-  easeHandleRingThicknessPx: 2,
-  graphLineColor: 'var(--automation-line)',
-  easeHandleColor: 'var(--automation-line)',
-  anchorOuterColor: 'var(--automation-line)',
-  anchorInnerColor: 'var(--input-field-bg)',
-  anchorDiameterPx: 12,
-  anchorBorderThicknessPx: 2,
 };
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
@@ -521,7 +514,7 @@ export default function GraphEditor({
           <line x1={config.padding} y1={config.padding} x2={config.padding} y2={config.height - config.padding} />
           <line x1={config.padding} y1={config.height - config.padding} x2={svgWidth - config.padding} y2={config.height - config.padding} />
         </g>
-        <path d={graphPath} fill="none" stroke={config.graphLineColor} strokeWidth={2} />
+        <path d={graphPath} fill="none" stroke={GRAPH_LINE_COLOR} strokeWidth={2} />
         {sortedGraph.map((point, index) => {
           if (index < sortedGraph.length - 1) {
             const nextPoint = sortedGraph[index + 1];
@@ -571,16 +564,16 @@ export default function GraphEditor({
                 <circle
                   cx={midSvg.x}
                   cy={handleY}
-                  r={config.easeHandleDiameterPx / 2 + 1}
+                  r={EASE_HANDLE_DIAMETER_PX / 2 + 1}
                   fill="var(--bg-elevated)"
                 />
                 <circle
                   cx={midSvg.x}
                   cy={handleY}
-                  r={config.easeHandleDiameterPx / 2}
+                  r={EASE_HANDLE_DIAMETER_PX / 2}
                   fill="none"
-                  stroke={config.easeHandleColor}
-                  strokeWidth={config.easeHandleRingThicknessPx}
+                  stroke={EASE_HANDLE_COLOR}
+                  strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
                   onPointerDown={e => {
                     e.stopPropagation();
                     beginDragSnapshot();
@@ -601,10 +594,10 @@ export default function GraphEditor({
               key={`point-${index}`}
               cx={svgPoint.x}
               cy={svgPoint.y}
-              r={config.anchorDiameterPx / 2}
-              fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--highlight-color)' : config.anchorInnerColor}
-              stroke={config.anchorOuterColor}
-              strokeWidth={config.anchorBorderThicknessPx}
+              r={ANCHOR_DIAMETER_PX / 2}
+              fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--highlight-color)' : ANCHOR_INNER_COLOR}
+              stroke={ANCHOR_OUTER_COLOR}
+              strokeWidth={ANCHOR_BORDER_THICKNESS_PX}
               style={{ cursor: index === 0 || index === sortedGraph.length - 1 ? 'default' : 'grab', zIndex: 10 }}
               onPointerDown={e => {
                 e.stopPropagation();
