@@ -251,11 +251,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 <SliderSetting label="Timeline scroll zoom amount" value={scrollZoomAmount} min={1} max={100} step={1} onChange={setScrollZoomAmount} onReset={() => setScrollZoomAmount(25)} />
                 <SliderSetting label="Timeline scroll zoom smoothness" value={scrollZoomSmoothness} min={0} max={100} step={1} onChange={setScrollZoomSmoothness} onReset={() => setScrollZoomSmoothness(70)} formatValue={v => `${v.toFixed(3)}%`} />
               </SettingsCategory>
-              <SettingsCategory title="Playneedle">
-                <div style={{ padding: 8, color: 'var(--text-muted)', fontSize: 12, textAlign: 'center' }}>
-                  Playneedle settings moved to <strong>Components → Playneedle Editor</strong>
-                </div>
-              </SettingsCategory>
+                {/* Playneedle settings have been moved to the Playneedle Editor component. */}
               <SettingsCategory title="Miscellaneous">
                 <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v.toFixed(3)}%`} />
                 <SliderSetting label="Draggable modal background blur amount" value={elevatedPanelBlur} min={0} max={100} step={1} onChange={setElevatedPanelBlur} onReset={() => setElevatedPanelBlur(0)} formatValue={v => `${v.toFixed(3)}%`} />
