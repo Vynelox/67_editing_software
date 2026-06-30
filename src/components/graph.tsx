@@ -22,6 +22,7 @@ const EASE_HANDLE_RING_THICKNESS_PX = 2; //default 2px
 const GRAPH_LINE_COLOR = 'var(--automation-line)';
 const EASE_HANDLE_COLOR = 'var(--automation-line)';
 const AUTOMATION_ANCHOR_OUTER_COL = 'var(--automation-line)';
+const AUTOMATION_ANCHOR_INNER_COL = 'var(--input-field-bg)';
 
 export const DEFAULT_TORUS_SIZE_GRAPH: SizeGraphPoint[] = [
   { time: 0, size: 0 },
@@ -581,7 +582,7 @@ export default function GraphEditor({
               cx={svgPoint.x}
               cy={svgPoint.y}
               r={isSelected ? 6 : 5}
-              fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--highlight-color)' : 'var(--bg)'}
+              fill={index === 0 || index === sortedGraph.length - 1 ? 'var(--highlight-color)' : AUTOMATION_ANCHOR_INNER_COL}
               stroke={AUTOMATION_ANCHOR_OUTER_COL}
               strokeWidth={isSelected ? 2 : 1}
               style={{ cursor: index === 0 || index === sortedGraph.length - 1 ? 'default' : 'grab', zIndex: 10 }}
