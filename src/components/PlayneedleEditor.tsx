@@ -182,111 +182,108 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
       }
       style={{ width: EDITOR_MAX_WIDTH, maxHeight: EDITOR_MAX_HEIGHT, minHeight: 0, overflow: 'hidden' }}
       body={
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 12px 0' }}>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260, overflowY: 'auto', overflowX: 'hidden', paddingRight: 4 }}>
-              <Slider
-                label={<span>t ！ Total thickness of the needle part</span>}
-                value={pnT}
-                min={0}
-                max={0.5}
-                step={0.001}
-                onChange={setPnT}
-                onReset={() => setPnT(0.092)}
-                formatValue={v => v.toFixed(3)}
-              />
-              <Slider
-                label={<span>j ！ Length of the ribbon at the top</span>}
-                value={pnJ}
-                min={-0.05}
-                max={0.25}
-                step={0.001}
-                onChange={setPnJ}
-                onReset={() => setPnJ(0.049)}
-                formatValue={v => v.toFixed(3)}
-              />
-              <Slider
-                label={<span>k ！ Falloff of the ribbon (log scale)</span>}
-                value={pnK}
-                min={10}
-                max={1000}
-                step={1}
-                onChange={setPnK}
-                onReset={() => setPnK(103)}
-                logScale
-                formatValue={v => v.toFixed(3)}
-              />
-              <Slider
-                label={<span>s ！ Vertical height of the playneedle button</span>}
-                value={pnS}
-                min={10}
-                max={50}
-                step={0.1}
-                onChange={setPnS}
-                onReset={() => setPnS(16.4)}
-                formatValue={v => v.toFixed(3)}
-              />
-              <Slider
-                label={<span>v<sub>o</sub> ！ Vertical offset of the playneedle button</span>}
-                value={pnVo}
-                min={0}
-                max={1}
-                step={0.001}
-                onChange={setPnVo}
-                onReset={() => setPnVo(0.4)}
-                formatValue={v => v.toFixed(3)}
-              />
-              <Slider
-                label={<span>h<sub>b</sub> ！ Horizontal width of the playneedle button</span>}
-                value={pnHb}
-                min={0.5}
-                max={1}
-                step={0.001}
-                onChange={setPnHb}
-                onReset={() => setPnHb(0.8)}
-                formatValue={v => v.toFixed(3)}
-              />
-               <Slider
-                 label={<span>h<sub>r</sub> ！ Horizontal width of the ribbon</span>}
-                 value={pnHr}
-                 min={0}
-                 max={1}
-                 step={0.001}
-                 onChange={setPnHr}
-                 onReset={() => setPnHr(1)}
-                 formatValue={v => v.toFixed(3)}
-               />
-               {/* New slider for overall playneedle width in pixels */}
-               <Slider
-                 label={<span>Playneedle width (px)</span>}
-                 value={pnWidth}
-                 min={100}
-                 max={500}
-                 step={1}
-                 onChange={setPnWidth}
-                 onReset={() => setPnWidth(260)}
-                 formatValue={v => `${Math.round(v)}px`}
-               />
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16, padding: '4px 0 12px 0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260, overflowY: 'auto', overflowX: 'hidden', paddingRight: 4, maxHeight: 'calc(64vh - 100px)', flexShrink: 0 }}>
+            <Slider
+              label={<span>t ！ Total thickness of the needle part</span>}
+              value={pnT}
+              min={0}
+              max={0.5}
+              step={0.001}
+              onChange={setPnT}
+              onReset={() => setPnT(0.092)}
+              formatValue={v => v.toFixed(3)}
+            />
+            <Slider
+              label={<span>j ！ Length of the ribbon at the top</span>}
+              value={pnJ}
+              min={-0.05}
+              max={0.25}
+              step={0.001}
+              onChange={setPnJ}
+              onReset={() => setPnJ(0.049)}
+              formatValue={v => v.toFixed(3)}
+            />
+            <Slider
+              label={<span>k ！ Falloff of the ribbon (log scale)</span>}
+              value={pnK}
+              min={10}
+              max={1000}
+              step={1}
+              onChange={setPnK}
+              onReset={() => setPnK(103)}
+              logScale
+              formatValue={v => v.toFixed(3)}
+            />
+            <Slider
+              label={<span>s ！ Vertical height of the playneedle button</span>}
+              value={pnS}
+              min={10}
+              max={50}
+              step={0.1}
+              onChange={setPnS}
+              onReset={() => setPnS(16.4)}
+              formatValue={v => v.toFixed(3)}
+            />
+            <Slider
+              label={<span>v<sub>o</sub> ！ Vertical offset of the playneedle button</span>}
+              value={pnVo}
+              min={0}
+              max={1}
+              step={0.001}
+              onChange={setPnVo}
+              onReset={() => setPnVo(0.4)}
+              formatValue={v => v.toFixed(3)}
+            />
+            <Slider
+              label={<span>h<sub>b</sub> ！ Horizontal width of the playneedle button</span>}
+              value={pnHb}
+              min={0.5}
+              max={1}
+              step={0.001}
+              onChange={setPnHb}
+              onReset={() => setPnHb(0.8)}
+              formatValue={v => v.toFixed(3)}
+            />
+             <Slider
+               label={<span>h<sub>r</sub> ！ Horizontal width of the ribbon</span>}
+               value={pnHr}
+               min={0}
+               max={1}
+               step={0.001}
+               onChange={setPnHr}
+               onReset={() => setPnHr(1)}
+               formatValue={v => v.toFixed(3)}
+             />
+             <Slider
+               label={<span>Playneedle width (px)</span>}
+               value={pnWidth}
+               min={100}
+               max={500}
+               step={1}
+               onChange={setPnWidth}
+               onReset={() => setPnWidth(260)}
+               formatValue={v => `${Math.round(v)}px`}
+             />
+          </div>
 
-            <div
-              style={{
-                position: 'relative',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: 260,
-                height: 260,
-              }}
-            >
-              <FormulaPlayneedle
-                height={260}
-                maxWidth={260}
-                color="var(--text-primary)"
-                glowColor="rgba(56, 189, 248, 0.4)"
-                params={params}
-              />
-            </div>
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: 260,
+              height: 260,
+            }}
+          >
+            <FormulaPlayneedle
+              height={260}
+              maxWidth={260}
+              color="var(--text-primary)"
+              glowColor="rgba(56, 189, 248, 0.4)"
+              params={params}
+            />
           </div>
         </div>
       }
