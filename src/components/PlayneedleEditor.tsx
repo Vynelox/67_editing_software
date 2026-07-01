@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import FormulaPlayneedle from './FormulaPlayneedle';
 import DraggableModal from './DraggableModal';
@@ -103,6 +103,8 @@ export interface PlayneedleEditorModalProps {
 }
 
 export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEditorModalProps) {
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [previewHeight, setPreviewHeight] = useState(260);
   // Core playneedle parameters
   const [pnT, setPnT] = useState<number>(getSavedPnT);
   const [pnJ, setPnJ] = useState<number>(getSavedPnJ);
@@ -157,6 +159,17 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
     h_r: pnHr,
   }), [pnT, pnJ, pnK, pnS, pnVo, pnHb, pnHr]);
 
+  // Watch the preview container height to make the playneedle fill the modal
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    const updateHeight = () => setPreviewHeight(el.clientHeight);
+    const ro = new ResizeObserver(updateHeight);
+    ro.observe(el);
+    updateHeight();
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <DraggableModal
       title="Playneedle Editor"
@@ -184,7 +197,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
       }
       style={{ width: EDITOR_MAX_WIDTH, maxHeight: EDITOR_MAX_HEIGHT, minHeight: 0, overflow: 'hidden' }}
       body={
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16, padding: `4px 0 12px ${PADDING_LEFT}px` }}>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 16, padding: `4px 0 12px ${PADDING_LEFT}px`, flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260, overflowY: 'auto', overflowX: 'hidden', paddingRight: 4, maxHeight: 'calc(64vh - 100px)', flexShrink: 0 }}>
             <Slider
               label={<span>t ！ Total thickness of the needle part</span>}
@@ -270,22 +283,25 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
           </div>
 
           <div
+            ref={previewRef}
             style={{
               position: 'relative',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
               width: 260,
-              height: 260,
+              flex: 1,
+              alignSelf: 'stretch',
+              minHeight: 0,
             }}
           >
-              <FormulaPlayneedle
-                height={260}
-                maxWidth={pnWidth}
-                color="var(--text-primary)"
-                glowColor="rgba(56, 189, 248, 0.4)"
-                params={params}
-              />
+            <FormulaPlayneedle
+              height={previewHeight}
+              maxWidth={pnWidth}
+              color="var(--text-primary)"
+              glowColor="rgba(56, 189, 248, 0.4)"
+              params={params}
+            />
           </div>
         </div>
       }
