@@ -1036,7 +1036,6 @@ html, body, #root {
   border-radius: var(--radius-lg);
   padding: 20px;
   width: 420px;
-  max-width: 90vw;
   display: flex;
   flex-direction: column;
   gap: 14px;

@@ -1,4 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+// Modal dimensions for the Styles page
+const MODAL_WIDTH = '480px'; //default 480px
+const MODAL_HEIGHT = '72vh';
+
+
 import { OpenColorPicker } from './ColorPicker';
 import { colorFields, type ThemeColors, type ColorVarName } from './GlobalStyleSettings';
 import { themesByName } from './ThemeColors';
@@ -174,7 +179,7 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
       title={getPathLabel(stylePage)}
       onClose={() => { setShowStyle(false); setStylePage(null); }}
       className="settings-modal"
-      style={{ width: 480, height: '72vh', minHeight: '72vh', maxHeight: '72vh', overflow: 'hidden' }}
+      style={{ width: MODAL_WIDTH, height: MODAL_HEIGHT, minHeight: MODAL_HEIGHT, maxHeight: MODAL_HEIGHT, overflow: 'hidden' }}
       headerLeft={stylePage && (
         <button className="icon-btn" onClick={() => { const parentId = parentMap[stylePage]; setStylePage(parentId || null); }} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, color: 'var(--text-secondary)' }} title="Back">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
