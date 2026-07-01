@@ -7,9 +7,21 @@ import { RotateCcw } from 'lucide-react';
 
 // Playneedle Editor modal caps
 const EDITOR_MAX_WIDTH = '620px';
-const EDITOR_MAX_HEIGHT = '64vh';
+const EDITOR_MAX_HEIGHT = '72vh';
 // Left padding for the sliders column
 const PADDING_LEFT = 10;
+
+// Default values for all playneedle sliders
+const DEFAULT_VALUES = {
+  pnT: 0.092,
+  pnJ: 0.049,
+  pnK: 103,
+  pnS: 16.4,
+  pnVo: 0.4,
+  pnHb: 0.8,
+  pnHr: 1,
+  pnWidth: 20,
+} as const;
 
 function getSavedPnT(): number {
   try {
@@ -206,7 +218,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
               max={0.5}
               step={0.001}
               onChange={setPnT}
-              onReset={() => setPnT(0.092)}
+                onReset={() => setPnT(DEFAULT_VALUES.pnT)}
               formatValue={v => v.toFixed(3)}
             />
             <Slider
@@ -216,7 +228,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
               max={0.25}
               step={0.001}
               onChange={setPnJ}
-              onReset={() => setPnJ(0.049)}
+                onReset={() => setPnJ(DEFAULT_VALUES.pnJ)}
               formatValue={v => v.toFixed(3)}
             />
             <Slider
@@ -226,7 +238,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
               max={1000}
               step={1}
               onChange={setPnK}
-              onReset={() => setPnK(103)}
+                onReset={() => setPnK(DEFAULT_VALUES.pnK)}
               logScale
               formatValue={v => v.toFixed(3)}
             />
@@ -237,7 +249,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
               max={50}
               step={0.1}
               onChange={setPnS}
-              onReset={() => setPnS(16.4)}
+                onReset={() => setPnS(DEFAULT_VALUES.pnS)}
               formatValue={v => v.toFixed(3)}
             />
             <Slider
@@ -247,7 +259,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
               max={1}
               step={0.001}
               onChange={setPnVo}
-              onReset={() => setPnVo(0.4)}
+                onReset={() => setPnVo(DEFAULT_VALUES.pnVo)}
               formatValue={v => v.toFixed(3)}
             />
             <Slider
@@ -257,7 +269,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
               max={1}
               step={0.001}
               onChange={setPnHb}
-              onReset={() => setPnHb(0.8)}
+                onReset={() => setPnHb(DEFAULT_VALUES.pnHb)}
               formatValue={v => v.toFixed(3)}
             />
              <Slider
@@ -267,7 +279,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
                max={1}
                step={0.001}
                onChange={setPnHr}
-               onReset={() => setPnHr(1)}
+                onReset={() => setPnHr(DEFAULT_VALUES.pnHr)}
                formatValue={v => v.toFixed(3)}
              />
              <Slider
@@ -277,7 +289,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
                max={500}
                step={1}
                onChange={setPnWidth}
-               onReset={() => setPnWidth(260)}
+                onReset={() => setPnWidth(DEFAULT_VALUES.pnWidth)}
                formatValue={v => `${Math.round(v)}px`}
              />
           </div>
