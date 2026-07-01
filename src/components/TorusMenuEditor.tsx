@@ -7,9 +7,13 @@ import TorusMenu from './TorusMenu';
 import { Slider } from './Adjustables';
 import { RotateCcw } from 'lucide-react';
 
-const GRAPH_PADDING_LEFT = 10; //THIS CONTROLS THE CLIPPING
+// Torus Menu Editor modal dimensions
+const EDITOR_WIDTH = 620; //default 620px, can be wider if needed
+const EDITOR_HEIGHT = 370; //minimum 370
+
+const GRAPH_PADDING_LEFT = 10; //THIS CONTROLS THE CLIPPING default 10px. this controls how wide it is
 const GRAPH_WIDTH = 100; //kind of a useless variable, doesn't do anything
-const GRAPH_HEIGHT = 100; //THIS is a useful variable
+const GRAPH_HEIGHT = 100; //THIS is a useful variable. controls how high it is
 
 const TORUS_GRAPH_CONFIG: GraphConfig = {
   ...DEFAULT_GRAPH_CONFIG,
@@ -164,7 +168,7 @@ export default function TorusMenuEditorModal({ onClose, onBack }: TorusMenuEdito
           </svg>
         </button>
       }
-      style={{ width: 620, minHeight: 0 }}
+      style={{ width: EDITOR_WIDTH, minHeight: EDITOR_HEIGHT }}
       body={
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 12px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
