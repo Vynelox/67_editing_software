@@ -261,7 +261,8 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
                  step={1}
                  onChange={setPnWidth}
                  onReset={() => setPnWidth(260)}
-                 formatValue={v => `${v}px`}
+                  // Round the pixel value to the nearest whole number before displaying
+                  formatValue={v => `${Math.round(v)}px`}
                />
             </div>
 
