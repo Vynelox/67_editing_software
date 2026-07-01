@@ -310,7 +310,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
             <FormulaPlayneedle
               height={previewHeight}
               maxWidth={pnWidth}
-              color="var(--text-primary)"
+              color="var(--playneedle)"
               glowColor="rgba(56, 189, 248, 0.4)"
               params={params}
             />
