@@ -19,6 +19,10 @@ export function Slider({ label, value, min, max, step, onChange, onReset, format
   const defaultFormat = (v: number) => v.toFixed(3);
   const fmt = formatValue || defaultFormat;
   const displayValue = fmt(value);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editValue, setEditValue] = React.useState(displayValue);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
   const sliderToValue = (slider: number) => {
     if (!logScale) return min + (slider / 1000) * (max - min);
     const logMin = Math.log10(min);
@@ -29,12 +33,79 @@ export function Slider({ label, value, min, max, step, onChange, onReset, format
     if (!logScale) return ((val - min) / (max - min)) * 1000;
     return ((Math.log10(val) - Math.log10(min)) / (Math.log10(max) - Math.log10(min))) * 1000;
   };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(editValue);
+    if (!isNaN(parsed)) {
+      onChange(parsed);
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleBlur();
+    } else if (e.key === 'Escape') {
+      setEditValue(displayValue);
+      setIsEditing(false);
+    }
+  };
+
+  const handleClick = () => {
+    setEditValue(displayValue);
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
   return (
     <div className="settings-field" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <span style={{ flex: 1, lineHeight: 1.2 }}>{label}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{displayValue}</span>
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={editValue}
+              onChange={e => setEditValue(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              style={{
+                color: 'var(--text-primary)',
+                fontFamily: 'monospace',
+                fontSize: 12,
+                whiteSpace: 'nowrap',
+                background: 'var(--bg-hover)',
+                border: '1px solid var(--highlight-color)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '2px 6px',
+                width: 'ch',
+                minWidth: 60,
+                outline: 'none',
+              }}
+            />
+          ) : (
+            <span
+              style={{
+                color: 'var(--text-primary)',
+                fontFamily: 'monospace',
+                fontSize: 12,
+                whiteSpace: 'nowrap',
+                cursor: 'text',
+                userSelect: 'all',
+                padding: '2px 4px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'transparent',
+                transition: 'background 0.15s',
+              }}
+              onClick={handleClick}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              title="Click to edit"
+            >
+              {displayValue}
+            </span>
+          )}
           <button type="button" className="icon-btn" onClick={onReset} title="Reset to default" style={{ padding: 4 }}><RotateCcw size={14} /></button>
         </div>
       </div>
