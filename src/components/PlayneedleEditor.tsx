@@ -6,7 +6,7 @@ import { Slider } from './Adjustables';
 import { RotateCcw } from 'lucide-react';
 
 // Playneedle Editor modal caps
-const EDITOR_MAX_WIDTH = '620px';
+const EDITOR_MAX_WIDTH = '480px';
 const EDITOR_MAX_HEIGHT = '72vh'; //default 72vh
 // Left padding for the sliders column
 const PADDING_LEFT = 10;
@@ -210,7 +210,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
       style={{ width: EDITOR_MAX_WIDTH, maxHeight: EDITOR_MAX_HEIGHT, minHeight: 0, overflow: 'hidden' }}
       body={
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 16, padding: `4px 0 12px ${PADDING_LEFT}px`, flex: 1, minHeight: 0, overflow: 'hidden', height: '100%' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260, overflowY: 'scroll', overflowX: 'hidden', paddingRight: 4, flexShrink: 0, minHeight: 0, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260, overflowY: 'scroll', overflowX: 'hidden', paddingRight: 4, flexShrink: 0, minHeight: 0, flex: 3 }}>
             <Slider
               label={<span>t ！ Total thickness of the needle part</span>}
               value={pnT}
