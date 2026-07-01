@@ -4,9 +4,14 @@ import { RotateCcw, Plus, ChevronRight } from 'lucide-react';
 import type { ShortcutAction } from './shortcuts';
 import { getShortcutKeys as scGetKeys, updateShortcuts as scUpdate, resetDefaultShortcuts as scReset } from './shortcuts';
 import DraggableModal from './DraggableModal';
-import TorusMenu, { insideMenuItems } from './TorusMenu';
 import { OpenTorusMenuEditor } from './TorusMenuEditor';
 import { OpenPlayneedleEditor } from './PlayneedleEditor';
+
+// Settings modal dimensions
+const SETTINGS_MODAL_WIDTH = '480px'; //default 480px
+const SETTINGS_MODAL_HEIGHT = '72vh'; //default 72vh
+const SETTINGS_MODAL_MIN_HEIGHT = '0vh';
+const SETTINGS_MODAL_MAX_HEIGHT = '100vh';
 
 // Gap in pixels between each slider component in the Settings sliders tab
 const SLIDER_GAP_PX = 15; //default 15 px
@@ -225,7 +230,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   };
 
   return (
-    <DraggableModal title="Settings" onClose={() => { onClose?.(); }} className="settings-modal" body={
+    <DraggableModal title="Settings" onClose={() => { onClose?.(); }} className="settings-modal" style={{ width: SETTINGS_MODAL_WIDTH, height: SETTINGS_MODAL_HEIGHT, minHeight: SETTINGS_MODAL_MIN_HEIGHT, maxHeight: SETTINGS_MODAL_MAX_HEIGHT, overflow: 'hidden' }} body={
       <div className="settings-body" ref={panelRef}>
         <nav className="settings-tabs" aria-label="Settings sections">
           <button type="button" className={"settings-tab" + (activeTab === "shortcuts" ? " settings-tab--active" : "")} onClick={() => setActiveTab("shortcuts")}>Keyboard</button>
