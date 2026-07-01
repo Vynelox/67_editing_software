@@ -305,6 +305,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
               flex: 1,
               alignSelf: 'stretch',
               minHeight: 0,
+              overflow: 'hidden',
             }}
           >
             <FormulaPlayneedle
