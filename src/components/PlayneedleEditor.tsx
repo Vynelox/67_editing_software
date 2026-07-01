@@ -83,7 +83,7 @@ function getSavedPnHr(): number {
 function getSavedPnWidth(): number {
   try {
     const v = window.localStorage.getItem('juicecut.settings.playneedle_width');
-    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 500) return n; }
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 250) return n; }
   } catch {}
   // Default width matches the current hard‑coded value used elsewhere
   return 260;
@@ -282,16 +282,16 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
                 onReset={() => setPnHr(DEFAULT_VALUES.pnHr)}
                formatValue={v => v.toFixed(3)}
              />
-             <Slider
-               label={<span>Playneedle width (px)</span>}
-               value={pnWidth}
-                 min={0}
-               max={500}
-               step={1}
-               onChange={setPnWidth}
-                onReset={() => setPnWidth(DEFAULT_VALUES.pnWidth)}
-               formatValue={v => `${Math.round(v)}px`}
-             />
+              <Slider
+                label={<span>Playneedle width (px)</span>}
+                value={pnWidth}
+                  min={0}
+                max={250}
+                step={1}
+                onChange={setPnWidth}
+                 onReset={() => setPnWidth(DEFAULT_VALUES.pnWidth)}
+                formatValue={v => `${Math.round(v)}px`}
+              />
           </div>
 
           <div
