@@ -20,7 +20,7 @@ const DEFAULT_VALUES = {
   pnVo: 0.4,
   pnHb: 0.8,
   pnHr: 1,
-  pnWidth: 260,
+  pnWidth: 20,
 } as const;
 
 function getSavedPnT(): number {
