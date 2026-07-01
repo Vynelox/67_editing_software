@@ -1028,6 +1028,15 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   z-index: 200;
+  pointer-events: none;
+}
+.modal-overlay > * {
+  pointer-events: auto;
+}
+
+/* Keep header above modal overlay so it isn't blurred/darkened */
+.app-header {
+  z-index: 201;
 }
 
 .modal-box {
