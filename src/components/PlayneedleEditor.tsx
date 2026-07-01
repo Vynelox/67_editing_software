@@ -5,6 +5,10 @@ import DraggableModal from './DraggableModal';
 import { Slider } from './Adjustables';
 import { RotateCcw } from 'lucide-react';
 
+// Playneedle Editor modal caps
+const EDITOR_MAX_WIDTH = '620px';
+const EDITOR_MAX_HEIGHT = '64vh';
+
 function getSavedPnT(): number {
   try {
     const v = window.localStorage.getItem('juicecut.settings.playneedle_t');
@@ -176,11 +180,11 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
           </svg>
         </button>
       }
-      style={{ width: 620, minHeight: 0 }}
+      style={{ width: EDITOR_MAX_WIDTH, maxHeight: EDITOR_MAX_HEIGHT, minHeight: 0, overflow: 'hidden' }}
       body={
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 12px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: 260, overflowY: 'auto', overflowX: 'hidden', paddingRight: 4 }}>
               <Slider
                 label={<span>t ！ Total thickness of the needle part</span>}
                 value={pnT}
@@ -261,8 +265,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
                  step={1}
                  onChange={setPnWidth}
                  onReset={() => setPnWidth(260)}
-                  // Round the pixel value to the nearest whole number before displaying
-                  formatValue={v => `${Math.round(v)}px`}
+                 formatValue={v => `${Math.round(v)}px`}
                />
             </div>
 

@@ -9,7 +9,7 @@ import { RotateCcw } from 'lucide-react';
 
 // Torus Menu Editor modal dimensions
 const EDITOR_WIDTH = 620; //default 620px, can be wider if needed
-const EDITOR_HEIGHT = 370; //minimum 370
+const EDITOR_HEIGHT = 370; //minimum: 370px, can be taller if needed
 
 const GRAPH_PADDING_LEFT = 10; //THIS CONTROLS THE CLIPPING default 10px. this controls how wide it is
 const GRAPH_WIDTH = 100; //kind of a useless variable, doesn't do anything
