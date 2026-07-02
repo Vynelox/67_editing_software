@@ -3,6 +3,7 @@ import MediaPool from './components/MediaPool';
 import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
+import ViewerControls from './components/ViewerControls';
 import { OpenSettings } from './components/Settings';
 import { isShortcutMatch } from './components/shortcuts';
 import { parentMap, StylesModal, applyThemeToDocument } from './components/styles';
@@ -618,7 +619,17 @@ function AppContent() {
         )}
 
         <div className="workspace-panel-viewer">
-          <Viewer clips={clips} mediaItems={mediaItems} playhead={playhead} playing={playing} totalFrames={totalFrames} onPlayPause={() => setPlaying(p => !p)} onSeek={setPlayhead} onExport={() => setShowExport(true)} />
+          <Viewer clips={clips} mediaItems={mediaItems} playhead={playhead} playing={playing} totalFrames={totalFrames} onExport={() => setShowExport(true)} />
+          <ViewerControls
+            style={{ marginTop: 'auto' }}
+            clips={clips}
+            mediaItems={mediaItems}
+            playhead={playhead}
+            playing={playing}
+            totalFrames={totalFrames}
+            onPlayPause={() => setPlaying(p => !p)}
+            onSeek={setPlayhead}
+          />
         </div>
 
         <div className="workspace-hsplit">

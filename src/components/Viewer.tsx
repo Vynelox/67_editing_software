@@ -1,7 +1,6 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { useEffect, useRef, useCallback } from 'react';
 import type { MediaItem, TimelineClip } from '../types';
-import { formatTimecode, FPS } from '../types';
+import { FPS } from '../types';
 
 interface Props {
   clips: TimelineClip[];
@@ -9,14 +8,12 @@ interface Props {
   playhead: number;
   playing: boolean;
   totalFrames: number;
-  onPlayPause: () => void;
-  onSeek: (frame: number) => void;
   onExport: () => void;
 }
 
 export default function Viewer({
   clips, mediaItems, playhead, playing, totalFrames,
-  onPlayPause, onSeek, onExport
+  onExport
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -108,49 +105,6 @@ export default function Viewer({
     return () => observer.disconnect();
   }, [drawFrame]);
 
-  const progress = totalFrames > 0 ? (playhead / totalFrames) * 100 : 0;
-
-  const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    onSeek(Math.round(ratio * totalFrames));
-  };
-
-  const [controlsType, setControlsType] = useState<string>(() => {
-    try { return window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'; } catch { return 'compact'; }
-  });
-  const [timecodePanel, setTimecodePanel] = useState<string>(() => {
-    try { return window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'; } catch { return 'both'; }
-  });
-
-  useEffect(() => {
-    const handler = () => {
-      try { setControlsType(window.localStorage.getItem('juicecut.settings.viewerControlsType') || 'compact'); } catch {}
-    };
-    window.addEventListener('juicecut-settings-changed', handler);
-    return () => window.removeEventListener('juicecut-settings-changed', handler);
-  }, []);
-
-  useEffect(() => {
-    const handler = () => {
-      try { setTimecodePanel(window.localStorage.getItem('juicecut.settings.timecodePanel') || 'both'); } catch {}
-    };
-    window.addEventListener('juicecut-settings-changed', handler);
-    return () => window.removeEventListener('juicecut-settings-changed', handler);
-  }, []);
-
-  const scrubBar = (height: number) => (
-    <div onClick={handleScrub} style={{ flex:1, position:'relative', height, borderRadius:2, background:'var(--border-mid)', cursor:'pointer' }}>
-      <div style={{ position:'absolute', left:0, top:0, height:'100%', width:`${progress}%`, background:'var(--input-field)', borderRadius:2 }} />
-      <div style={{ position:'absolute', top:'50%', left:`${progress}%`, transform:'translate(-50%,-50%)', width:8, height:8, borderRadius:'50%', background:'var(--text-primary)', boxShadow:'0 0 0 2px var(--bg-panel)', pointerEvents:'none' }} />
-    </div>
-  );
-
-  const skipBtn = (onClick: () => void, title: string, icon: React.ReactNode, className: string) => (
-    <button onClick={onClick} title={title} className={`ctrl-btn ${className}`}
-    >{icon}</button>
-  );
-
   return (
     <div className="viewer">
       <div className="viewer-header">
@@ -167,40 +121,6 @@ export default function Viewer({
       <div className="viewer-canvas-wrap">
         <canvas ref={canvasRef} width={854} height={480} className="viewer-canvas" />
       </div>
-
-      {controlsType === 'compact' ? (
-        <div className="viewer-controls viewer-controls--compact">
-          {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={12} />, 'ctrl-btn-small')}
-          <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'} className="viewer-play-btn ctrl-btn-small"
-          >{playing ? <Pause size={13} /> : <Play size={13} />}</button>
-          {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={12} />, 'ctrl-btn-small')}
-          {scrubBar(3)}
-          {timecodePanel === 'viewer' || timecodePanel === 'both' ? (
-            <span className="viewer-timecode">{formatTimecode(playhead)}</span>
-          ) : null}
-          <Volume2 size={12} className="viewer-volume-icon viewer-volume-icon--compact" />
-        </div>
-      ) : (
-        <div className="viewer-controls viewer-controls--full">
-          {scrubBar(4)}
-          <div className="viewer-controls-row">
-            {timecodePanel === 'viewer' || timecodePanel === 'both' ? (
-              <span className="viewer-timecode viewer-timecode--full">{formatTimecode(playhead)}</span>
-            ) : (
-              <span className="viewer-timecode-placeholder" />
-            )}
-            <div className="viewer-controls-center">
-              {skipBtn(() => onSeek(0), 'Go to start', <SkipBack size={14} />, 'ctrl-btn')}
-              <button onClick={onPlayPause} title={playing ? 'Pause' : 'Play'} className="viewer-play-btn ctrl-btn"
-              >{playing ? <Pause size={16} /> : <Play size={16} />}</button>
-              {skipBtn(() => onSeek(totalFrames), 'Go to end', <SkipForward size={14} />, 'ctrl-btn')}
-            </div>
-            <div className="viewer-controls-right">
-              <Volume2 size={14} className="viewer-volume-icon viewer-volume-icon--full" />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
