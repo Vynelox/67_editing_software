@@ -283,6 +283,16 @@ export default function Timeline({
     return ticks;
   };
 
+  // Close torus menu when splitters are interacted with
+  useEffect(() => {
+    const handler = () => {
+      setTorusTarget(null);
+      setTorusPos(null);
+    };
+    window.addEventListener('juicecut-torus-close', handler);
+    return () => window.removeEventListener('juicecut-torus-close', handler);
+  }, []);
+
   const getPlayheadContext = useCallback((): TorusTarget => {
     for (const clip of clips) {
       if (Math.abs(playhead - clip.startFrame) <= 1) {

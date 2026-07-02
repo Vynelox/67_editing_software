@@ -41,6 +41,10 @@ export default function Splitter({ orientation, onChange, onDragEnd, thickness =
     e.preventDefault();
     e.stopPropagation();
     draggingRef.current = true;
+    // Signal any open torus menu to close
+    try {
+      window.dispatchEvent(new CustomEvent('juicecut-torus-close'));
+    } catch {}
     startRef.current = orientation === 'vertical' ? e.clientX : e.clientY;
     document.body.style.cursor = orientation === 'vertical' ? 'col-resize' : 'row-resize';
     document.body.style.userSelect = 'none';
