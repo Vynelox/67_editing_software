@@ -100,6 +100,7 @@ function AppContent() {
   const [playing, setPlaying] = useState(false);
   const [rollClipId, setRollClipId] = useState<string | null>(null);
   const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [hasModalOpen, setHasModalOpen] = useState(false);
 
   // settings (persisted)
   const [playheadTop, setPlayheadTop] = useState<number>(() => {
@@ -151,6 +152,18 @@ function AppContent() {
   void guiScale; // used to force re-render dependency
   const [showStyle, setShowStyle] = useState(false);
   const [stylePage, setStylePage] = useState<string | null>(null);
+
+  // Watch for modal overlays in DOM to toggle hasModalOpen
+  useEffect(() => {
+    const checkModals = () => {
+      const open = !!document.querySelector('.modal-overlay, .torus-overlay');
+      setHasModalOpen(open);
+    };
+    checkModals();
+    const observer = new MutationObserver(() => checkModals());
+    observer.observe(document.body, { childList: true, subtree: false });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -226,6 +239,15 @@ function AppContent() {
       }
     } catch {}
   }, []);
+
+  // Determine if background should be locked
+  const allowEdits = (() => {
+    try {
+      return (window as any).juicecut?.settings?.allowEditsWhenMenuOpen ?? true;
+    } catch { return true; }
+  })();
+  const blockBackground = !allowEdits && hasModalOpen;
+
   const [showExport, setShowExport] = useState(false);
   const [exportVideo, setExportVideo] = useState(true);
   const [exportAudio, setExportAudio] = useState(true);
@@ -303,6 +325,10 @@ function AppContent() {
         const pct = detail.value;
         const blurPx = (pct / 100) * 50;
         document.documentElement.style.setProperty('--modal-overlay-blur', `${blurPx}px`);
+      }
+      // Force re-render when allowEditsWhenMenuOpen changes
+      if (detail?.key === 'allowEditsWhenMenuOpen') {
+        setHasModalOpen(prev => prev); // trigger re-render
       }
     };
     window.addEventListener('juicecut-settings-changed', handler);
@@ -576,6 +602,19 @@ function AppContent() {
 
   return (
     <div className="app-shell">
+      {/* Background blocking overlay: sits below modal/torus overlays (z-index 199 vs 200) */}
+      {blockBackground && (
+        <div
+          className="app-bg-lock"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 199,
+            background: 'transparent',
+            pointerEvents: 'auto',
+          }}
+        />
+      )}
       {Array.from(mediaItems.values()).map(item =>
         item.type === 'video' ? (
           <video key={item.id} id={`vid-${item.id}`} src={item.src} style={{ display: 'none' }} preload="auto" muted />

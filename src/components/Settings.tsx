@@ -168,6 +168,26 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
       (window as any).juicecut.settings.allowMultipleMenus = allowMultipleMenus;
     } catch {}
   }, [allowMultipleMenus]);
+
+  const [allowEditsWhenMenuOpen, setAllowEditsWhenMenuOpen] = useState<boolean>(() => {
+    try {
+      const v = window.localStorage.getItem("juicecut.settings.allowEditsWhenMenuOpen");
+      return v === null ? true : v === "true";
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("juicecut.settings.allowEditsWhenMenuOpen", String(allowEditsWhenMenuOpen));
+      if (!(window as any).juicecut) (window as any).juicecut = {};
+      if (!(window as any).juicecut.settings) (window as any).juicecut.settings = {};
+      (window as any).juicecut.settings.allowEditsWhenMenuOpen = allowEditsWhenMenuOpen;
+      window.dispatchEvent(new CustomEvent("juicecut.settings-changed", { detail: { key: "allowEditsWhenMenuOpen", value: allowEditsWhenMenuOpen } }));
+    } catch {}
+  }, [allowEditsWhenMenuOpen]);
+
   const [pnS, setPnS] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_s"); return v !== null ? Number(v) : 16.4; } catch { return 16.4; } });
   const [pnVo, setPnVo] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_v_o"); return v !== null ? Number(v) : 0.4; } catch { return 0.4; } });
   const [pnHb, setPnHb] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_h_b"); return v !== null ? Number(v) : 0.8; } catch { return 0.8; } });
@@ -323,6 +343,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <button type="button" className="icon-btn" onClick={() => setAllowMultipleMenus(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
+              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
+                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow edits when menu is open</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="checkbox" className="settings-checkbox" checked={allowEditsWhenMenuOpen} onChange={e => setAllowEditsWhenMenuOpen(e.target.checked)} />
+                  <button type="button" className="icon-btn" onClick={() => setAllowEditsWhenMenuOpen(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                </div>
+              </div>
             </div>
           )}
           {activeTab === "multiselects" && (
@@ -369,12 +396,12 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                       const isEditing = editingChip?.action === action && editingChip?.index === idx;
                       return (
                         <div key={idx} ref={el => { chipRefs.current[`${action}-${idx}`] = el; }} tabIndex={0} onFocus={() => setEditingChip({ action, index: idx })} onBlur={() => { setTimeout(() => setEditingChip(null), 150); }} onKeyDown={(e) => handleChipKeyDown(e, action, idx)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: isEditing ? "var(--bg-hover)" : "var(--bg-elevated)", border: isEditing ? "1px solid var(--highlight-color)" : "1px solid var(--border-mid)", borderRadius: "var(--radius-sm)", padding: "3px 8px", cursor: "pointer", outline: "none", minHeight: 28 }} title={isEditing ? "Press keys to assign..." : keys.length === 0 ? "Click then press keys to assign" : "Click then press new keys to reassign"}>
-                          <span style={{ fontSize: 12, color: keys.length > 0 ? "var(--text-primary)" : "var(--text-muted)", fontFamily: "monospace" }}>{isEditing && keys.length === 0 ? "..." : keys.length > 0 ? formatKeys(keys) : "None"}</span>
-                          {shortcuts[action].length > 1 && (<button type="button" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: "0 2px", fontSize: 13, lineHeight: 1, display: "flex", alignItems: "center" }} onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }} title="Remove this combination">x</button>)}
-                        </div>
-                      );
-                    })}
-                  </div>
+                            <span style={{ fontSize: 12, color: keys.length > 0 ? "var(--text-primary)" : "var(--text-muted)", fontFamily: "monospace" }}>{isEditing && keys.length === 0 ? "..." : keys.length > 0 ? formatKeys(keys) : "None"}</span>
+                            {shortcuts[action].length > 1 && (<button type="button" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: "0 2px", fontSize: 13, lineHeight: 1, display: "flex", alignItems: "center" }} onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }} title="Remove this combination">x</button>)}
+                          </div>
+                        );
+                      })}
+                    </div>
                 </div>
               ))}
             </div>
