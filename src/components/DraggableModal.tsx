@@ -32,6 +32,9 @@ export default function DraggableModal({ title, body, onClose, className = '', m
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [allowEditsWhenMenuOpen, setAllowEditsWhenMenuOpen] = useState(() => 
+    (window as any).juicecut?.settings?.allowEditsWhenMenuOpen ?? true
+  );
   const dragOffset = useRef({ x: 0, y: 0 });
   const overlayRef = useRef<HTMLDivElement>(null);
   const dragStartPos = useRef({ x: 0, y: 0 });
@@ -44,10 +47,11 @@ export default function DraggableModal({ title, body, onClose, className = '', m
 
   const handleOverlayDoubleClick = useCallback((e: React.MouseEvent) => {
     // Only reset if double-clicking directly on the overlay background, not the modal
-    if (e.target === overlayRef.current) {
+    // And only when allowEditsWhenMenuOpen is false (checkbox disabled)
+    if (!allowEditsWhenMenuOpen && e.target === overlayRef.current) {
       resetPosition();
     }
-  }, [resetPosition]);
+  }, [resetPosition, allowEditsWhenMenuOpen]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -73,6 +77,18 @@ export default function DraggableModal({ title, body, onClose, className = '', m
         y: e.clientY - modalRect.top,
       };
     }
+  }, []);
+
+  // Listen for settings changes to update allowEditsWhenMenuOpen reactively
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.key === 'allowEditsWhenMenuOpen') {
+        setAllowEditsWhenMenuOpen(detail.value ?? true);
+      }
+    };
+    window.addEventListener('juicecut.settings-changed', handler);
+    return () => window.removeEventListener('juicecut.settings-changed', handler);
   }, []);
 
   useEffect(() => {
@@ -115,8 +131,6 @@ export default function DraggableModal({ title, body, onClose, className = '', m
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging]);
-
-  const allowEditsWhenMenuOpen = (window as any).juicecut?.settings?.allowEditsWhenMenuOpen ?? true;
 
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true" ref={overlayRef} onDoubleClick={handleOverlayDoubleClick}>
