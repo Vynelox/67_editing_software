@@ -34,6 +34,8 @@ export default function DraggableModal({ title, body, onClose, className = '', m
   const [isMinimized, setIsMinimized] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const overlayRef = useRef<HTMLDivElement>(null);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const hasDraggedSignificantly = useRef(false);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -47,6 +49,8 @@ export default function DraggableModal({ title, body, onClose, className = '', m
     }
     
     setIsDragging(true);
+    hasDraggedSignificantly.current = false;
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
     // Get the modal element's current screen position
     const modalEl = overlayRef.current?.querySelector('.modal-box') as HTMLElement | null;
     if (modalEl) {
@@ -63,6 +67,13 @@ export default function DraggableModal({ title, body, onClose, className = '', m
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
+      // Track if drag distance exceeds threshold
+      const dx = e.clientX - dragStartPos.current.x;
+      const dy = e.clientY - dragStartPos.current.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasDraggedSignificantly.current = true;
+      }
+      
       // Directly set the modal position so the anchor point stays under the cursor
       const modalEl = overlayRef.current?.querySelector('.modal-box') as HTMLElement | null;
       if (modalEl) {
@@ -115,9 +126,9 @@ export default function DraggableModal({ title, body, onClose, className = '', m
           <span className="panel-title settings-title" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>{title}</span>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginLeft: 'auto', height: '100%' }}>
             {minimizable && (
-              <button
+             <button
                 className="icon-btn modal-minimize-btn"
-                onClick={() => setIsMinimized(m => !m)}
+                onClick={() => { if (!hasDraggedSignificantly.current) setIsMinimized(m => !m); }}
                 aria-label={isMinimized ? 'Restore' : 'Minimize'}
                 title={isMinimized ? 'Restore' : 'Minimize'}
                 style={{ width: 32, height: 32 }}
@@ -127,7 +138,7 @@ export default function DraggableModal({ title, body, onClose, className = '', m
                 </svg>
               </button>
             )}
-            <button className="icon-btn" onClick={onClose} aria-label="Close" style={{ width: 32, height: 32 }}>
+            <button className="icon-btn" onClick={(e) => { const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true; if (shouldExecute || !hasDraggedSignificantly.current) onClose(); }} aria-label="Close" style={{ width: 32, height: 32 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />

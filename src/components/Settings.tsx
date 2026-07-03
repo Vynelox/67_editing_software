@@ -188,6 +188,24 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     } catch {}
   }, [allowEditsWhenMenuOpen]);
 
+  const [executeHeaderButtonsOnDrag, setExecuteHeaderButtonsOnDrag] = useState<boolean>(() => {
+    try {
+      const v = window.localStorage.getItem("juicecut.settings.executeHeaderButtonsOnDrag");
+      return v === null ? true : v === "true";
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("juicecut.settings.executeHeaderButtonsOnDrag", String(executeHeaderButtonsOnDrag));
+      if (!(window as any).juicecut) (window as any).juicecut = {};
+      if (!(window as any).juicecut.settings) (window as any).juicecut.settings = {};
+      (window as any).juicecut.settings.executeHeaderButtonsOnDrag = executeHeaderButtonsOnDrag;
+    } catch {}
+  }, [executeHeaderButtonsOnDrag]);
+
   const [pnS, setPnS] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_s"); return v !== null ? Number(v) : 16.4; } catch { return 16.4; } });
   const [pnVo, setPnVo] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_v_o"); return v !== null ? Number(v) : 0.4; } catch { return 0.4; } });
   const [pnHb, setPnHb] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_h_b"); return v !== null ? Number(v) : 0.8; } catch { return 0.8; } });
@@ -327,10 +345,17 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
-                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow ○, ?, and ～ buttons in<br />modals' header bar to be draggable</span>
+                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow ×, -, and ← buttons in modals' header bar to be draggable</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <input type="checkbox" className="settings-checkbox" checked={draggableHeaderButtons} onChange={e => setDraggableHeaderButtons(e.target.checked)} />
                   <button type="button" className="icon-btn" onClick={() => setDraggableHeaderButtons(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                </div>
+              </div>
+              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
+                <span style={{ flex: 1, lineHeight: 1.2, color: draggableHeaderButtons ? 'var(--text-secondary)' : 'var(--text-muted)' }} title={!draggableHeaderButtons ? 'requires "allow ○, ?, and ～" to be enabled' : undefined}>Execute header button actions when dragging</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, opacity: draggableHeaderButtons ? 1 : 0.5, pointerEvents: draggableHeaderButtons ? 'auto' : 'none' }}>
+                  <input type="checkbox" className="settings-checkbox" checked={executeHeaderButtonsOnDrag} onChange={e => setExecuteHeaderButtonsOnDrag(e.target.checked)} disabled={!draggableHeaderButtons} title={!draggableHeaderButtons ? 'requires "allow ○, ?, and ～" to be enabled' : undefined} />
+                  <button type="button" className="icon-btn" onClick={() => setExecuteHeaderButtonsOnDrag(true)} title={!draggableHeaderButtons ? 'requires "allow ○, ?, and ～" to be enabled' : "Reset to default (Checked)"} style={{ padding: 4 }} disabled={!draggableHeaderButtons}><RotateCcw size={14} /></button>
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
