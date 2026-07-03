@@ -166,6 +166,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
       if (!(window as any).juicecut) (window as any).juicecut = {};
       if (!(window as any).juicecut.settings) (window as any).juicecut.settings = {};
       (window as any).juicecut.settings.allowMultipleMenus = allowMultipleMenus;
+      window.dispatchEvent(new CustomEvent("juicecut.settings-changed", { detail: { key: "allowMultipleMenus", value: allowMultipleMenus } }));
     } catch {}
   }, [allowMultipleMenus]);
 

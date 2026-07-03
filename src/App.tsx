@@ -152,6 +152,9 @@ function AppContent() {
   void guiScale; // used to force re-render dependency
   const [showStyle, setShowStyle] = useState(false);
   const [stylePage, setStylePage] = useState<string | null>(null);
+  const [allowEditsWhenMenuOpen, setAllowEditsWhenMenuOpen] = useState(() => 
+    (window as any).juicecut?.settings?.allowEditsWhenMenuOpen ?? true
+  );
 
   // Watch for modal overlays in DOM to toggle hasModalOpen
   useEffect(() => {
@@ -163,6 +166,18 @@ function AppContent() {
     const observer = new MutationObserver(() => checkModals());
     observer.observe(document.body, { childList: true, subtree: false });
     return () => observer.disconnect();
+  }, []);
+
+  // Listen for settings changes to update allowEditsWhenMenuOpen reactively
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.key === 'allowEditsWhenMenuOpen') {
+        setAllowEditsWhenMenuOpen(detail.value ?? true);
+      }
+    };
+    window.addEventListener('juicecut.settings-changed', handler);
+    return () => window.removeEventListener('juicecut.settings-changed', handler);
   }, []);
 
   useEffect(() => {
@@ -241,12 +256,7 @@ function AppContent() {
   }, []);
 
   // Determine if background should be locked
-  const allowEdits = (() => {
-    try {
-      return (window as any).juicecut?.settings?.allowEditsWhenMenuOpen ?? true;
-    } catch { return true; }
-  })();
-  const blockBackground = !allowEdits && hasModalOpen;
+  const blockBackground = !allowEditsWhenMenuOpen && hasModalOpen;
 
   const [showExport, setShowExport] = useState(false);
   const [exportVideo, setExportVideo] = useState(true);
@@ -628,12 +638,16 @@ function AppContent() {
           <span>67 editing software</span>
         </div>
         <div style={{ display: 'flex', gap: TOP_BAR_MENU_BUTTONS_SPACING, alignItems: 'center', marginLeft: WINDOW_BUTTONS_SPACING }}>
-          <button className="icon-btn" onClick={() => setShowStyle(true)} title="Style">
+          <button className="icon-btn" onClick={() => {
+            if (!(window as any).__canOpenModal?.()) return;
+            setShowStyle(true);
+            (window as any).__pushClose?.(() => { setShowStyle(false); setStylePage(null); });
+          }} title="Style">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2C12 2 5 10 5 15c0 3.866 3.134 7 7 7s7-3.134 7-7c0-5-7-13-7-13z"/>
             </svg>
           </button>
-          <button className="icon-btn" onClick={() => { try { OpenSettings({ tab: 'misc' }, null); } catch (e) {} }} title="Settings">
+          <button className="icon-btn" onClick={() => { try { if ((window as any).__canOpenModal?.()) OpenSettings({ tab: 'misc' }, null); } catch (e) {} }} title="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -674,7 +688,11 @@ function AppContent() {
         )}
 
         <div className="workspace-panel-viewer">
-          <Viewer clips={clips} mediaItems={mediaItems} playhead={playhead} playing={playing} totalFrames={totalFrames} onExport={() => setShowExport(true)} />
+          <Viewer clips={clips} mediaItems={mediaItems} playhead={playhead} playing={playing} totalFrames={totalFrames} onExport={() => {
+            if (!(window as any).__canOpenModal?.()) return;
+            setShowExport(true);
+            (window as any).__pushClose?.(() => setShowExport(false));
+          }} />
           <ViewerControls
             style={{ marginTop: 'auto' }}
             clips={clips}
