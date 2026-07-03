@@ -23,6 +23,28 @@ const DEFAULT_VALUES = {
   pnWidth: 20,
 } as const;
 
+const MAX_VALUES = {
+  pnT: 0.5,
+  pnJ: 0.25,
+  pnK: 1000,
+  pnS: 50,
+  pnVo: 1,
+  pnHb: 1,
+  pnHr: 1,
+  pnWidth: 100,
+} as const;
+
+const MIN_VALUES = {
+  pnT: 0,
+  pnJ: -0.05,
+  pnK: 10,
+  pnS: 10,
+  pnVo: 0,
+  pnHb: 0.5,
+  pnHr: 0,
+  pnWidth: 0,
+} as const;
+
 function getSavedPnT(): number {
   try {
     const v = window.localStorage.getItem('juicecut.settings.playneedle_t');
@@ -83,7 +105,7 @@ function getSavedPnHr(): number {
 function getSavedPnWidth(): number {
   try {
     const v = window.localStorage.getItem('juicecut.settings.playneedle_width');
-    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 250) return n; }
+    if (v !== null) { const n = parseInt(v, 10); if (!isNaN(n) && n >= 0 && n <= 100) return n; }
   } catch {}
   // Default width matches the current hard‑coded value used elsewhere
   return 260;
@@ -104,6 +126,7 @@ export function OpenPlayneedleEditor(onCloseCallback?: () => void) {
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
   };
+  if (!(window as any).__canOpenModal?.()) return;
   (window as any).__pushClose?.(closeDirectly);
   root.render(<PlayneedleEditorModal onClose={closeDirectly} onBack={closeAndReturnToSettings} />);
   return closeDirectly;
@@ -286,7 +309,7 @@ export default function PlayneedleEditorModal({ onClose, onBack }: PlayneedleEdi
                 label={<span>Playneedle width (px)</span>}
                 value={pnWidth}
                   min={0}
-                max={250}
+                max={100}
                 step={1}
                 onChange={setPnWidth}
                  onReset={() => setPnWidth(DEFAULT_VALUES.pnWidth)}

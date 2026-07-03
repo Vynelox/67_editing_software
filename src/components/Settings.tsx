@@ -10,6 +10,7 @@ import { OpenPlayneedleEditor } from './PlayneedleEditor';
 // Stretch factors for the playneedle icon
 const PLAYNEEDLE_ICON_HORIZONTAL_STRETCH_FACTOR = 0.4; // default 0.4
 const PLAYNEEDLE_ICON_VERTICAL_STRETCH_FACTOR = 3; // default 3
+const PLAYNEEDLE_ICON_Y_OFFSET_PX = 3;
 
 // Settings modal dimensions
 const SETTINGS_MODAL_WIDTH = '480px'; //default 480px
@@ -149,6 +150,24 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
       (window as any).juicecut.settings.draggableHeaderButtons = draggableHeaderButtons;
     } catch {}
   }, [draggableHeaderButtons]);
+
+  const [allowMultipleMenus, setAllowMultipleMenus] = useState<boolean>(() => {
+    try {
+      const v = window.localStorage.getItem("juicecut.settings.allowMultipleMenus");
+      return v === null ? true : v === "true";
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("juicecut.settings.allowMultipleMenus", String(allowMultipleMenus));
+      if (!(window as any).juicecut) (window as any).juicecut = {};
+      if (!(window as any).juicecut.settings) (window as any).juicecut.settings = {};
+      (window as any).juicecut.settings.allowMultipleMenus = allowMultipleMenus;
+    } catch {}
+  }, [allowMultipleMenus]);
   const [pnS, setPnS] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_s"); return v !== null ? Number(v) : 16.4; } catch { return 16.4; } });
   const [pnVo, setPnVo] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_v_o"); return v !== null ? Number(v) : 0.4; } catch { return 0.4; } });
   const [pnHb, setPnHb] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.playneedle_h_b"); return v !== null ? Number(v) : 0.8; } catch { return 0.8; } });
@@ -297,6 +316,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <button type="button" className="icon-btn" onClick={() => setDraggableHeaderButtons(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
+              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
+                <span style={{ flex: 1, lineHeight: 1.2 }}>Allow open multiple menus</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="checkbox" className="settings-checkbox" checked={allowMultipleMenus} onChange={e => setAllowMultipleMenus(e.target.checked)} />
+                  <button type="button" className="icon-btn" onClick={() => setAllowMultipleMenus(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
+                </div>
+              </div>
             </div>
           )}
           {activeTab === "multiselects" && (
@@ -403,6 +429,7 @@ export function OpenSettings(pageData?: any, scroll?: number | null) {
   document.body.appendChild(container);
   const root = createRoot(container);
   const cleanup = () => { try { root.unmount(); } catch (e) {} if (container.parentNode) container.parentNode.removeChild(container); (window as any).__popClose?.(); };
+  if (!(window as any).__canOpenModal?.()) return;
   (window as any).__pushClose?.(cleanup);
   root.render(<SettingsShell initialPageData={pageData} initialScroll={scroll ?? null} onClose={cleanup} />);
   return cleanup;

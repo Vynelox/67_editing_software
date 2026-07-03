@@ -93,6 +93,7 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
   };
+  if (!(window as any).__canOpenModal?.()) return;
   (window as any).__pushClose?.(closeDirectly);
   root.render(<TorusMenuEditorModal onClose={closeDirectly} onBack={closeAndReturnToSettings} />);
   return closeDirectly;

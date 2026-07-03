@@ -28,6 +28,22 @@ const closeStack: Array<() => void> = [];
 (window as any).__popClose = () => { closeStack.pop(); };
 (window as any).__peekClose = () => closeStack.length > 0 ? closeStack[closeStack.length - 1] : null;
 
+// New helper to check if any modal is currently open
+(window as any).__isAnyModalOpen = () => closeStack.length > 0;
+
+// Global function to check if a new modal can be opened
+// Returns true if allowed, false if blocked (when allowMultipleMenus is false and a modal is already open)
+(window as any).__canOpenModal = () => {
+  try {
+    // Check if allowMultipleMenus setting is disabled (false)
+    const allowMultiple = (window as any).juicecut?.settings?.allowMultipleMenus ?? true;
+    if (!allowMultiple && closeStack.length > 0) {
+      return false; // Block opening new modal
+    }
+  } catch {}
+  return true; // Allow opening
+};
+
 const TRACKS: Track[] = [
   { id: 'v1', type: 'video', label: 'V1' },
   { id: 'a1', type: 'audio', label: 'A1' },
