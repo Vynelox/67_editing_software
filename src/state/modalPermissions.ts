@@ -1,14 +1,28 @@
 import { modalManager } from './modalManager';
 import type { ModalType } from './modalManager';
+import { showBlockedDialog } from '../components/BlockedDialog';
 
 // Register all modal permission rules here
 // This is where all the complex if-else logic lives centralized
 
 export function registerModalPermissions() {
-  // Settings modal - always allowed
+  // Settings modal
   modalManager.registerPermission({
     id: 'settings',
     canOpen: (state) => {
+      // If allow multiple menus is true, always allow
+      if (state.settings.allowMultipleMenus) {
+        return { allowed: true };
+      }
+      
+      // If any modal is open, block it
+      if (state.openModals.size > 0) {
+        return { 
+          allowed: false, 
+          reason: '⚠ <br/>opening multiple menus is disabled' 
+        };
+      }
+      
       return { allowed: true };
     }
   });
@@ -31,7 +45,7 @@ export function registerModalPermissions() {
       if (state.openModals.size > 0) {
         return { 
           allowed: false, 
-          reason: 'Opening multiple menus is disabled' 
+          reason: '⚠ <br/>opening multiple menus is disabled' 
         };
       }
       
@@ -50,7 +64,7 @@ export function registerModalPermissions() {
       if (state.openModals.size > 0) {
         return { 
           allowed: false, 
-          reason: 'Opening multiple menus is disabled' 
+          reason: '⚠ <br/>opening multiple menus is disabled' 
         };
       }
       
@@ -69,7 +83,7 @@ export function registerModalPermissions() {
       if (state.openModals.size > 0) {
         return { 
           allowed: false, 
-          reason: 'Opening multiple menus is disabled' 
+          reason: '⚠ <br/>opening multiple menus is disabled' 
         };
       }
       
@@ -88,7 +102,7 @@ export function registerModalPermissions() {
       if (state.openModals.size > 0) {
         return { 
           allowed: false, 
-          reason: 'Opening multiple menus is disabled' 
+          reason: '⚠ <br/>opening multiple menus is disabled' 
         };
       }
       
@@ -113,7 +127,5 @@ export function registerModalPermissions() {
   });
 }
 
-// Helper function to show a dialog when a modal is blocked
-export function showBlockedDialog(reason: string) {
-  alert(reason);
-}
+// The showBlockedDialog function is now imported from ../components/BlockedDialog
+// and re-exported through src/state/index.ts

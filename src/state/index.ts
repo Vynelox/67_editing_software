@@ -1,2 +1,3 @@
 export { modalManager } from './modalManager';
-export { registerModalPermissions, showBlockedDialog } from './modalPermissions';
+export { registerModalPermissions } from './modalPermissions';
+export { showBlockedDialog } from '../components/BlockedDialog';

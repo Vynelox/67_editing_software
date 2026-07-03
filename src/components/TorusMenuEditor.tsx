@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import GraphEditor, { DEFAULT_TORUS_SIZE_GRAPH, getSavedSizeGraph, SizeGraphPoint, GraphConfig, DEFAULT_GRAPH_CONFIG } from './graph';
 import { getSavedSegmentHandleValues, saveSegmentHandleValues } from '../utils/torusGraphEasing';
 import DraggableModal from './DraggableModal';
+import { showBlockedDialog } from './BlockedDialog';
+import { modalManager } from '../state/modalManager';
 import TorusMenu from './TorusMenu';
 import { Slider } from './Adjustables';
 import { RotateCcw } from 'lucide-react';
@@ -79,6 +81,12 @@ function delayToSlider(delay: number): number {
 }
 
 export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
+  const result = modalManager.requestOpen('torusMenuEditor');
+  if (!result.allowed) {
+    showBlockedDialog(result.reason || '⚠ <br/>opening multiple menus is disabled');
+    return;
+  }
+  
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -93,7 +101,6 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
   };
-  if (!(window as any).__canOpenModal?.()) return;
   (window as any).__pushClose?.(closeDirectly);
   root.render(<TorusMenuEditorModal onClose={closeDirectly} onBack={closeAndReturnToSettings} />);
   return closeDirectly;

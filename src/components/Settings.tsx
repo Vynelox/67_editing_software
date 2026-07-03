@@ -7,6 +7,7 @@ import DraggableModal from './DraggableModal';
 import { OpenTorusMenuEditor } from './TorusMenuEditor';
 import { OpenPlayneedleEditor } from './PlayneedleEditor';
 import { modalManager } from '../state/modalManager';
+import { showBlockedDialog } from './BlockedDialog';
 
 // Stretch factors for the playneedle icon
 const PLAYNEEDLE_ICON_HORIZONTAL_STRETCH_FACTOR = 0.4; // default 0.4
@@ -481,11 +482,16 @@ export function OpenSettings(pageData?: any, scroll?: number | null) {
     document.documentElement.style.setProperty('--theme-transition-timing', 'cubic-bezier(0.4, 0, 0.2, 1)');
   }
   
+  const result = modalManager.requestOpen('settings');
+  if (!result.allowed) {
+    showBlockedDialog(result.reason || '⚠ <br/>opening multiple menus is disabled');
+    return;
+  }
+  
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
   const cleanup = () => { try { root.unmount(); } catch (e) {} if (container.parentNode) container.parentNode.removeChild(container); (window as any).__popClose?.(); };
-  if (!(window as any).__canOpenModal?.()) return;
   (window as any).__pushClose?.(cleanup);
   root.render(<SettingsShell initialPageData={pageData} initialScroll={scroll ?? null} onClose={cleanup} />);
   return cleanup;

@@ -27,6 +27,26 @@ class ModalManager {
   private permissions: Map<ModalType, ModalPermission> = new Map();
   private listeners: Set<(state: ModalManagerState) => void> = new Set();
   
+  constructor() {
+    // Initialize settings from localStorage so the manager reflects
+    // persisted user preferences on app startup.
+    try {
+      const v = window.localStorage.getItem('juicecut.settings.allowMultipleMenus');
+      if (v !== null) {
+        this.state.settings.allowMultipleMenus = v === 'true';
+      }
+    } catch {}
+    
+    // Keep in sync with the rest of the app via the global settings-changed event.
+    window.addEventListener('juicecut.settings-changed', ((e: CustomEvent) => {
+      const { key, value } = e.detail;
+      if (key in this.state.settings) {
+        this.state.settings[key as keyof ModalManagerState['settings']] = value;
+        this.notifyListeners();
+      }
+    }) as EventListener);
+  }
+  
   // Subscribe to state changes
   subscribe(listener: (state: ModalManagerState) => void) {
     this.listeners.add(listener);
@@ -100,7 +120,7 @@ export const modalManager = new ModalManager();
 
 // Export helper functions for global access
 export const __canOpenModal = (): boolean => {
-  return !modalManager.getState().settings.allowMultipleMenus || !modalManager.hasAnyOpen();
+  return modalManager.getState().settings.allowMultipleMenus || !modalManager.hasAnyOpen();
 };
 
 export const __pushClose = (fn: () => void): void => {
@@ -112,9 +132,9 @@ export const __popClose = (): void => {
   // Backwards compatibility
 };
 
-export const __peekClose = (): (() => void) | null => {
+export const __peekClose = ((): (() => void) | null => {
   return null; // Deprecated - use modalManager instead
-};
+});
 
 export const __isAnyModalOpen = (): boolean => {
   return modalManager.hasAnyOpen();

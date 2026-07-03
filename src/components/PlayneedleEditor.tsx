@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import FormulaPlayneedle from './FormulaPlayneedle';
 import DraggableModal from './DraggableModal';
+import { showBlockedDialog } from './BlockedDialog';
 import { Slider } from './Adjustables';
+import { modalManager } from '../state/modalManager';
 import { RotateCcw } from 'lucide-react';
 
 // Playneedle Editor modal caps
@@ -112,6 +114,12 @@ function getSavedPnWidth(): number {
 }
 
 export function OpenPlayneedleEditor(onCloseCallback?: () => void) {
+  const result = modalManager.requestOpen('playneedleEditor');
+  if (!result.allowed) {
+    showBlockedDialog(result.reason || '⚠ <br/>opening multiple menus is disabled');
+    return;
+  }
+  
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -126,7 +134,6 @@ export function OpenPlayneedleEditor(onCloseCallback?: () => void) {
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
   };
-  if (!(window as any).__canOpenModal?.()) return;
   (window as any).__pushClose?.(closeDirectly);
   root.render(<PlayneedleEditorModal onClose={closeDirectly} onBack={closeAndReturnToSettings} />);
   return closeDirectly;
