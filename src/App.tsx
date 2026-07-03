@@ -16,33 +16,15 @@ import {
   FPS, generateId, secondsToFrames
 } from './types';
 import { HistoryProvider, useHistory } from './state/history';
+import { modalManager, registerModalPermissions, showBlockedDialog } from './state';
 
 const DEFAULT_IMAGE_DURATION = 5 * FPS;
 const WINDOW_BUTTONS_SPACING = 10; //px
 const WINDOW_BUTTONS_SIZE = 15; //px
 const TOP_BAR_MENU_BUTTONS_SPACING = 0; //px
 
-// Global close stack for escape key handling (LIFO)
-const closeStack: Array<() => void> = [];
-(window as any).__pushClose = (fn: () => void) => { closeStack.push(fn); };
-(window as any).__popClose = () => { closeStack.pop(); };
-(window as any).__peekClose = () => closeStack.length > 0 ? closeStack[closeStack.length - 1] : null;
-
-// New helper to check if any modal is currently open
-(window as any).__isAnyModalOpen = () => closeStack.length > 0;
-
-// Global function to check if a new modal can be opened
-// Returns true if allowed, false if blocked (when allowMultipleMenus is false and a modal is already open)
-(window as any).__canOpenModal = () => {
-  try {
-    // Check if allowMultipleMenus setting is disabled (false)
-    const allowMultiple = (window as any).juicecut?.settings?.allowMultipleMenus ?? true;
-    if (!allowMultiple && closeStack.length > 0) {
-      return false; // Block opening new modal
-    }
-  } catch {}
-  return true; // Allow opening
-};
+// Initialize modal manager permissions
+registerModalPermissions();
 
 const TRACKS: Track[] = [
   { id: 'v1', type: 'video', label: 'V1' },
@@ -639,15 +621,25 @@ function AppContent() {
         </div>
         <div style={{ display: 'flex', gap: TOP_BAR_MENU_BUTTONS_SPACING, alignItems: 'center', marginLeft: WINDOW_BUTTONS_SPACING }}>
           <button className="icon-btn" onClick={() => {
-            if (!(window as any).__canOpenModal?.()) return;
+            const result = modalManager.requestOpen('styles');
+            if (!result.allowed) {
+              showBlockedDialog(result.reason || 'Cannot open modal');
+              return;
+            }
             setShowStyle(true);
-            (window as any).__pushClose?.(() => { setShowStyle(false); setStylePage(null); });
           }} title="Style">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2C12 2 5 10 5 15c0 3.866 3.134 7 7 7s7-3.134 7-7c0-5-7-13-7-13z"/>
             </svg>
           </button>
-          <button className="icon-btn" onClick={() => { try { if ((window as any).__canOpenModal?.()) OpenSettings({ tab: 'misc' }, null); } catch (e) {} }} title="Settings">
+          <button className="icon-btn" onClick={() => { try {
+            const result = modalManager.requestOpen('settings');
+            if (result.allowed) {
+              OpenSettings({ tab: 'misc' }, null);
+            } else {
+              showBlockedDialog(result.reason || 'Cannot open modal');
+            }
+          } catch (e) {} }} title="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -689,9 +681,12 @@ function AppContent() {
 
         <div className="workspace-panel-viewer">
           <Viewer clips={clips} mediaItems={mediaItems} playhead={playhead} playing={playing} totalFrames={totalFrames} onExport={() => {
-            if (!(window as any).__canOpenModal?.()) return;
+            const result = modalManager.requestOpen('export');
+            if (!result.allowed) {
+              showBlockedDialog(result.reason || 'Cannot open modal');
+              return;
+            }
             setShowExport(true);
-            (window as any).__pushClose?.(() => setShowExport(false));
           }} />
           <ViewerControls
             style={{ marginTop: 'auto' }}
@@ -718,7 +713,10 @@ function AppContent() {
       {showExport && (
         <DraggableModal
           title="Export"
-          onClose={() => setShowExport(false)}
+          onClose={() => {
+            setShowExport(false);
+            modalManager.close('export');
+          }}
           style={{ width: 400 }}
           body={
             <div className="settings-panel-content">
@@ -739,7 +737,10 @@ function AppContent() {
           }
         />
       )}
-      <StylesModal showStyle={showStyle} setShowStyle={setShowStyle} stylePage={stylePage} setStylePage={setStylePage} />
+      <StylesModal showStyle={showStyle} setShowStyle={(v) => {
+        setShowStyle(v);
+        if (!v) modalManager.close('styles');
+      }} stylePage={stylePage} setStylePage={setStylePage} />
       {rollClip && rollMedia && (
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
       )}

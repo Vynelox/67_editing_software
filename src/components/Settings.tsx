@@ -6,6 +6,7 @@ import { getShortcutKeys as scGetKeys, updateShortcuts as scUpdate, resetDefault
 import DraggableModal from './DraggableModal';
 import { OpenTorusMenuEditor } from './TorusMenuEditor';
 import { OpenPlayneedleEditor } from './PlayneedleEditor';
+import { modalManager } from '../state/modalManager';
 
 // Stretch factors for the playneedle icon
 const PLAYNEEDLE_ICON_HORIZONTAL_STRETCH_FACTOR = 0.4; // default 0.4
@@ -166,6 +167,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
       if (!(window as any).juicecut) (window as any).juicecut = {};
       if (!(window as any).juicecut.settings) (window as any).juicecut.settings = {};
       (window as any).juicecut.settings.allowMultipleMenus = allowMultipleMenus;
+      modalManager.updateSettings('allowMultipleMenus', allowMultipleMenus);
       window.dispatchEvent(new CustomEvent("juicecut.settings-changed", { detail: { key: "allowMultipleMenus", value: allowMultipleMenus } }));
     } catch {}
   }, [allowMultipleMenus]);
