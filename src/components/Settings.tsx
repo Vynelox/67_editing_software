@@ -143,6 +143,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
       return true;
     }
   });
+
+  // Toggle Switch component for cleaner rendering
+  function ToggleSwitch({ checked, onChange, disabled, title }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; title?: string }) {
+    return (
+      <input 
+        type="checkbox" 
+        className="toggle-switch" 
+        checked={checked} 
+        onChange={e => onChange(e.target.checked)} 
+        disabled={disabled}
+        title={title}
+      />
+    );
+  }
   
   useEffect(() => {
     try {
@@ -343,17 +357,17 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
           )}
           {activeTab === "checkboxes" && (
             <div className="settings-panel-content">
-              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                 <span style={{ flex: 1, lineHeight: 1.2 }}>Include splitter resize<br />actions in Ctrl+Z/Ctrl+Y</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input type="checkbox" className="settings-checkbox" checked={includeResizeInUndo} onChange={e => setIncludeResizeInUndo(e.target.checked)} />
+                  <ToggleSwitch checked={includeResizeInUndo} onChange={setIncludeResizeInUndo} title="Reset to default (Checked)" />
                   <button type="button" className="icon-btn" onClick={() => setIncludeResizeInUndo(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
-              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
+               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
                 <span style={{ flex: 1, lineHeight: 1.2 }}>Allow ×, -, and ← buttons in modals' header bar to be draggable</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input type="checkbox" className="settings-checkbox" checked={draggableHeaderButtons} onChange={e => setDraggableHeaderButtons(e.target.checked)} />
+                  <ToggleSwitch checked={draggableHeaderButtons} onChange={setDraggableHeaderButtons} title="Reset to default (Checked)" />
                   <button type="button" className="icon-btn" onClick={() => setDraggableHeaderButtons(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
@@ -362,21 +376,21 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   {(draggableHeaderButtons || !requireDragHover) ? 'Execute header button actions when dragging' : 'requires "Allow ×, -, and ←" checkbox to be enabled'}
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, opacity: draggableHeaderButtons ? 1 : 0.5, pointerEvents: draggableHeaderButtons ? 'auto' : 'none' }}>
-                  <input type="checkbox" className="settings-checkbox" checked={executeHeaderButtonsOnDrag} onChange={e => setExecuteHeaderButtonsOnDrag(e.target.checked)} disabled={!draggableHeaderButtons} />
+                  <ToggleSwitch checked={executeHeaderButtonsOnDrag} onChange={setExecuteHeaderButtonsOnDrag} disabled={!draggableHeaderButtons} title={draggableHeaderButtons ? "Reset to default (Checked)" : undefined} />
                   <button type="button" className="icon-btn" onClick={() => setExecuteHeaderButtonsOnDrag(true)} title={draggableHeaderButtons ? "Reset to default (Checked)" : undefined} style={{ padding: 4 }} disabled={!draggableHeaderButtons}><RotateCcw size={14} /></button>
                 </div>
               </div>
-              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
+               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
                 <span style={{ flex: 1, lineHeight: 1.2 }}>Allow open multiple menus</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input type="checkbox" className="settings-checkbox" checked={allowMultipleMenus} onChange={e => setAllowMultipleMenus(e.target.checked)} />
+                  <ToggleSwitch checked={allowMultipleMenus} onChange={setAllowMultipleMenus} title="Reset to default (Checked)" />
                   <button type="button" className="icon-btn" onClick={() => setAllowMultipleMenus(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
-              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
+               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
                 <span style={{ flex: 1, lineHeight: 1.2 }}>Allow edits when menu is open</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input type="checkbox" className="settings-checkbox" checked={allowEditsWhenMenuOpen} onChange={e => setAllowEditsWhenMenuOpen(e.target.checked)} />
+                  <ToggleSwitch checked={allowEditsWhenMenuOpen} onChange={setAllowEditsWhenMenuOpen} title="Reset to default (Checked)" />
                   <button type="button" className="icon-btn" onClick={() => setAllowEditsWhenMenuOpen(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
