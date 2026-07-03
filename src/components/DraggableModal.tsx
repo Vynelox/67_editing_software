@@ -37,6 +37,18 @@ export default function DraggableModal({ title, body, onClose, className = '', m
   const dragStartPos = useRef({ x: 0, y: 0 });
   const hasDraggedSignificantly = useRef(false);
 
+  const resetPosition = useCallback(() => {
+    setPosition({ x: 0, y: 0 });
+    setIsMinimized(false);
+  }, []);
+
+  const handleOverlayDoubleClick = useCallback((e: React.MouseEvent) => {
+    // Only reset if double-clicking directly on the overlay background, not the modal
+    if (e.target === overlayRef.current) {
+      resetPosition();
+    }
+  }, [resetPosition]);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     // Check if we should allow dragging on header buttons
@@ -104,8 +116,26 @@ export default function DraggableModal({ title, body, onClose, className = '', m
     };
   }, [isDragging]);
 
+  const allowEditsWhenMenuOpen = (window as any).juicecut?.settings?.allowEditsWhenMenuOpen ?? true;
+
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" ref={overlayRef}>
+    <div className="modal-overlay" role="dialog" aria-modal="true" ref={overlayRef} onDoubleClick={handleOverlayDoubleClick}>
+      {!allowEditsWhenMenuOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          color: 'var(--text-muted)',
+          fontSize: 14,
+          opacity: 0.6,
+          letterSpacing: '0.3px',
+        }}>
+          Double click background to return modal to center
+        </div>
+      )}
       <div
         className={`modal-box ${className}`}
         style={{
@@ -113,6 +143,7 @@ export default function DraggableModal({ title, body, onClose, className = '', m
           left: `calc(50% + ${position.x}px)`,
           top: `calc(50% + ${position.y}px)`,
           transform: 'translate(-50%, -50%)',
+          zIndex: 1,
           ...style,
           ...(isMinimized ? { height: 'auto', minHeight: 0, maxHeight: 'none', overflow: 'hidden' } : {}),
         }}

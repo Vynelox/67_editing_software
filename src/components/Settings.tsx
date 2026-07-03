@@ -10,7 +10,7 @@ import { OpenPlayneedleEditor } from './PlayneedleEditor';
 // Stretch factors for the playneedle icon
 const PLAYNEEDLE_ICON_HORIZONTAL_STRETCH_FACTOR = 0.4; // default 0.4
 const PLAYNEEDLE_ICON_VERTICAL_STRETCH_FACTOR = 3; // default 3
-const PLAYNEEDLE_ICON_Y_OFFSET_PX = 3;
+const PLAYNEEDLE_ICON_Y_OFFSET_PX = 3; //bullshit variable, not used
 
 // Settings modal dimensions
 const SETTINGS_MODAL_WIDTH = '480px'; //default 480px
