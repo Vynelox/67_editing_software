@@ -331,8 +331,8 @@ function AppContent() {
         setHasModalOpen(prev => prev); // trigger re-render
       }
     };
-    window.addEventListener('juicecut-settings-changed', handler);
-    return () => window.removeEventListener('juicecut-settings-changed', handler);
+    window.addEventListener('juicecut.settings-changed', handler);
+    return () => window.removeEventListener('juicecut.settings-changed', handler);
   }, []);
   useEffect(() => {
     try { window.localStorage.setItem('juicecut.settings.includeResizeInUndo', includeResizeInUndo ? 'true' : 'false'); } catch {}
