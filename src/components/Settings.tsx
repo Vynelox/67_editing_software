@@ -301,9 +301,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 <SliderSetting label="Timeline scroll zoom smoothness" value={scrollZoomSmoothness} min={0} max={100} step={1} onChange={setScrollZoomSmoothness} onReset={() => setScrollZoomSmoothness(70)} formatValue={v => `${v.toFixed(3)}%`} />
               </SettingsCategory>
                 {/* Playneedle settings have been moved to the Playneedle Editor component. */}
-              <SettingsCategory title="Playneedle Icon">
-                <SliderSetting label="Horizontal stretch factor" value={playneedleIconHorizontalStretch} min={0.5} max={3} step={0.01} onChange={setPlayneedleIconHorizontalStretch} onReset={() => setPlayneedleIconHorizontalStretch(PLAYNEEDLE_ICON_HORIZONTAL_STRETCH_FACTOR)} />
-              </SettingsCategory>
               <SettingsCategory title="Miscellaneous">
                 <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v.toFixed(3)}%`} />
                 <SliderSetting label="Draggable modal background blur amount" value={elevatedPanelBlur} min={0} max={100} step={1} onChange={setElevatedPanelBlur} onReset={() => setElevatedPanelBlur(0)} formatValue={v => `${v.toFixed(3)}%`} />
