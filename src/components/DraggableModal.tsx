@@ -59,8 +59,10 @@ export default function DraggableModal({ title, body, onClose, className = '', m
     const allowDraggableButtons = (window as any).juicecut?.settings?.draggableHeaderButtons ?? true;
     
     // Don't start drag if clicking close or minimize buttons (unless allowed)
-    if (!allowDraggableButtons && 
-        (target.closest('.modal-minimize-btn') || target.closest('[aria-label="Close"]') || target.closest('.icon-btn'))) {
+    // But still allow the click event to propagate to the button's onClick handler
+    const isHeaderButton = target.closest('.modal-minimize-btn') || target.closest('[aria-label="Close"]') || target.closest('.icon-btn');
+    if (!allowDraggableButtons && isHeaderButton) {
+      // Don't start dragging, but don't prevent the click from reaching the button
       return;
     }
     
