@@ -516,7 +516,12 @@ export function OpenSettings(pageData?: any, scroll?: number | null) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
-  const cleanup = () => { try { root.unmount(); } catch (e) {} if (container.parentNode) container.parentNode.removeChild(container); (window as any).__popClose?.(); };
+  const cleanup = () => { 
+    try { root.unmount(); } catch (e) {} 
+    if (container.parentNode) container.parentNode.removeChild(container); 
+    modalManager.close('settings');
+    (window as any).__popClose?.(); 
+  };
   (window as any).__pushClose?.(cleanup);
   root.render(<SettingsShell initialPageData={pageData} initialScroll={scroll ?? null} onClose={cleanup} />);
   return cleanup;
