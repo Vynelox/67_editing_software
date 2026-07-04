@@ -382,13 +382,13 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                   <button type="button" className="icon-btn" onClick={() => setDraggableHeaderButtons(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
-              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }} onMouseEnter={() => setRequireDragHover(true)} onMouseLeave={() => setRequireDragHover(false)}>
-                <span style={{ flex: 1, lineHeight: 1.2, color: draggableHeaderButtons ? 'var(--text-secondary)' : 'var(--text-muted)', opacity: draggableHeaderButtons ? 1 : ((!draggableHeaderButtons && requireDragHover) ? 1 : 0.7), transition: 'opacity 0.2s ease, color 0.2s ease', fontSize: 'inherit', fontWeight: 'inherit' }}>
-                  {(draggableHeaderButtons || !requireDragHover) ? 'Execute header button actions when dragging' : 'requires "Allow ×, -, and ←" switch to be enabled'}
+              <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
+                <span style={{ flex: 1, lineHeight: 1.2, color: 'var(--text-secondary)' }}>
+                  Execute header button actions when dragging
                 </span>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, opacity: draggableHeaderButtons ? 1 : 0.5, pointerEvents: draggableHeaderButtons ? 'auto' : 'none' }}>
-                  <ToggleSwitch checked={executeHeaderButtonsOnDrag} onChange={setExecuteHeaderButtonsOnDrag} disabled={!draggableHeaderButtons} title={draggableHeaderButtons ? "Reset to default (Checked)" : undefined} />
-                  <button type="button" className="icon-btn" onClick={() => setExecuteHeaderButtonsOnDrag(true)} title={draggableHeaderButtons ? "Reset to default (Checked)" : undefined} style={{ padding: 4 }} disabled={!draggableHeaderButtons}><RotateCcw size={14} /></button>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <ToggleSwitch checked={executeHeaderButtonsOnDrag} onChange={setExecuteHeaderButtonsOnDrag} title="Reset to default (Checked)" />
+                  <button type="button" className="icon-btn" onClick={() => setExecuteHeaderButtonsOnDrag(true)} title="Reset to default (Checked)" style={{ padding: 4 }}><RotateCcw size={14} /></button>
                 </div>
               </div>
                <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }}>
