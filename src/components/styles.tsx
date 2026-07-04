@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { modalManager } from '../state/modalManager';
 // Modal dimensions for the Styles page
 const MODAL_WIDTH = '480px'; //default 480px
 const MODAL_HEIGHT = '72vh';
@@ -177,7 +178,7 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
   return (
     <DraggableModal
       title={getPathLabel(stylePage)}
-      onClose={() => { setShowStyle(false); setStylePage(null); }}
+      onClose={() => { modalManager.close('styles'); setShowStyle(false); setStylePage(null); }}
       className="settings-modal"
       style={{ width: MODAL_WIDTH, height: MODAL_HEIGHT, minHeight: MODAL_HEIGHT, maxHeight: MODAL_HEIGHT, overflow: 'hidden' }}
       headerLeft={stylePage && (

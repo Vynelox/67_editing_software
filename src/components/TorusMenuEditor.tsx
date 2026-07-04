@@ -94,12 +94,14 @@ export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
     try { root.unmount(); } catch (e) {}
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
+    modalManager.close('torusMenuEditor');
     if (onCloseCallback) onCloseCallback();
   };
   const closeDirectly = () => {
     try { root.unmount(); } catch (e) {}
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
+    modalManager.close('torusMenuEditor');
   };
   (window as any).__pushClose?.(closeDirectly);
   root.render(<TorusMenuEditorModal onClose={closeDirectly} onBack={closeAndReturnToSettings} />);

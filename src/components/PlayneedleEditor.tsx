@@ -127,12 +127,14 @@ export function OpenPlayneedleEditor(onCloseCallback?: () => void) {
     try { root.unmount(); } catch (e) {}
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
+    modalManager.close('playneedleEditor');
     if (onCloseCallback) onCloseCallback();
   };
   const closeDirectly = () => {
     try { root.unmount(); } catch (e) {}
     if (container.parentNode) container.parentNode.removeChild(container);
     (window as any).__popClose?.();
+    modalManager.close('playneedleEditor');
   };
   (window as any).__pushClose?.(closeDirectly);
   root.render(<PlayneedleEditorModal onClose={closeDirectly} onBack={closeAndReturnToSettings} />);

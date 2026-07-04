@@ -511,7 +511,7 @@ export function OpenSettings(pageData?: any, scroll?: number | null) {
   return cleanup;
 }
 
-export function closeSettings() { const existing = document.querySelector(".modal-overlay.settings-modal"); if (existing && existing.parentNode) existing.parentNode.removeChild(existing); }
+export function closeSettings() { modalManager.close('settings'); const existing = document.querySelector(".modal-overlay.settings-modal"); if (existing && existing.parentNode) existing.parentNode.removeChild(existing); }
 (window as any).__onColorPickerClose = null;
 try { (window as any).OpenSettings = OpenSettings; } catch (e) {}
 try { (window as any).closeSettings = closeSettings; } catch (e) {}

@@ -76,7 +76,7 @@ function generateThumbnail(file: File, type: MediaItem['type']): Promise<string 
 
 function AppContent() {
   const history = useHistory();
-  const multipleMenusToast = new Toast('⚠ <br/>opening multiple <br/> menus is disabled');
+  const multipleMenusToast = new Toast('opening multiple <br/> menus is disabled!');
   const [mediaItems, setMediaItems] = useState<Map<string, MediaItem>>(new Map());
   const [clips, setClips] = useState<TimelineClip[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -623,25 +623,15 @@ function AppContent() {
           <span>67 editing software</span>
         </div>
         <div style={{ display: 'flex', gap: TOP_BAR_MENU_BUTTONS_SPACING, alignItems: 'center', marginLeft: WINDOW_BUTTONS_SPACING }}>
-          <button className="icon-btn" onClick={(e) => {
-            const result = modalManager.requestOpen('styles');
-            if (!result.allowed) {
-              multipleMenusToast.show(e.currentTarget);
-              return;
-            }
+          <button className="icon-btn" onClick={() => {
             setShowStyle(true);
           }} title="Style">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2C12 2 5 10 5 15c0 3.866 3.134 7 7 7s7-3.134 7-7c0-5-7-13-7-13z"/>
             </svg>
           </button>
-          <button className="icon-btn" onClick={(e) => {
-            const result = modalManager.requestOpen('settings');
-            if (result.allowed) {
-              OpenSettings({ tab: 'misc' }, null);
-            } else {
-              multipleMenusToast.show(e.currentTarget);
-            }
+          <button className="icon-btn" onClick={() => {
+            OpenSettings({ tab: 'misc' }, null);
           }} title="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"/>
@@ -717,8 +707,8 @@ function AppContent() {
         <DraggableModal
           title="Export"
           onClose={() => {
-            setShowExport(false);
             modalManager.close('export');
+            setShowExport(false);
           }}
           style={{ width: 400 }}
           body={
