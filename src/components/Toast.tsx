@@ -72,28 +72,41 @@ class Toast {
       font-size: 12px;
       color: var(--text-primary, #f1f5f9);
       box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-      white-space: nowrap;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-width: 180px;
       justify-content: center;
       text-align: center;
+      line-height: 1.4;
     `;
 
     // Create the container
     const container = document.createElement('div');
     container.style.cssText = `
       position: fixed;
-      left: ${left}px;
       top: ${top}px;
       z-index: 999999;
       pointer-events: none;
+      display: inline-block;
     `;
     container.appendChild(arrow);
     container.appendChild(arrowFill);
     container.appendChild(content);
     document.body.appendChild(container);
+
+    // Position the container so the arrow points to the target center
+    const toastRect = container.getBoundingClientRect();
+    const toastWidth = toastRect.width;
+    if (targetElement) {
+      const targetRect = targetElement.getBoundingClientRect();
+      const targetCenterX = targetRect.left + targetRect.width / 2;
+      // Position so the arrow (center of toast) aligns with target center
+      container.style.left = `${targetCenterX - toastWidth / 2}px`;
+    } else {
+      // Center on mouse position or viewport center
+      const mouseX = (window as any).mouseX || window.innerWidth / 2;
+      container.style.left = `${mouseX - toastWidth / 2}px`;
+    }
 
     // Track as active toast
     Toast.activeToast = container;
