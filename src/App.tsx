@@ -624,6 +624,11 @@ function AppContent() {
         </div>
         <div style={{ display: 'flex', gap: TOP_BAR_MENU_BUTTONS_SPACING, alignItems: 'center', marginLeft: WINDOW_BUTTONS_SPACING }}>
           <button className="icon-btn" onClick={() => {
+            const result = modalManager.requestOpen('styles');
+            if (!result.allowed) {
+              multipleMenusToast.show();
+              return;
+            }
             setShowStyle(true);
           }} title="Style">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
