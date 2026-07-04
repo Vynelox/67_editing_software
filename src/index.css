@@ -1409,12 +1409,13 @@ input[type="color"] {
   height: 20px;
   background: var(--text-primary);
   border-radius: 50%;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .toggle-switch:checked {
   background: var(--input-field);
   box-shadow: 0 0 10px rgba(44, 51, 73, 0.5), 0 0 20px rgba(44, 51, 73, 0.3);
+  transition: background var(--theme-transition-duration) var(--theme-transition-timing), box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .toggle-switch:checked::after {

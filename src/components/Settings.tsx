@@ -25,6 +25,14 @@ const SLIDER_GAP_PX = 15; //default 15 px
 
 type SettingsTab = "sliders" | "checkboxes" | "shortcuts" | "multiselects" | "components";
 
+const TAB_NAMES: Record<SettingsTab, string> = {
+  sliders: "Sliders",
+  checkboxes: "Switches",
+  shortcuts: "Keyboard",
+  multiselects: "Multiselects",
+  components: "Components",
+};
+
 interface Props {
   onClose?: () => void;
   initialPageData?: any;
@@ -118,6 +126,9 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     if (initialPageData?.tab === "components") return "components";
     return "sliders";
   });
+  
+  // Map tab keys to display names
+  const getTabLabel = (tab: SettingsTab): string => TAB_NAMES[tab];
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   const [guiScale, setGuiScale] = useState<number>(() => { try { const v = window.localStorage.getItem("juicecut.settings.guiScale"); return v ? Number(v) : 100; } catch { return 100; } });
@@ -312,11 +323,11 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
     <DraggableModal title="Settings" onClose={() => { onClose?.(); }} className="settings-modal" style={{ width: SETTINGS_MODAL_WIDTH, height: SETTINGS_MODAL_HEIGHT, minHeight: SETTINGS_MODAL_MIN_HEIGHT, maxHeight: SETTINGS_MODAL_MAX_HEIGHT, overflow: 'hidden' }} body={
       <div className="settings-body" ref={panelRef}>
         <nav className="settings-tabs" aria-label="Settings sections">
-          <button type="button" className={"settings-tab" + (activeTab === "shortcuts" ? " settings-tab--active" : "")} onClick={() => setActiveTab("shortcuts")}>Keyboard</button>
-          <button type="button" className={"settings-tab" + (activeTab === "sliders" ? " settings-tab--active" : "")} onClick={() => setActiveTab("sliders")}>Sliders</button>
-          <button type="button" className={"settings-tab" + (activeTab === "checkboxes" ? " settings-tab--active" : "")} onClick={() => setActiveTab("checkboxes")}>Checkboxes</button>
-          <button type="button" className={"settings-tab" + (activeTab === "multiselects" ? " settings-tab--active" : "")} onClick={() => setActiveTab("multiselects")}>Multiselects</button>
-          <button type="button" className={"settings-tab" + (activeTab === "components" ? " settings-tab--active" : "")} onClick={() => setActiveTab("components")}>Components</button>
+          <button type="button" className={"settings-tab" + (activeTab === "shortcuts" ? " settings-tab--active" : "")} onClick={() => setActiveTab("shortcuts")}>{getTabLabel("shortcuts")}</button>
+          <button type="button" className={"settings-tab" + (activeTab === "sliders" ? " settings-tab--active" : "")} onClick={() => setActiveTab("sliders")}>{getTabLabel("sliders")}</button>
+          <button type="button" className={"settings-tab" + (activeTab === "checkboxes" ? " settings-tab--active" : "")} onClick={() => setActiveTab("checkboxes")}>{getTabLabel("checkboxes")}</button>
+          <button type="button" className={"settings-tab" + (activeTab === "multiselects" ? " settings-tab--active" : "")} onClick={() => setActiveTab("multiselects")}>{getTabLabel("multiselects")}</button>
+          <button type="button" className={"settings-tab" + (activeTab === "components" ? " settings-tab--active" : "")} onClick={() => setActiveTab("components")}>{getTabLabel("components")}</button>
         </nav>
         <div className="settings-panel">
           {activeTab === "sliders" && (
