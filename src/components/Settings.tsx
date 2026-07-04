@@ -332,6 +332,16 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 <input type="range" className="settings-range-input" min={50} max={200} step={1} value={guiScale} onChange={e => setGuiScale(Number(e.target.value))} />
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)" }}><span>50%</span><span>200%</span></div>
               </div>
+              <SliderSetting 
+                label="Global transition duration"
+                value={colorTransitionDuration}
+                min={0}
+                max={1000}
+                step={10}
+                onChange={setColorTransitionDuration}
+                onReset={() => setColorTransitionDuration(0)}
+                formatValue={v => `${v}ms`}
+              />
               <SettingsCategory title="Scrolling">
                 <SliderSetting label="Timeline scroll smooth factor" value={scrollSmooth} min={0} max={100} step={1} onChange={setScrollSmooth} onReset={() => setScrollSmooth(50)} formatValue={v => `${v.toFixed(3)}%`} />
                 <SliderSetting label="Timeline scroll amount" value={scrollAmount} min={1} max={400} step={1} onChange={setScrollAmount} onReset={() => setScrollAmount(100)} formatValue={v => `${v.toFixed(3)}%`} />
@@ -342,16 +352,6 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
               <SettingsCategory title="Miscellaneous">
                 <SliderSetting label="Draggable modal background darken amount" value={elevatedPanelDarken} min={0} max={100} step={1} onChange={setElevatedPanelDarken} onReset={() => setElevatedPanelDarken(50)} formatValue={v => `${v.toFixed(3)}%`} />
                 <SliderSetting label="Draggable modal background blur amount" value={elevatedPanelBlur} min={0} max={100} step={1} onChange={setElevatedPanelBlur} onReset={() => setElevatedPanelBlur(0)} formatValue={v => `${v.toFixed(3)}%`} />
-                <SliderSetting 
-                  label="Color change transition duration"
-                  value={colorTransitionDuration}
-                  min={0}
-                  max={1000}
-                  step={10}
-                  onChange={setColorTransitionDuration}
-                  onReset={() => setColorTransitionDuration(0)}
-                  formatValue={v => `${v}ms`}
-                />
               </SettingsCategory>
             </div>
           )}
