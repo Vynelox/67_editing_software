@@ -383,8 +383,8 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                 </div>
               </div>
               <div className="settings-field" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginTop: 12 }} onMouseEnter={() => setRequireDragHover(true)} onMouseLeave={() => setRequireDragHover(false)}>
-                <span style={{ flex: 1, lineHeight: 1.2, color: draggableHeaderButtons ? 'var(--text-secondary)' : 'var(--text-muted)', opacity: (!draggableHeaderButtons && requireDragHover) ? 1 : 0.7, transition: 'opacity 0.2s ease, color 0.2s ease', fontSize: 'inherit', fontWeight: 'inherit' }}>
-                  {(draggableHeaderButtons || !requireDragHover) ? 'Execute header button actions when dragging' : 'requires "Allow ×, -, and ←" checkbox to be enabled'}
+                <span style={{ flex: 1, lineHeight: 1.2, color: draggableHeaderButtons ? 'var(--text-secondary)' : 'var(--text-muted)', opacity: draggableHeaderButtons ? 1 : ((!draggableHeaderButtons && requireDragHover) ? 1 : 0.7), transition: 'opacity 0.2s ease, color 0.2s ease', fontSize: 'inherit', fontWeight: 'inherit' }}>
+                  {(draggableHeaderButtons || !requireDragHover) ? 'Execute header button actions when dragging' : 'requires "Allow ×, -, and ←" switch to be enabled'}
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, opacity: draggableHeaderButtons ? 1 : 0.5, pointerEvents: draggableHeaderButtons ? 'auto' : 'none' }}>
                   <ToggleSwitch checked={executeHeaderButtonsOnDrag} onChange={setExecuteHeaderButtonsOnDrag} disabled={!draggableHeaderButtons} title={draggableHeaderButtons ? "Reset to default (Checked)" : undefined} />
