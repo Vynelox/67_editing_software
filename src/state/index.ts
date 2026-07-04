@@ -1,3 +1,3 @@
 export { modalManager } from './modalManager';
 export { registerModalPermissions } from './modalPermissions';
-export { showBlockedDialog } from '../components/BlockedDialog';
+export { showToast } from '../components/Toast';

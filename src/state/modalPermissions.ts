@@ -1,6 +1,5 @@
 import { modalManager } from './modalManager';
 import type { ModalType } from './modalManager';
-import { showBlockedDialog } from '../components/BlockedDialog';
 
 // Register all modal permission rules here
 // This is where all the complex if-else logic lives centralized
@@ -127,5 +126,4 @@ export function registerModalPermissions() {
   });
 }
 
-// The showBlockedDialog function is now imported from ../components/BlockedDialog
-// and re-exported through src/state/index.ts
+// Toast notifications are handled directly via Toast.show() from '../components/Toast'

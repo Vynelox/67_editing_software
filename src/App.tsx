@@ -17,8 +17,8 @@ import {
 } from './types';
 import { HistoryProvider, useHistory } from './state/history';
 import { modalManager, registerModalPermissions } from './state';
-import { showBlockedDialog } from './components/BlockedDialog';
-import BlockedDialogManager from './components/BlockedDialog';
+import Toast from './components/Toast';
+// Toast is a class, not a React component - no need to render it
 
 const DEFAULT_IMAGE_DURATION = 5 * FPS;
 const WINDOW_BUTTONS_SPACING = 10; //px
@@ -76,6 +76,7 @@ function generateThumbnail(file: File, type: MediaItem['type']): Promise<string 
 
 function AppContent() {
   const history = useHistory();
+  const multipleMenusToast = new Toast('⚠ <br/>opening multiple <br/> menus is disabled');
   const [mediaItems, setMediaItems] = useState<Map<string, MediaItem>>(new Map());
   const [clips, setClips] = useState<TimelineClip[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -625,7 +626,7 @@ function AppContent() {
           <button className="icon-btn" onClick={(e) => {
             const result = modalManager.requestOpen('styles');
             if (!result.allowed) {
-              showBlockedDialog(result.reason || 'Cannot open modal', e.currentTarget);
+              multipleMenusToast.show(e.currentTarget);
               return;
             }
             setShowStyle(true);
@@ -639,7 +640,7 @@ function AppContent() {
             if (result.allowed) {
               OpenSettings({ tab: 'misc' }, null);
             } else {
-              showBlockedDialog(result.reason || 'Cannot open modal', e.currentTarget);
+              multipleMenusToast.show(e.currentTarget);
             }
           }} title="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -685,7 +686,7 @@ function AppContent() {
           <Viewer clips={clips} mediaItems={mediaItems} playhead={playhead} playing={playing} totalFrames={totalFrames} onExport={() => {
             const result = modalManager.requestOpen('export');
             if (!result.allowed) {
-              showBlockedDialog(result.reason || 'Cannot open modal');
+              multipleMenusToast.show();
               return;
             }
             setShowExport(true);
@@ -747,7 +748,6 @@ function AppContent() {
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
       )}
       <GlowOverlay />
-      <BlockedDialogManager />
     </div>
   );
 }

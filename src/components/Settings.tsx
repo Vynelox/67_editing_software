@@ -7,7 +7,7 @@ import DraggableModal from './DraggableModal';
 import { OpenTorusMenuEditor } from './TorusMenuEditor';
 import { OpenPlayneedleEditor } from './PlayneedleEditor';
 import { modalManager } from '../state/modalManager';
-import { showBlockedDialog } from './BlockedDialog';
+import { showToast } from './Toast';
 
 // Stretch factors for the playneedle icon
 const PLAYNEEDLE_ICON_HORIZONTAL_STRETCH_FACTOR = 0.4; // default 0.4
@@ -498,7 +498,7 @@ export function OpenSettings(pageData?: any, scroll?: number | null) {
   
   const result = modalManager.requestOpen('settings');
   if (!result.allowed) {
-    showBlockedDialog(result.reason || '⚠ <br/>opening multiple menus is disabled');
+    showToast(result.reason || '⚠ <br/>opening multiple menus is disabled');
     return;
   }
   

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import FormulaPlayneedle from './FormulaPlayneedle';
 import DraggableModal from './DraggableModal';
-import { showBlockedDialog } from './BlockedDialog';
+import { showToast } from './Toast';
 import { Slider } from './Adjustables';
 import { modalManager } from '../state/modalManager';
 import { RotateCcw } from 'lucide-react';
@@ -116,7 +116,7 @@ function getSavedPnWidth(): number {
 export function OpenPlayneedleEditor(onCloseCallback?: () => void) {
   const result = modalManager.requestOpen('playneedleEditor');
   if (!result.allowed) {
-    showBlockedDialog(result.reason || '⚠ <br/>opening multiple menus is disabled');
+    showToast(result.reason || '⚠ <br/>opening multiple menus is disabled');
     return;
   }
   

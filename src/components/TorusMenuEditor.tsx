@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import GraphEditor, { DEFAULT_TORUS_SIZE_GRAPH, getSavedSizeGraph, SizeGraphPoint, GraphConfig, DEFAULT_GRAPH_CONFIG } from './graph';
 import { getSavedSegmentHandleValues, saveSegmentHandleValues } from '../utils/torusGraphEasing';
 import DraggableModal from './DraggableModal';
-import { showBlockedDialog } from './BlockedDialog';
+import { showToast } from './Toast';
 import { modalManager } from '../state/modalManager';
 import TorusMenu from './TorusMenu';
 import { Slider } from './Adjustables';
@@ -83,7 +83,7 @@ function delayToSlider(delay: number): number {
 export function OpenTorusMenuEditor(onCloseCallback?: () => void) {
   const result = modalManager.requestOpen('torusMenuEditor');
   if (!result.allowed) {
-    showBlockedDialog(result.reason || '⚠ <br/>opening multiple menus is disabled');
+    showToast(result.reason || '⚠ <br/>opening multiple menus is disabled');
     return;
   }
   
