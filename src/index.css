@@ -39,6 +39,11 @@
   --gui-scale: 1;
 }
 
+body.graph-dragging,
+body.graph-dragging * {
+  cursor: none !important;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 /* Allow text selection in input fields */
 input, textarea, [contenteditable="true"] { user-select: text; }

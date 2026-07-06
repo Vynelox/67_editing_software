@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { Undo2, Redo2 } from 'lucide-react';
 import { useLocalHistory } from '../state/history';
 import { formatShortcutLabel, getShortcutKeys, isShortcutMatch } from './shortcuts';
+import { formatSensitivity, adjustSensitivity, DEFAULT_SENSITIVITY, MIN_SENSITIVITY, MAX_SENSITIVITY, DISPLAY_DURATION_MS } from '../utils/sensitivity';
 
 export interface SizeGraphPoint {
   time: number;
@@ -114,7 +115,6 @@ export function evaluateGraphAtTime(time: number, points: SizeGraphPoint[]): num
       const t = segmentDuration > 0 ? (clampedTime - pointA.time) / segmentDuration : 0;
       
       // Calculate handleValue for this segment based on the midpoint constraint
-      // The handle is positioned at the midpoint of the segment
       const midpointT = 0.5;
       const midpointSize = pointA.size + (pointB.size - pointA.size) * midpointT;
       
@@ -221,6 +221,10 @@ export default function GraphEditor({
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [svgWidth, setSvgWidth] = useState(config.width);
   const [easingOffsets, setEasingOffsets] = useState<number[]>([]);
+  const [dragSensitivity, setDragSensitivity] = useState(DEFAULT_SENSITIVITY);
+  const [showSensitivityDisplay, setShowSensitivityDisplay] = useState(false);
+  const sensitivityHideTimeoutRef = useRef<number | null>(null);
+  
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const draggingPointIndex = useRef<number | null>(null);
@@ -229,6 +233,38 @@ export default function GraphEditor({
   const graphRef = useRef(graph);
   const easingOffsetsRef = useRef(easingOffsets);
   const graphHistory = useLocalHistory<GraphSnapshot>('graph');
+  
+  // Track drag start position for sensitivity calculations
+  const dragStartPositionRef = useRef<{ clientX: number; clientY: number } | null>(null);
+  
+  // Helper to show sensitivity display temporarily
+  const showSensitivityDisplayTemporarily = useCallback(() => {
+    setShowSensitivityDisplay(true);
+    if (sensitivityHideTimeoutRef.current !== null) {
+      window.clearTimeout(sensitivityHideTimeoutRef.current);
+    }
+    sensitivityHideTimeoutRef.current = window.setTimeout(() => {
+      setShowSensitivityDisplay(false);
+      sensitivityHideTimeoutRef.current = null;
+    }, DISPLAY_DURATION_MS);
+  }, []);
+  
+  // Handle wheel event during drag to adjust sensitivity
+  const handleWheelDuringDrag = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    setDragSensitivity(prev => adjustSensitivity(prev, e.deltaY));
+    showSensitivityDisplayTemporarily();
+  }, [showSensitivityDisplayTemporarily]);
+  
+  // Hide cursor while dragging using CSS class with !important
+  const hideCursor = useCallback(() => {
+    document.body.classList.add('graph-dragging');
+  }, []);
+  
+  // Show cursor after drag
+  const showCursor = useCallback(() => {
+    document.body.classList.remove('graph-dragging');
+  }, []);
 
   useEffect(() => { graphRef.current = graph; }, [graph]);
   useEffect(() => { easingOffsetsRef.current = easingOffsets; }, [easingOffsets]);
@@ -372,34 +408,62 @@ export default function GraphEditor({
     const handlePointerMove = (e: PointerEvent) => {
       const pointIndex = draggingPointIndex.current;
       const easingIndex = draggingEasingIndex.current;
+      const sensitivity = dragSensitivity;
+      
+      // Use relative movement so the mouse doesn't need to move far
+      const relX = e.movementX * sensitivity;
+      const relY = e.movementY * sensitivity;
       
       if (pointIndex !== null) {
-        const coords = graphCoordsFromEvent(config, e, svgRef.current, svgWidth);
-        if (!coords) return;
+        // Store current graph position and apply relative movement
+        const currentGraph = graphRef.current.slice().sort((a, b) => a.time - b.time);
+        const currentPoint = currentGraph[pointIndex];
+        if (!currentPoint) return;
+        
+        // Convert relative pixel movement to graph coordinate changes
+        const svg = svgRef.current;
+        if (!svg) return;
+        const { plotWidth, plotHeight } = getGraphMetrics(config, svgWidth);
+        
+        // Approximate conversion: movement in pixels -> space in graph units
+        // For x (time): movement / plotWidth
+        // For y (size): -movement / plotHeight (inverted because SVG Y is flipped)
+        const timeDelta = relX / plotWidth;
+        const sizeDelta = -relY / plotHeight;
+        
+        let newTime = currentPoint.time + timeDelta;
+        let newSize = clamp(currentPoint.size + sizeDelta, 0, 1);
+        
+        // Constrain time based on neighboring points
+        if (pointIndex === 0 || pointIndex === currentGraph.length - 1) {
+          newSize = clamp(newSize, 0, 1);
+        } else {
+          const minTime = pointIndex > 0 ? currentGraph[pointIndex - 1].time + config.minTimeDelta : 0;
+          const maxTime = pointIndex < currentGraph.length - 1 ? currentGraph[pointIndex + 1].time - config.minTimeDelta : 1;
+          newTime = clamp(newTime, minTime, maxTime);
+          newSize = clamp(newSize, 0, 1);
+        }
+        
         onChange(prev => {
           const next = prev.slice().sort((a, b) => a.time - b.time);
           if (pointIndex === 0 || pointIndex === next.length - 1) {
             next[pointIndex] = {
               ...next[pointIndex],
-              size: clamp(coords.size, 0, 1),
+              size: newSize,
             };
             return next;
           }
-          const minTime = pointIndex > 0 ? next[pointIndex - 1].time + config.minTimeDelta : 0;
-          const maxTime = pointIndex < next.length - 1 ? next[pointIndex + 1].time - config.minTimeDelta : 1;
-          if (minTime > maxTime) return next;
           next[pointIndex] = {
-            time: clamp(coords.time, minTime, maxTime),
-            size: clamp(coords.size, 0, 1),
+            time: newTime,
+            size: newSize,
           };
           return next;
         });
       } else if (easingIndex !== null) {
-        if (!svgRef.current) return;
-        const rect = svgRef.current.getBoundingClientRect();
-        const desiredY = e.clientY - rect.top;
+        // For easing handles, only vertical movement matters
+        const currentOffset = easingOffsetsRef.current[easingIndex] ?? 0;
+        const newOffset = currentOffset + relY;
         
-        // Get the two adjacent points to constrain the handler
         const point1 = sortedGraph[easingIndex];
         const point2 = sortedGraph[easingIndex + 1];
         const svgPoint1 = graphPointToSvg(config, point1, svgWidth);
@@ -407,15 +471,10 @@ export default function GraphEditor({
         
         const minY = Math.min(svgPoint1.y, svgPoint2.y);
         const maxY = Math.max(svgPoint1.y, svgPoint2.y);
-        
-        // To ensure the Bezier curve stays within [minY, maxY], the control point cy must also stay within bounds
-        // cy = (4*handlerY - y0 - y1) / 2
-        // For cy to be in [minY, maxY]:
-        // handlerY must be in [(2*minY + y0 + y1) / 4, (2*maxY + y0 + y1) / 4]
         const handlerMinY = (2 * minY + svgPoint1.y + svgPoint2.y) / 4;
         const handlerMaxY = (2 * maxY + svgPoint1.y + svgPoint2.y) / 4;
         
-        const constrainedY = clamp(desiredY, handlerMinY, handlerMaxY);
+        const constrainedY = clamp(newOffset, handlerMinY, handlerMaxY);
         
         setEasingOffsets(prev => {
           const next = [...prev];
@@ -432,15 +491,19 @@ export default function GraphEditor({
       }
       draggingPointIndex.current = null;
       draggingEasingIndex.current = null;
+      dragStartPositionRef.current = null;
+      showCursor();
     };
 
+    window.addEventListener('wheel', handleWheelDuringDrag, { passive: false });
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
     return () => {
+      window.removeEventListener('wheel', handleWheelDuringDrag);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [onChange, svgWidth, commitDragSnapshot, config, sortedGraph]);
+  }, [onChange, svgWidth, commitDragSnapshot, config, sortedGraph, handleWheelDuringDrag, showCursor, dragSensitivity]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -517,6 +580,19 @@ export default function GraphEditor({
           <line x1={config.padding} y1={config.height - config.padding} x2={svgWidth - config.padding} y2={config.height - config.padding} />
         </g>
         <path d={graphPath} fill="none" stroke={GRAPH_LINE_COLOR} strokeWidth={2} />
+        {showSensitivityDisplay && (
+          <text
+            x={config.padding + 10}
+            y={config.padding + 20}
+            fill="var(--highlight-color)"
+            fontSize="12"
+            fontFamily="monospace"
+            fontWeight="bold"
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            Sens: {formatSensitivity(dragSensitivity)}
+          </text>
+        )}
         {sortedGraph.map((point, index) => {
           if (index < sortedGraph.length - 1) {
             const nextPoint = sortedGraph[index + 1];
@@ -530,8 +606,6 @@ export default function GraphEditor({
             
             const minY = Math.min(point1Svg.y, point2Svg.y);
             const maxY = Math.max(point1Svg.y, point2Svg.y);
-            // easingOffsets now stores actual Y positions
-            // Compute handleY to match the curve's midpoint at t=0.5
             let handleY = midSvg.y;
             if (easingOffsets[index] !== undefined) {
               const handlerY = easingOffsets[index];
@@ -549,7 +623,7 @@ export default function GraphEditor({
               handleValue = Math.max(-1, Math.min(1, handleValue));
               
               const strength = 3;
-              const t = 0.5; // midpoint
+              const t = 0.5;
               let curvedProgress = t;
               if (handleValue < 0) {
                 const power = 1 - (handleValue * strength);
@@ -564,7 +638,6 @@ export default function GraphEditor({
             
             return (
               <g key={`easing-${index}`} style={{ cursor: 'ns-resize', zIndex: 5 }}>
-                {/* Larger invisible hitbox for easier clicking - 16px radius */}
                 <circle
                   cx={midSvg.x}
                   cy={handleY}
@@ -574,7 +647,9 @@ export default function GraphEditor({
                     e.stopPropagation();
                     beginDragSnapshot();
                     draggingEasingIndex.current = index;
+                    dragStartPositionRef.current = { clientX: e.clientX, clientY: e.clientY };
                     e.currentTarget.setPointerCapture(e.pointerId);
+                    hideCursor();
                   }}
                 />
                 <circle
@@ -613,8 +688,10 @@ export default function GraphEditor({
                 e.stopPropagation();
                 beginDragSnapshot();
                 draggingPointIndex.current = index;
+                dragStartPositionRef.current = { clientX: e.clientX, clientY: e.clientY };
                 setSelectedPointIndex(index);
                 e.currentTarget.setPointerCapture(e.pointerId);
+                hideCursor();
               }}
               onClick={e => {
                 e.stopPropagation();
