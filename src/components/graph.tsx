@@ -256,14 +256,17 @@ export default function GraphEditor({
     showSensitivityDisplayTemporarily();
   }, [showSensitivityDisplayTemporarily]);
   
-  // Hide cursor while dragging using CSS class with !important
-  const hideCursor = useCallback(() => {
-    document.body.classList.add('graph-dragging');
+  // Lock pointer to element during drag using Pointer Lock API
+  const lockPointer = useCallback((element: Element) => {
+    if (element.requestPointerLock) {
+      element.requestPointerLock();
+    }
   }, []);
   
-  // Show cursor after drag
-  const showCursor = useCallback(() => {
-    document.body.classList.remove('graph-dragging');
+  const unlockPointer = useCallback(() => {
+    if (document.exitPointerLock) {
+      document.exitPointerLock();
+    }
   }, []);
 
   useEffect(() => { graphRef.current = graph; }, [graph]);
@@ -492,18 +495,32 @@ export default function GraphEditor({
       draggingPointIndex.current = null;
       draggingEasingIndex.current = null;
       dragStartPositionRef.current = null;
-      showCursor();
+      unlockPointer();
+    };
+
+    // Handle case where user presses Esc to exit pointer lock
+    const handlePointerLockChange = () => {
+      if (!document.pointerLockElement) {
+        if (draggingPointIndex.current !== null || draggingEasingIndex.current !== null) {
+          commitDragSnapshot();
+          draggingPointIndex.current = null;
+          draggingEasingIndex.current = null;
+          dragStartPositionRef.current = null;
+        }
+      }
     };
 
     window.addEventListener('wheel', handleWheelDuringDrag, { passive: false });
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointerlockchange', handlePointerLockChange);
     return () => {
       window.removeEventListener('wheel', handleWheelDuringDrag);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointerlockchange', handlePointerLockChange);
     };
-  }, [onChange, svgWidth, commitDragSnapshot, config, sortedGraph, handleWheelDuringDrag, showCursor, dragSensitivity]);
+  }, [onChange, svgWidth, commitDragSnapshot, config, sortedGraph, handleWheelDuringDrag, unlockPointer, dragSensitivity]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -649,7 +666,7 @@ export default function GraphEditor({
                     draggingEasingIndex.current = index;
                     dragStartPositionRef.current = { clientX: e.clientX, clientY: e.clientY };
                     e.currentTarget.setPointerCapture(e.pointerId);
-                    hideCursor();
+                    lockPointer(e.currentTarget);
                   }}
                 />
                 <circle
@@ -691,7 +708,7 @@ export default function GraphEditor({
                 dragStartPositionRef.current = { clientX: e.clientX, clientY: e.clientY };
                 setSelectedPointIndex(index);
                 e.currentTarget.setPointerCapture(e.pointerId);
-                hideCursor();
+                lockPointer(e.currentTarget);
               }}
               onClick={e => {
                 e.stopPropagation();
