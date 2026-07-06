@@ -181,6 +181,15 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
       onClose={() => { modalManager.close('styles'); setShowStyle(false); setStylePage(null); }}
       className="settings-modal"
       style={{ width: MODAL_WIDTH, height: MODAL_HEIGHT, minHeight: MODAL_HEIGHT, maxHeight: MODAL_HEIGHT, overflow: 'hidden' }}
+      persistenceKey="styles"
+      pageState={{ stylePage, activeTheme }}
+      onSavePageState={(state) => {}}
+      onRestorePageState={(state) => {
+        if (state) {
+          if (state.stylePage !== undefined) setStylePage(state.stylePage);
+          if (state.activeTheme) setActiveTheme(state.activeTheme);
+        }
+      }}
       headerLeft={stylePage && (
         <button className="icon-btn" onClick={() => { const parentId = parentMap[stylePage]; setStylePage(parentId || null); }} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, color: 'var(--text-secondary)' }} title="Back">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

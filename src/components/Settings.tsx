@@ -320,7 +320,20 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   };
 
   return (
-    <DraggableModal title="Settings" onClose={() => { onClose?.(); }} className="settings-modal" style={{ width: SETTINGS_MODAL_WIDTH, height: SETTINGS_MODAL_HEIGHT, minHeight: SETTINGS_MODAL_MIN_HEIGHT, maxHeight: SETTINGS_MODAL_MAX_HEIGHT, overflow: 'hidden' }} body={
+    <DraggableModal
+      title="Settings"
+      onClose={() => { onClose?.(); }}
+      className="settings-modal"
+      style={{ width: SETTINGS_MODAL_WIDTH, height: SETTINGS_MODAL_HEIGHT, minHeight: SETTINGS_MODAL_MIN_HEIGHT, maxHeight: SETTINGS_MODAL_MAX_HEIGHT, overflow: 'hidden' }}
+      persistenceKey="settings"
+      pageState={activeTab}
+      onSavePageState={(state) => {}}
+      onRestorePageState={(state) => {
+        if (state && TAB_NAMES[state as SettingsTab]) {
+          setActiveTab(state as SettingsTab);
+        }
+      }}
+      body={
       <div className="settings-body" ref={panelRef}>
         <nav className="settings-tabs" aria-label="Settings sections">
           <button type="button" className={"settings-tab" + (activeTab === "shortcuts" ? " settings-tab--active" : "")} onClick={() => setActiveTab("shortcuts")}>{getTabLabel("shortcuts")}</button>

@@ -15,6 +15,14 @@ interface DraggableModalProps {
   headerLeft?: ReactNode;
   /** Inline styles for the modal-box element */
   style?: React.CSSProperties;
+  /** Unique key for persisting page state to localStorage (e.g., 'settings', 'styles') */
+  persistenceKey?: string;
+  /** Current page state to persist (e.g., active tab, selected folder) */
+  pageState?: any;
+  /** Called when modal is about to close to save page state */
+  onSavePageState?: (state: any) => void;
+  /** Called when modal opens to get the restored page state */
+  onRestorePageState?: (state: any) => void;
 }
 
 /**
@@ -28,7 +36,19 @@ interface DraggableModalProps {
  *   className="settings-modal"
  * />
  */
-export default function DraggableModal({ title, body, onClose, className = '', minimizable = true, headerLeft, style }: DraggableModalProps) {
+export default function DraggableModal({ 
+  title, 
+  body, 
+  onClose, 
+  className = '', 
+  minimizable = true, 
+  headerLeft, 
+  style,
+  persistenceKey,
+  pageState,
+  onSavePageState,
+  onRestorePageState
+}: DraggableModalProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -40,6 +60,39 @@ export default function DraggableModal({ title, body, onClose, className = '', m
   const dragStartPos = useRef({ x: 0, y: 0 });
   const hasDraggedSignificantly = useRef(false);
   const draggedButtonRef = useRef<{ type: 'minimize' | 'close' | 'back'; action: () => void } | null>(null);
+  const isFirstRender = useRef(true);
+  // Refs to store latest callbacks without triggering re-renders
+  const onRestorePageStateRef = useRef(onRestorePageState);
+  const onSavePageStateRef = useRef(onSavePageState);
+  onRestorePageStateRef.current = onRestorePageState;
+  onSavePageStateRef.current = onSavePageState;
+
+  // Restore page state from localStorage on mount (only once)
+  useEffect(() => {
+    if (persistenceKey && onRestorePageStateRef.current) {
+      try {
+        const saved = window.localStorage.getItem(`juicecut.modal.${persistenceKey}.pageState`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          onRestorePageStateRef.current(parsed);
+        }
+      } catch (e) {
+        console.warn(`Failed to restore page state for ${persistenceKey}:`, e);
+      }
+    }
+  }, [persistenceKey]);
+
+  // Save page state to localStorage when it changes
+  useEffect(() => {
+    if (persistenceKey && pageState !== undefined && onSavePageStateRef.current) {
+      try {
+        window.localStorage.setItem(`juicecut.modal.${persistenceKey}.pageState`, JSON.stringify(pageState));
+        onSavePageStateRef.current(pageState);
+      } catch (e) {
+        console.warn(`Failed to save page state for ${persistenceKey}:`, e);
+      }
+    }
+  }, [persistenceKey, pageState]);
 
   const resetPosition = useCallback(() => {
     setPosition({ x: 0, y: 0 });
