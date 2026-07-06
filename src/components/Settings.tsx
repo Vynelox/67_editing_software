@@ -305,7 +305,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
   }, []);
 
   const addCombination = (action: ShortcutAction) => { const next = { ...shortcuts, [action]: [...shortcuts[action], []] }; setShortcuts(next); scUpdate(next); const newIndex = next[action].length - 1; setEditingChip({ action, index: newIndex }); setTimeout(() => { chipRefs.current[`${action}-${newIndex}`]?.focus(); }, 0); };
-  const removeCombination = (action: ShortcutAction, index: number) => { const arr = shortcuts[action].filter((_, i) => i !== index); const next = { ...shortcuts, [action]: arr.length > 0 ? arr : [[]] }; setShortcuts(next); scUpdate(next); setEditingChip(null); };
+  const removeCombination = (action: ShortcutAction, index: number) => { const arr = shortcuts[action].filter((_, i) => i !== index); const next = { ...shortcuts, [action]: arr }; setShortcuts(next); scUpdate(next); setEditingChip(null); };
   const updateCombination = (action: ShortcutAction, index: number, keys: string[]) => { const arr = [...shortcuts[action]]; arr[index] = keys; const next = { ...shortcuts, [action]: arr }; setShortcuts(next); scUpdate(next); setEditingChip(null); };
   const handleReset = (action: ShortcutAction) => { scReset(action); setShortcuts(loadAllShortcuts()); setEditingChip(null); };
   const handleChipKeyDown = (e: React.KeyboardEvent, action: ShortcutAction, index: number) => {
@@ -465,7 +465,7 @@ function SettingsShell({ onClose, initialPageData, initialScroll }: Props) {
                       return (
                         <div key={idx} ref={el => { chipRefs.current[`${action}-${idx}`] = el; }} tabIndex={0} onFocus={() => setEditingChip({ action, index: idx })} onBlur={() => { setTimeout(() => setEditingChip(null), 150); }} onKeyDown={(e) => handleChipKeyDown(e, action, idx)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: isEditing ? "var(--bg-hover)" : "var(--bg-elevated)", border: isEditing ? "1px solid var(--highlight-color)" : "1px solid var(--border-mid)", borderRadius: "var(--radius-sm)", padding: "3px 8px", cursor: "pointer", outline: "none", minHeight: 28 }} title={isEditing ? "Press keys to assign..." : keys.length === 0 ? "Click then press keys to assign" : "Click then press new keys to reassign"}>
                             <span style={{ fontSize: 12, color: keys.length > 0 ? "var(--text-primary)" : "var(--text-muted)", fontFamily: "monospace" }}>{isEditing && keys.length === 0 ? "..." : keys.length > 0 ? formatKeys(keys) : "None"}</span>
-                            {shortcuts[action].length > 1 && (<button type="button" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: "0 2px", fontSize: 13, lineHeight: 1, display: "flex", alignItems: "center" }} onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }} title="Remove this combination">x</button>)}
+                            <button type="button" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: "0 2px", fontSize: 13, lineHeight: 1, display: "flex", alignItems: "center" }} onMouseDown={(e) => { e.stopPropagation(); removeCombination(action, idx); }} title="Remove this combination">x</button>
                           </div>
                         );
                       })}
