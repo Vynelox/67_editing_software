@@ -178,7 +178,7 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
   return (
     <DraggableModal
       title={getPathLabel(stylePage)}
-      onClose={() => { modalManager.close('styles'); setShowStyle(false); setStylePage(null); }}
+      onClose={() => { modalManager.close('styles'); setShowStyle(false);}}
       className="settings-modal"
       style={{ width: MODAL_WIDTH, height: MODAL_HEIGHT, minHeight: MODAL_HEIGHT, maxHeight: MODAL_HEIGHT, overflow: 'hidden' }}
       persistenceKey="styles"

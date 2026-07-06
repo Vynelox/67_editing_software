@@ -300,7 +300,21 @@ export default function DraggableModal({
                 </svg>
               </button>
             )}
-            <button className="icon-btn" onClick={(e) => { const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true; if (shouldExecute || !hasDraggedSignificantly.current) onClose(); }} aria-label="Close" style={{ width: 32, height: 32 }}>
+            <button className="icon-btn" onClick={(e) => { 
+                const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true; 
+                if (shouldExecute || !hasDraggedSignificantly.current) {
+                  // Save page state before closing
+                  if (persistenceKey && pageState !== undefined && onSavePageStateRef.current) {
+                    try {
+                      window.localStorage.setItem(`juicecut.modal.${persistenceKey}.pageState`, JSON.stringify(pageState));
+                      onSavePageStateRef.current(pageState);
+                    } catch (e) {
+                      console.warn(`Failed to save page state for ${persistenceKey}:`, e);
+                    }
+                  }
+                  onClose(); 
+                }
+              }} aria-label="Close" style={{ width: 32, height: 32 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
