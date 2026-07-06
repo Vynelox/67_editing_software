@@ -564,6 +564,19 @@ export default function GraphEditor({
             
             return (
               <g key={`easing-${index}`} style={{ cursor: 'ns-resize', zIndex: 5 }}>
+                {/* Larger invisible hitbox for easier clicking - 16px radius */}
+                <circle
+                  cx={midSvg.x}
+                  cy={handleY}
+                  r={16}
+                  fill="transparent"
+                  onPointerDown={e => {
+                    e.stopPropagation();
+                    beginDragSnapshot();
+                    draggingEasingIndex.current = index;
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  }}
+                />
                 <circle
                   cx={midSvg.x}
                   cy={handleY}
@@ -577,12 +590,6 @@ export default function GraphEditor({
                   fill="none"
                   stroke={EASE_HANDLE_COLOR}
                   strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
-                  onPointerDown={e => {
-                    e.stopPropagation();
-                    beginDragSnapshot();
-                    draggingEasingIndex.current = index;
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                  }}
                 />
               </g>
             );
