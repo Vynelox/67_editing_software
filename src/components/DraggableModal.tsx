@@ -39,6 +39,7 @@ export default function DraggableModal({ title, body, onClose, className = '', m
   const overlayRef = useRef<HTMLDivElement>(null);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const hasDraggedSignificantly = useRef(false);
+  const draggedButtonRef = useRef<{ type: 'minimize' | 'close' | 'back'; action: () => void } | null>(null);
 
   const resetPosition = useCallback(() => {
     setPosition({ x: 0, y: 0 });
@@ -57,12 +58,65 @@ export default function DraggableModal({ title, body, onClose, className = '', m
     const target = e.target as HTMLElement;
     // Check if we should allow dragging on header buttons
     const allowDraggableButtons = (window as any).juicecut?.settings?.draggableHeaderButtons ?? true;
+    // Check if execute on drag is enabled
+    const executeOnDrag = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true;
     
-    // Don't start drag if clicking close or minimize buttons (unless allowed)
-    // But still allow the click event to propagate to the button's onClick handler
-    const isHeaderButton = target.closest('.modal-minimize-btn') || target.closest('[aria-label="Close"]') || target.closest('.icon-btn');
+    // Check if clicking on a header button
+    const minimizeBtn = target.closest('.modal-minimize-btn') as HTMLButtonElement | null;
+    const closeBtn = target.closest('[aria-label="Close"]') as HTMLButtonElement | null;
+    const backBtn = target.closest('.icon-btn:not(.modal-minimize-btn):not([aria-label="Close"])') as HTMLButtonElement | null;
+    
+    const isHeaderButton = minimizeBtn || closeBtn || backBtn;
+    
+    // Always track which header button was clicked (if any) for potential execution on mouseup
+    // This works regardless of draggableHeaderButtons setting
+    if (isHeaderButton) {
+      if (minimizeBtn) {
+        draggedButtonRef.current = { 
+          type: 'minimize', 
+          action: () => setIsMinimized(m => !m) 
+        };
+      } else if (closeBtn) {
+        draggedButtonRef.current = { 
+          type: 'close', 
+          action: onClose 
+        };
+      } else if (backBtn) {
+        draggedButtonRef.current = { 
+          type: 'back', 
+          action: () => backBtn.click() 
+        };
+      }
+      
+      // If execute on drag is enabled, start dragging to allow execution on mouseup
+      // even if draggableHeaderButtons is false
+      if (executeOnDrag) {
+        setIsDragging(true);
+        hasDraggedSignificantly.current = false;
+        dragStartPos.current = { x: e.clientX, y: e.clientY };
+        // Get the modal element's current screen position
+        const modalEl = overlayRef.current?.querySelector('.modal-box') as HTMLElement | null;
+        if (modalEl) {
+          const modalRect = modalEl.getBoundingClientRect();
+          // Store the offset from click point to the modal's top-left corner
+          dragOffset.current = {
+            x: e.clientX - modalRect.left,
+            y: e.clientY - modalRect.top,
+          };
+        }
+        return;
+      }
+    } else {
+      draggedButtonRef.current = null;
+    }
+    
+    // If draggableHeaderButtons is false and clicking a header button, 
+    // don't start dragging (let the button's onClick handle it normally)
+    // But if draggableHeaderButtons is true, start dragging
     if (!allowDraggableButtons && isHeaderButton) {
-      // Don't start dragging, but don't prevent the click from reaching the button
+      // Don't start dragging, let button's onClick fire normally
+      // Reset drag tracking so the onClick can execute normally
+      hasDraggedSignificantly.current = false;
       return;
     }
     
@@ -79,7 +133,7 @@ export default function DraggableModal({ title, body, onClose, className = '', m
         y: e.clientY - modalRect.top,
       };
     }
-  }, []);
+  }, [onClose]);
 
   // Listen for settings changes to update allowEditsWhenMenuOpen reactively
   useEffect(() => {
@@ -123,7 +177,15 @@ export default function DraggableModal({ title, body, onClose, className = '', m
     };
 
     const handleMouseUp = () => {
+      // If we dragged a header button and the setting allows execution on drag, execute it
+      if (hasDraggedSignificantly.current && draggedButtonRef.current) {
+        const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true;
+        if (shouldExecute) {
+          draggedButtonRef.current.action();
+        }
+      }
       setIsDragging(false);
+      draggedButtonRef.current = null;
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -175,7 +237,7 @@ export default function DraggableModal({ title, body, onClose, className = '', m
             {minimizable && (
              <button
                 className="icon-btn modal-minimize-btn"
-                onClick={() => { if (!hasDraggedSignificantly.current) setIsMinimized(m => !m); }}
+                onClick={() => { const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true; if (shouldExecute || !hasDraggedSignificantly.current) setIsMinimized(m => !m); }}
                 aria-label={isMinimized ? 'Restore' : 'Minimize'}
                 title={isMinimized ? 'Restore' : 'Minimize'}
                 style={{ width: 32, height: 32 }}

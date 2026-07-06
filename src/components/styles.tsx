@@ -182,7 +182,7 @@ export function StylesModal({ showStyle, setShowStyle, stylePage, setStylePage }
       className="settings-modal"
       style={{ width: MODAL_WIDTH, height: MODAL_HEIGHT, minHeight: MODAL_HEIGHT, maxHeight: MODAL_HEIGHT, overflow: 'hidden' }}
       headerLeft={stylePage && (
-        <button className="icon-btn" onClick={(e) => { const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true; if (shouldExecute || !(window as any).__backButtonDragged) { const parentId = parentMap[stylePage]; setStylePage(parentId || null); } }} onMouseDown={(e) => { (window as any).__backButtonDragged = false; (window as any).__backButtonDragStartX = e.clientX; (window as any).__backButtonDragStartY = e.clientY; }} onMouseMove={(e) => { if ((window as any).__backButtonDragged) return; const dx = Math.abs(e.clientX - ((window as any).__backButtonDragStartX || e.clientX)); const dy = Math.abs(e.clientY - ((window as any).__backButtonDragStartY || e.clientY)); if (dx > 3 || dy > 3) (window as any).__backButtonDragged = true; }} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, color: 'var(--text-secondary)' }} title="Back">
+        <button className="icon-btn" onClick={() => { const parentId = parentMap[stylePage]; setStylePage(parentId || null); }} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, color: 'var(--text-secondary)' }} title="Back">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"/>
             <polyline points="12 19 5 12 12 5"/>
