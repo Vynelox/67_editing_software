@@ -29,14 +29,6 @@ export default function GlowOverlay() {
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    // DEBUG: Render solid red to verify canvas is visible
-    renderer.setClearColor(0xff0000, 1); // Opaque red
-    const debugAnimate = () => {
-      requestAnimationFrame(debugAnimate);
-      renderer.render(scene, camera); // Use renderer directly, not composer
-    };
-    debugAnimate();
-
     // Start screen capture
     const startCapture = async () => {
       try {
@@ -55,43 +47,26 @@ export default function GlowOverlay() {
         const geometry = new THREE.PlaneGeometry(2, 2);
         const material = new THREE.MeshBasicMaterial({ 
           map: videoTexture,
-          transparent: true
+          transparent: false
         });
         const mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
 
-        // Setup bloom post-processing
-        const composer = new EffectComposer(renderer);
-        composerRef.current = composer;
-
-        const renderPass = new RenderPass(scene, camera);
-        composer.addPass(renderPass);
-
-        const bloomPass = new UnrealBloomPass(
-          new THREE.Vector2(window.innerWidth, window.innerHeight),
-          0.8,   // strength
-          0.5,   // radius
-          0.3    // threshold
-        );
-        composer.addPass(bloomPass);
-
-        // OutputPass handles color space conversion and tone mapping
-        const outputPass = new OutputPass();
-        composer.addPass(outputPass);
-
-        // Animation loop
+        // Render WITHOUT composer - just the video
         const animate = () => {
           requestAnimationFrame(animate);
-          composer.render();
+          renderer.render(scene, camera);
         };
         animate();
+
+        console.log('🔍 Step 2: Video texture should be visible - you should see your app UI on the canvas');
 
       } catch (err) {
         console.error('Bloom capture failed:', err);
       }
     };
 
-    // startCapture(); // DEBUG: commented out for solid red canvas test
+    startCapture();
 
     // Handle resize
     const handleResize = () => {
@@ -124,8 +99,9 @@ export default function GlowOverlay() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 1,
-        mixBlendMode: 'screen'
+        zIndex: 9999,
+        mixBlendMode: 'normal', // Use 'normal' so you see the raw video
+        border: '3px solid blue' // Blue border to see the canvas
       }}
     >
       <video ref={videoRef} style={{ display: 'none' }} playsInline muted />
