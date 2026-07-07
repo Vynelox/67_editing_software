@@ -1,5 +1,5 @@
 const path = require('path');
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer } = require('electron');
 
 app.whenReady().then(() => {
   const win = new BrowserWindow({
@@ -8,8 +8,9 @@ app.whenReady().then(() => {
     frame: false,
     icon: path.join(__dirname, 'src/67_editing_software.ico'),
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      preload: path.join(__dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false
     }
   });
 
