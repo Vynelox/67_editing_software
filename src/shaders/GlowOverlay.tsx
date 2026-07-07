@@ -5,9 +5,6 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
-console.log('🔍 window.electronAPI:', (window as any).electronAPI);
-console.log('🔍 typeof window.electronAPI:', typeof (window as any).electronAPI);
-
 export default function GlowOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -30,6 +27,7 @@ export default function GlowOverlay() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x000000, 0); // Black with 0 alpha (fully transparent)
     container.appendChild(renderer.domElement);
 
     // Start screen capture
@@ -62,23 +60,6 @@ export default function GlowOverlay() {
         await video.play();
         console.log('🔍 Video play() succeeded');
         
-        // Check video state after a delay
-        setTimeout(() => {
-          console.log('🔍 Video state after 1 second:');
-          console.log('  - readyState:', video.readyState);
-          console.log('  - videoWidth:', video.videoWidth);
-          console.log('  - videoHeight:', video.videoHeight);
-          console.log('  - paused:', video.paused);
-          console.log('  - currentTime:', video.currentTime);
-          console.log('  - srcObject:', video.srcObject);
-          
-          if (video.readyState >= 2) {
-            console.log('✅ Video has frames!');
-          } else {
-            console.log('❌ Video has NO frames - readyState < 2');
-          }
-        }, 1000);
-
         // Create video texture
         const videoTexture = new THREE.VideoTexture(video);
         videoTexture.minFilter = THREE.LinearFilter;
@@ -87,16 +68,37 @@ export default function GlowOverlay() {
         const geometry = new THREE.PlaneGeometry(2, 2);
         const material = new THREE.MeshBasicMaterial({ 
           map: videoTexture,
-          transparent: false
+          transparent: true
         });
         const mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
 
+        // Setup bloom post-processing with EXTREME settings
+        const composer = new EffectComposer(renderer);
+        composerRef.current = composer;
+
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        const bloomPass = new UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          1.0,   // strength - EXTREME
+          0.002,   // radius - EXTREME
+          1.0    // threshold - 0 means EVERYTHING blooms
+        );
+        composer.addPass(bloomPass);
+
+        const outputPass = new OutputPass();
+        composer.addPass(outputPass);
+
+        // Render WITH composer
         const animate = () => {
           requestAnimationFrame(animate);
-          renderer.render(scene, camera);
+          composer.render();
         };
         animate();
+
+        console.log('🔍 Step 3: Bloom should be EXTREME - massive white glow everywhere');
 
       } catch (err) {
         console.error('Bloom capture failed:', err);
@@ -136,26 +138,12 @@ export default function GlowOverlay() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 9998, // Lower than the debug video
-        mixBlendMode: 'normal',
-        border: '3px solid blue'
+        zIndex: 1, // Lower z-index so it doesn't capture itself
+        mixBlendMode: 'screen', // Use screen blend mode
+        border: 'none'
       }}
     >
-      <video 
-        ref={videoRef} 
-        style={{ 
-          position: 'fixed',
-          top: '10px',
-          right: '10px',
-          width: '320px',
-          height: '180px',
-          zIndex: 99999,
-          border: '3px solid red',
-          background: 'black'
-        }} 
-        playsInline 
-        muted 
-      />
+      <video ref={videoRef} style={{ display: 'none' }} playsInline muted />
     </div>
   );
 }
