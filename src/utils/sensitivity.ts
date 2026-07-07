@@ -42,9 +42,10 @@ export function formatSensitivity(sensitivity: number): string {
  * @returns New sensitivity value clamped to valid range
  */
 export function adjustSensitivity(currentSensitivity: number, deltaY: number): number {
-  // Scroll up = increase sensitivity, scroll down = decrease sensitivity
-  const direction = deltaY < 0 ? 1 : -1;
-  const newSensitivity = currentSensitivity + direction * SCROLL_SENSITIVITY_STEP;
+  if (currentSensitivity <= 0) return MIN_SENSITIVITY;
+  // Scroll up = multiply by 1.5, scroll down = divide by 1.5
+  const factor = deltaY < 0 ? 1.5 : 1 / 1.5;
+  const newSensitivity = currentSensitivity * factor;
   return Math.max(MIN_SENSITIVITY, Math.min(MAX_SENSITIVITY, newSensitivity));
 }
 
