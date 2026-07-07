@@ -675,6 +675,7 @@ export default function GraphEditor({
                   cy={handleY}
                   r={EASE_HANDLE_DIAMETER_PX / 2 + 1}
                   fill="var(--bg-elevated)"
+                  style={{ pointerEvents: 'none' }}
                 />
                 <circle
                   cx={midSvg.x}
@@ -683,6 +684,7 @@ export default function GraphEditor({
                   fill="none"
                   stroke={EASE_HANDLE_COLOR}
                   strokeWidth={EASE_HANDLE_RING_THICKNESS_PX}
+                  style={{ pointerEvents: 'none' }}
                 />
               </g>
             );
