@@ -32,18 +32,40 @@ export default function GlowOverlay() {
     // Start screen capture
     const startCapture = async () => {
       try {
+        console.log('🔍 Starting capture...');
         const { sourceId } = await (window as any).electronAPI.startWindowCapture();
+        console.log('🔍 Got sourceId:', sourceId);
+        
         const stream = await (window as any).electronAPI.getCaptureStream(sourceId);
+        console.log('🔍 Got stream:', stream);
+        console.log('🔍 Stream tracks:', stream.getTracks());
         
         video.srcObject = stream;
         await video.play();
+        console.log('🔍 Video play() succeeded');
+        
+        // Check video state after a delay
+        setTimeout(() => {
+          console.log('🔍 Video state after 1 second:');
+          console.log('  - readyState:', video.readyState);
+          console.log('  - videoWidth:', video.videoWidth);
+          console.log('  - videoHeight:', video.videoHeight);
+          console.log('  - paused:', video.paused);
+          console.log('  - currentTime:', video.currentTime);
+          console.log('  - srcObject:', video.srcObject);
+          
+          if (video.readyState >= 2) {
+            console.log('✅ Video has frames!');
+          } else {
+            console.log('❌ Video has NO frames - readyState < 2');
+          }
+        }, 1000);
 
         // Create video texture
         const videoTexture = new THREE.VideoTexture(video);
         videoTexture.minFilter = THREE.LinearFilter;
         videoTexture.magFilter = THREE.LinearFilter;
 
-        // Create fullscreen plane with the video texture
         const geometry = new THREE.PlaneGeometry(2, 2);
         const material = new THREE.MeshBasicMaterial({ 
           map: videoTexture,
@@ -52,14 +74,11 @@ export default function GlowOverlay() {
         const mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
 
-        // Render WITHOUT composer - just the video
         const animate = () => {
           requestAnimationFrame(animate);
           renderer.render(scene, camera);
         };
         animate();
-
-        console.log('🔍 Step 2: Video texture should be visible - you should see your app UI on the canvas');
 
       } catch (err) {
         console.error('Bloom capture failed:', err);
@@ -99,12 +118,26 @@ export default function GlowOverlay() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 9999,
-        mixBlendMode: 'normal', // Use 'normal' so you see the raw video
-        border: '3px solid blue' // Blue border to see the canvas
+        zIndex: 9998, // Lower than the debug video
+        mixBlendMode: 'normal',
+        border: '3px solid blue'
       }}
     >
-      <video ref={videoRef} style={{ display: 'none' }} playsInline muted />
+      <video 
+        ref={videoRef} 
+        style={{ 
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          width: '320px',
+          height: '180px',
+          zIndex: 99999,
+          border: '3px solid red',
+          background: 'black'
+        }} 
+        playsInline 
+        muted 
+      />
     </div>
   );
 }
