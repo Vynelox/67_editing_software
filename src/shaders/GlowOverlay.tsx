@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
 export default function GlowOverlay() {
@@ -30,26 +31,22 @@ export default function GlowOverlay() {
     renderer.setClearColor(0x000000, 0); // Black with 0 alpha (fully transparent)
     container.appendChild(renderer.domElement);
 
-    // Start screen capture
+    // Start screen capture using element.captureStream()
     const startCapture = async () => {
       try {
         console.log('🔍 Starting capture...');
-        const { sourceId } = await (window as any).electronAPI.startWindowCapture();
-        console.log('🔍 Got sourceId:', sourceId);
         
-        // Call getUserMedia directly in the renderer
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
+        // Get the editor container element (outside GlowOverlay)
+        const editorContainer = document.getElementById('editor-container');
+        if (!editorContainer) {
+          throw new Error('Editor container not found');
+        }
+        
+        // Capture only the editor container (not the GlowOverlay canvas)
+        // @ts-ignore - captureStream is not in standard TypeScript types
+        const stream = editorContainer.captureStream({
           video: {
-            // @ts-ignore
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: sourceId,
-              minWidth: 1280,
-              maxWidth: 1920,
-              minHeight: 720,
-              maxHeight: 1080
-            }
+            frameRate: 60
           }
         });
         
@@ -73,7 +70,7 @@ export default function GlowOverlay() {
         const mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
 
-        // Setup bloom post-processing with EXTREME settings
+        // Setup bloom post-processing
         const composer = new EffectComposer(renderer);
         composerRef.current = composer;
 
@@ -82,11 +79,47 @@ export default function GlowOverlay() {
 
         const bloomPass = new UnrealBloomPass(
           new THREE.Vector2(window.innerWidth, window.innerHeight),
-          1.0,   // strength - EXTREME
-          0.002,   // radius - EXTREME
-          1.0    // threshold - 0 means EVERYTHING blooms
+          1.5,   // strength
+          0.5,   // radius
+          0.0    // threshold
         );
         composer.addPass(bloomPass);
+
+        // Custom shader to make dark areas transparent (breaks feedback loop)
+        const bloomOnlyShader = {
+          uniforms: {
+            tDiffuse: { value: null },
+            threshold: { value: 0.8 }
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform sampler2D tDiffuse;
+            uniform float threshold;
+            varying vec2 vUv;
+            
+            void main() {
+              vec4 color = texture2D(tDiffuse, vUv);
+              // Calculate brightness using luminance formula
+              float brightness = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+              
+              // Only keep pixels above threshold, make others fully transparent
+              if (brightness < threshold) {
+                gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0); // Fully transparent
+              } else {
+                gl_FragColor = color;
+              }
+            }
+          `
+        };
+
+        const bloomOnlyPass = new ShaderPass(bloomOnlyShader);
+        composer.addPass(bloomOnlyPass);
 
         const outputPass = new OutputPass();
         composer.addPass(outputPass);
@@ -98,7 +131,7 @@ export default function GlowOverlay() {
         };
         animate();
 
-        console.log('🔍 Step 3: Bloom should be EXTREME - massive white glow everywhere');
+        console.log('🔍 Bloom active - capturing editor only, no feedback loop');
 
       } catch (err) {
         console.error('Bloom capture failed:', err);
@@ -138,8 +171,8 @@ export default function GlowOverlay() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 1, // Lower z-index so it doesn't capture itself
-        mixBlendMode: 'screen', // Use screen blend mode
+        zIndex: 1,
+        mixBlendMode: 'screen',
         border: 'none'
       }}
     >

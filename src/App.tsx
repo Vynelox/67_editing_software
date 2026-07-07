@@ -596,6 +596,7 @@ function AppContent() {
   const rollMedia = rollClip ? mediaItems.get(rollClip.mediaId) ?? null : null;
 
   return (
+    <div id="editor-container" style={{ width: '100vw', height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
     <div className="app-shell">
       {/* Background blocking overlay: sits below modal/torus overlays (z-index 199 vs 200) */}
       {blockBackground && (
@@ -742,6 +743,9 @@ function AppContent() {
       {rollClip && rollMedia && (
         <RollDialog clip={rollClip} media={rollMedia} onClose={() => setRollClipId(null)} onApply={handleRollApply} />
       )}
+      </div>
+      
+      {/* Keep GlowOverlay OUTSIDE the capture container */}
       <GlowOverlay />
     </div>
   );
