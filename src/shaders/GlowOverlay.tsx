@@ -2,19 +2,27 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { domToCanvas } from 'modern-screenshot';
 
 export default function GlowOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const composerRef = useRef<EffectComposer | null>(null);
+  const textureRef = useRef<THREE.DataTexture | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    const video = videoRef.current;
-    if (!container || !video) return;
+    if (!container) return;
+
+    // Use HALF resolution for performance
+    const CAPTURE_SCALE = 0.5;
+    let captureWidth = Math.floor(window.innerWidth * CAPTURE_SCALE);
+    let captureHeight = Math.floor(window.innerHeight * CAPTURE_SCALE);
+
+    // Create worker using new URL() for Vite compatibility
+    const worker = new Worker(
+      new URL('../workers/shaderWorker.ts', import.meta.url),
+      { type: 'module' }
+    );
 
     // Three.js setup
     const scene = new THREE.Scene();
@@ -28,133 +36,131 @@ export default function GlowOverlay() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setClearColor(0x000000, 0); // Black with 0 alpha (fully transparent)
+    renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
 
-    // Start screen capture using element.captureStream()
-    const startCapture = async () => {
+    // Create a placeholder texture that will be updated by worker results
+    const placeholderData = new Uint8Array(captureWidth * captureHeight * 4);
+    const texture = new THREE.DataTexture(placeholderData, captureWidth, captureHeight, THREE.RGBAFormat);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    textureRef.current = texture;
+
+    // Fullscreen quad with the texture
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const material = new THREE.MeshBasicMaterial({ 
+      map: texture,
+      transparent: true
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    // Setup EffectComposer (just RenderPass + OutputPass for now, bloom in Step 3)
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    const outputPass = new OutputPass();
+    composer.addPass(outputPass);
+
+    // Animation loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+      composer.render();
+    };
+    animate();
+
+    // Capture loop
+    let isCapturing = false;
+
+    const captureLoop = async () => {
+      if (isCapturing) {
+        requestAnimationFrame(captureLoop);
+        return;
+      }
+      
       try {
-        console.log('🔍 Starting capture...');
+        isCapturing = true;
         
-        // Get the editor container element (outside GlowOverlay)
-        const editorContainer = document.getElementById('editor-container');
-        if (!editorContainer) {
-          throw new Error('Editor container not found');
+        console.log('🔍 modern-screenshot capture started');
+        
+        // Capture DOM using modern-screenshot
+        const appShell = document.querySelector('.app-shell');
+        if (!appShell) {
+          throw new Error('.app-shell element not found');
         }
         
-        // Capture only the editor container (not the GlowOverlay canvas)
-        // @ts-ignore - captureStream is not in standard TypeScript types
-        const stream = editorContainer.captureStream({
-          video: {
-            frameRate: 60
-          }
+        const canvas = await domToCanvas(appShell as HTMLElement, {
+          width: captureWidth,
+          height: captureHeight,
+          scale: 1,
         });
         
-        console.log('🔍 Got stream:', stream);
-        console.log('🔍 Stream tracks:', stream.getTracks());
+        console.log('🔍 Capture completed, sending to worker');
         
-        video.srcObject = stream;
-        await video.play();
-        console.log('🔍 Video play() succeeded');
+        // Convert to ImageBitmap
+        const bitmap = await createImageBitmap(canvas);
+        canvas.remove();
         
-        // Create video texture
-        const videoTexture = new THREE.VideoTexture(video);
-        videoTexture.minFilter = THREE.LinearFilter;
-        videoTexture.magFilter = THREE.LinearFilter;
-
-        const geometry = new THREE.PlaneGeometry(2, 2);
-        const material = new THREE.MeshBasicMaterial({ 
-          map: videoTexture,
-          transparent: true
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-
-        // Setup bloom post-processing
-        const composer = new EffectComposer(renderer);
-        composerRef.current = composer;
-
-        const renderPass = new RenderPass(scene, camera);
-        composer.addPass(renderPass);
-
-        const bloomPass = new UnrealBloomPass(
-          new THREE.Vector2(window.innerWidth, window.innerHeight),
-          1.5,   // strength
-          0.5,   // radius
-          0.0    // threshold
+        // Send to worker (transfer ownership)
+        worker.postMessage(
+          { type: 'process', bitmap },
+          [bitmap]
         );
-        composer.addPass(bloomPass);
-
-        // Custom shader to make dark areas transparent (breaks feedback loop)
-        const bloomOnlyShader = {
-          uniforms: {
-            tDiffuse: { value: null },
-            threshold: { value: 0.8 }
-          },
-          vertexShader: `
-            varying vec2 vUv;
-            void main() {
-              vUv = uv;
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-          `,
-          fragmentShader: `
-            uniform sampler2D tDiffuse;
-            uniform float threshold;
-            varying vec2 vUv;
-            
-            void main() {
-              vec4 color = texture2D(tDiffuse, vUv);
-              // Calculate brightness using luminance formula
-              float brightness = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-              
-              // Only keep pixels above threshold, make others fully transparent
-              if (brightness < threshold) {
-                gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0); // Fully transparent
-              } else {
-                gl_FragColor = color;
-              }
-            }
-          `
-        };
-
-        const bloomOnlyPass = new ShaderPass(bloomOnlyShader);
-        composer.addPass(bloomOnlyPass);
-
-        const outputPass = new OutputPass();
-        composer.addPass(outputPass);
-
-        // Render WITH composer
-        const animate = () => {
-          requestAnimationFrame(animate);
-          composer.render();
-        };
-        animate();
-
-        console.log('🔍 Bloom active - capturing editor only, no feedback loop');
-
       } catch (err) {
-        console.error('Bloom capture failed:', err);
+        console.error('🔍 Capture error:', err);
+      } finally {
+        isCapturing = false;
+      }
+      
+      requestAnimationFrame(captureLoop);
+    };
+
+    // Worker message handler
+    worker.onmessage = (e: MessageEvent) => {
+      const msg = e.data;
+      
+      if (msg.type === 'ready') {
+        console.log('🔧 Worker ready, starting capture loop');
+        captureLoop();
+      } else if (msg.type === 'result') {
+        if (textureRef.current && msg.bitmap) {
+          textureRef.current.image = msg.bitmap;
+          textureRef.current.needsUpdate = true;
+        }
+      } else if (msg.type === 'error') {
+        console.error('🔧 Worker error:', msg.message);
       }
     };
 
-    startCapture();
+    worker.onerror = (err) => {
+      console.error('🔧 Worker error event:', err);
+    };
+
+    // Initialize worker
+    worker.postMessage({ type: 'init', width: captureWidth, height: captureHeight });
 
     // Handle resize
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
+      
+      captureWidth = Math.floor(width * CAPTURE_SCALE);
+      captureHeight = Math.floor(height * CAPTURE_SCALE);
+      
       renderer.setSize(width, height);
-      composerRef.current?.setSize(width, height);
+      composer.setSize(width, height);
+      
+      worker.postMessage({ type: 'resize', width: captureWidth, height: captureHeight });
     };
     window.addEventListener('resize', handleResize);
 
+    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (video.srcObject) {
-        (video.srcObject as MediaStream).getTracks().forEach(t => t.stop());
-      }
+      worker.terminate();
       renderer.dispose();
+      geometry.dispose();
+      material.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
@@ -171,12 +177,9 @@ export default function GlowOverlay() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 1,
-        mixBlendMode: 'screen',
-        border: 'none'
+        zIndex: 9999,
+        mixBlendMode: 'screen'
       }}
-    >
-      <video ref={videoRef} style={{ display: 'none' }} playsInline muted />
-    </div>
+    />
   );
 }
