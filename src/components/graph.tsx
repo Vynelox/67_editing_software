@@ -575,6 +575,7 @@ export default function GraphEditor({
         height={config.height}
         viewBox={`0 0 ${svgWidth} ${config.height}`}
         onPointerDown={e => {
+          if (e.button !== 0) return; // Only respond to left-click
           if ((e.target as SVGElement).tagName.toLowerCase() === 'circle') return;
           const coords = graphCoordsFromEvent(config, e, svgRef.current, svgWidth);
           if (!coords) return;
@@ -659,14 +660,15 @@ export default function GraphEditor({
                   cy={handleY}
                   r={16}
                   fill="transparent"
-                  onPointerDown={e => {
-                    e.stopPropagation();
-                    beginDragSnapshot();
-                    draggingEasingIndex.current = index;
-                    dragStartPositionRef.current = { clientX: e.clientX, clientY: e.clientY };
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                    lockPointer(e.currentTarget);
-                  }}
+              onPointerDown={e => {
+                if (e.button !== 0) return; // Only respond to left-click
+                e.stopPropagation();
+                beginDragSnapshot();
+                draggingEasingIndex.current = index;
+                dragStartPositionRef.current = { clientX: e.clientX, clientY: e.clientY };
+                e.currentTarget.setPointerCapture(e.pointerId);
+                lockPointer(e.currentTarget);
+              }}
                 />
                 <circle
                   cx={midSvg.x}
@@ -702,6 +704,24 @@ export default function GraphEditor({
               style={{ cursor: index === 0 || index === sortedGraph.length - 1 ? 'default' : 'grab', zIndex: 10 }}
               onPointerDown={e => {
                 e.stopPropagation();
+                
+                // Handle right-click for deletion
+                if (e.button === 2) {
+                  e.preventDefault();
+                  if (index === 0 || index === sortedGraph.length - 1) return;
+                  pushHistorySnapshot(cloneGraphSnapshot(sortedGraph, easingOffsets));
+                  onChange(prev => {
+                    const next = prev.slice().sort((a, b) => a.time - b.time);
+                    next.splice(index, 1);
+                    return next;
+                  });
+                  setSelectedPointIndex(null);
+                  return;
+                }
+                
+                // Only respond to left-click for dragging
+                if (e.button !== 0) return;
+                
                 beginDragSnapshot();
                 draggingPointIndex.current = index;
                 dragStartPositionRef.current = { clientX: e.clientX, clientY: e.clientY };
@@ -712,30 +732,6 @@ export default function GraphEditor({
               onClick={e => {
                 e.stopPropagation();
                 setSelectedPointIndex(index);
-              }}
-              onContextMenu={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (index === 0 || index === sortedGraph.length - 1) return;
-                pushHistorySnapshot(cloneGraphSnapshot(sortedGraph, easingOffsets));
-                onChange(prev => {
-                  const next = prev.slice().sort((a, b) => a.time - b.time);
-                  next.splice(index, 1);
-                  return next;
-                });
-                setSelectedPointIndex(null);
-              }}
-              onDoubleClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (index === 0 || index === sortedGraph.length - 1) return;
-                pushHistorySnapshot(cloneGraphSnapshot(sortedGraph, easingOffsets));
-                onChange(prev => {
-                  const next = prev.slice().sort((a, b) => a.time - b.time);
-                  next.splice(index, 1);
-                  return next;
-                });
-                setSelectedPointIndex(null);
               }}
             />
           );
