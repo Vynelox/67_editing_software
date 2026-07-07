@@ -7,7 +7,8 @@ import { domToCanvas } from 'modern-screenshot';
 
 export default function GlowOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const textureRef = useRef<THREE.DataTexture | null>(null);
+  const textureRef = useRef<THREE.Texture | null>(null);
+  const latestBitmapRef = useRef<ImageBitmap | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -40,8 +41,9 @@ export default function GlowOverlay() {
     container.appendChild(renderer.domElement);
 
     // Create a placeholder texture that will be updated by worker results
-    const placeholderData = new Uint8Array(captureWidth * captureHeight * 4);
-    const texture = new THREE.DataTexture(placeholderData, captureWidth, captureHeight, THREE.RGBAFormat);
+    const placeholderCanvas = new OffscreenCanvas(captureWidth, captureHeight);
+    placeholderCanvas.getContext('2d');
+    const texture = new THREE.Texture(placeholderCanvas);
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     textureRef.current = texture;
@@ -123,9 +125,18 @@ export default function GlowOverlay() {
         console.log('🔧 Worker ready, starting capture loop');
         captureLoop();
       } else if (msg.type === 'result') {
+        console.log('🔍 Received result bitmap:', msg.bitmap?.width, 'x', msg.bitmap?.height);
+        
+        // Store the bitmap to prevent garbage collection
+        if (latestBitmapRef.current) {
+          latestBitmapRef.current.close();
+        }
+        latestBitmapRef.current = msg.bitmap;
+        
         if (textureRef.current && msg.bitmap) {
           textureRef.current.image = msg.bitmap;
           textureRef.current.needsUpdate = true;
+          console.log('🔍 Texture updated, needsUpdate:', textureRef.current.needsUpdate);
         }
       } else if (msg.type === 'error') {
         console.error('🔧 Worker error:', msg.message);
@@ -158,6 +169,9 @@ export default function GlowOverlay() {
     return () => {
       window.removeEventListener('resize', handleResize);
       worker.terminate();
+      if (latestBitmapRef.current) {
+        latestBitmapRef.current.close();
+      }
       renderer.dispose();
       geometry.dispose();
       material.dispose();
