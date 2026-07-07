@@ -1,35 +1,13 @@
-const { contextBridge, ipcRenderer, desktopCapturer } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
+
+console.log('🔍 Preload script loaded!');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   startWindowCapture: async () => {
-    const sources = await desktopCapturer.getSources({ 
-      types: ['window'], 
-      thumbnailSize: { width: 0, height: 0 } 
-    });
-    
-    // Find the main app window
-    const mainWindow = sources.find(source => 
-      source.name.includes('67 editing software') || 
-      source.name.includes('Electron') ||
-      source.name === ''
-    ) || sources[0];
-    
-    return { sourceId: mainWindow.id, name: mainWindow.name };
-  },
-  
-  getCaptureStream: (sourceId) => {
-    return navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        mandatory: {
-          chromeMediaSource: 'desktop',
-          chromeMediaSourceId: sourceId,
-          minWidth: 1280,
-          maxWidth: 1920,
-          minHeight: 720,
-          maxHeight: 1080
-        }
-      }
-    });
+    console.log('🔍 startWindowCapture called');
+    return await ipcRenderer.invoke('start-window-capture');
   }
+  // getCaptureStream removed - getUserMedia must be called in the renderer
 });
+
+console.log('🔍 electronAPI exposed successfully');

@@ -5,6 +5,9 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
+console.log('🔍 window.electronAPI:', (window as any).electronAPI);
+console.log('🔍 typeof window.electronAPI:', typeof (window as any).electronAPI);
+
 export default function GlowOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -36,7 +39,22 @@ export default function GlowOverlay() {
         const { sourceId } = await (window as any).electronAPI.startWindowCapture();
         console.log('🔍 Got sourceId:', sourceId);
         
-        const stream = await (window as any).electronAPI.getCaptureStream(sourceId);
+        // Call getUserMedia directly in the renderer
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            // @ts-ignore
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: sourceId,
+              minWidth: 1280,
+              maxWidth: 1920,
+              minHeight: 720,
+              maxHeight: 1080
+            }
+          }
+        });
+        
         console.log('🔍 Got stream:', stream);
         console.log('🔍 Stream tracks:', stream.getTracks());
         
