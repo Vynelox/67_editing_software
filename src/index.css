@@ -62,7 +62,7 @@ html, body, #root {
 
 /* Universal color transition for all elements using CSS color variables
    This ensures --text-secondary and --text-muted changes animate smoothly */
-* {
+*:not(::before):not(::after) {
   transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 

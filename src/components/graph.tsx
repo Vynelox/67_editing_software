@@ -623,35 +623,34 @@ export default function GraphEditor({
             
             const minY = Math.min(point1Svg.y, point2Svg.y);
             const maxY = Math.max(point1Svg.y, point2Svg.y);
-            let handleY = midSvg.y;
-            if (easingOffsets[index] !== undefined) {
-              const handlerY = easingOffsets[index];
-              const minY = Math.min(point1Svg.y, point2Svg.y);
-              const maxY = Math.max(point1Svg.y, point2Svg.y);
-              const handlerMinY = (2 * minY + point1Svg.y + point2Svg.y) / 4;
-              const handlerMaxY = (2 * maxY + point1Svg.y + point2Svg.y) / 4;
-              const midpointY = (point1Svg.y + point2Svg.y) / 2;
-              const range = handlerMaxY - handlerMinY;
-              let handleValue = 0;
-              const segmentDirection = Math.sign(nextPoint.size - point.size);
-              if (range > 0) {
-                handleValue = -(handlerY - midpointY) * 2 / range * segmentDirection;
-              }
-              handleValue = Math.max(-1, Math.min(1, handleValue));
-              
-              const strength = 3;
-              const t = 0.5;
-              let curvedProgress = t;
-              if (handleValue < 0) {
-                const power = 1 - (handleValue * strength);
-                curvedProgress = Math.pow(t, power);
-              } else if (handleValue > 0) {
-                const power = 1 + (handleValue * strength);
-                curvedProgress = 1 - Math.pow(1 - t, power);
-              }
-              const finalY = point.size + (nextPoint.size - point.size) * curvedProgress;
-              handleY = config.padding + (1 - finalY) * plotHeight;
+            const handlerMinY = (2 * minY + point1Svg.y + point2Svg.y) / 4;
+            const handlerMaxY = (2 * maxY + point1Svg.y + point2Svg.y) / 4;
+
+            // Compute the actual curve Y at t=0.5 using the same formula as buildSmoothCurvePath
+            const handlerY = easingOffsets[index] !== undefined 
+              ? clamp(easingOffsets[index], handlerMinY, handlerMaxY)
+              : (point1Svg.y + point2Svg.y) / 2;
+            const midpointY = (point1Svg.y + point2Svg.y) / 2;
+            const range = handlerMaxY - handlerMinY;
+            let handleValue = 0;
+            const segmentDirection = Math.sign(nextPoint.size - point.size);
+            if (range > 0) {
+              handleValue = -(handlerY - midpointY) * 2 / range * segmentDirection;
             }
+            handleValue = Math.max(-1, Math.min(1, handleValue));
+
+            const strength = 3;
+            const t = 0.5;
+            let curvedProgress = t;
+            if (handleValue < 0) {
+              const power = 1 - (handleValue * strength);
+              curvedProgress = Math.pow(t, power);
+            } else if (handleValue > 0) {
+              const power = 1 + (handleValue * strength);
+              curvedProgress = 1 - Math.pow(1 - t, power);
+            }
+            const finalY = point.size + (nextPoint.size - point.size) * curvedProgress;
+            const handleY = config.padding + (1 - finalY) * plotHeight;
             
             return (
               <g key={`easing-${index}`} style={{ cursor: 'ns-resize', zIndex: 5 }}>
