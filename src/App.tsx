@@ -10,7 +10,7 @@ import { parentMap, StylesModal, applyThemeToDocument } from './components/style
 import Splitter from './components/Splitter';
 import DraggableModal from './components/DraggableModal';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import GlowOverlay from './shaders/GlowOverlay';
+
 import {
   type MediaItem, type TimelineClip, type Track,
   FPS, generateId, secondsToFrames
@@ -745,8 +745,7 @@ function AppContent() {
       )}
       </div>
       
-      {/* Keep GlowOverlay OUTSIDE the capture container */}
-      <GlowOverlay />
+
     </div>
   );
 }
