@@ -48,10 +48,10 @@ let vbo: WebGLBuffer | null = null;
 
 // Fullscreen quad vertices (position + texCoord) - using TRIANGLE_STRIP
 const quadVertices = new Float32Array([
-  -1.0,  1.0,    0.0, 1.0,
-  -1.0, -1.0,    0.0, 0.0,
-   1.0,  1.0,    1.0, 1.0,
-   1.0, -1.0,    1.0, 0.0,
+  -1.0,  1.0,    0.0, 0.0,  // top-left: UV (0,0)
+  -1.0, -1.0,    0.0, 1.0,  // bottom-left: UV (0,1)
+   1.0,  1.0,    1.0, 0.0,  // top-right: UV (1,0)
+   1.0, -1.0,    1.0, 1.0,  // bottom-right: UV (1,1)
 ]);
 
 // Vertex shader (shared by all passes)

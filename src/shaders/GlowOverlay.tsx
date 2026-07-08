@@ -48,8 +48,9 @@ export default function GlowOverlay() {
     texture.magFilter = THREE.LinearFilter;
     textureRef.current = texture;
 
-    // Fullscreen quad with the texture
-    const geometry = new THREE.PlaneGeometry(2, 2);
+    // Fullscreen quad with the texture - match aspect ratio to prevent distortion
+    const aspectRatio = captureWidth / captureHeight;
+    const geometry = new THREE.PlaneGeometry(2 * aspectRatio, 2);
     const material = new THREE.MeshBasicMaterial({ 
       map: texture,
       transparent: true
