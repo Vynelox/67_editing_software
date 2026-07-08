@@ -15,7 +15,7 @@ export default function GlowOverlay() {
     if (!container) return;
 
     // Use HALF resolution for performance
-    const CAPTURE_SCALE = 0.5;
+    const CAPTURE_SCALE = 1;
     let captureWidth = Math.floor(window.innerWidth * CAPTURE_SCALE);
     let captureHeight = Math.floor(window.innerHeight * CAPTURE_SCALE);
 
@@ -50,7 +50,7 @@ export default function GlowOverlay() {
 
     // Fullscreen quad with the texture - match aspect ratio to prevent distortion
     const aspectRatio = captureWidth / captureHeight;
-    const geometry = new THREE.PlaneGeometry(2 * aspectRatio, 2);
+    const geometry = new THREE.PlaneGeometry(aspectRatio, aspectRatio);
     const material = new THREE.MeshBasicMaterial({ 
       map: texture,
       transparent: true
