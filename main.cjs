@@ -51,10 +51,13 @@ app.whenReady().then(() => {
   });
 
   // --- Sync overlay position/size with main window ---
+  // Also re-assert alwaysOnTop during move to prevent overlay falling behind main window
   const syncBounds = () => {
-    if (!win || !overlayWin) return;
+    if (!win || !overlayWin || overlayWin.isDestroyed()) return;
     const bounds = win.getBounds();
     overlayWin.setBounds(bounds);
+    // Re-assert alwaysOnTop with screen-saver level for stronger z-order
+    overlayWin.setAlwaysOnTop(true, 'screen-saver', -1);
   };
 
   win.on('move', syncBounds);
@@ -100,6 +103,20 @@ app.whenReady().then(() => {
     console.log('🔧 Main window loaded, starting capture loop');
     startCaptureLoop();
   });
+
+  // DEBUG: export a single screenshot 5 seconds after load to verify capture works
+  const fs = require('fs');
+  setTimeout(async () => {
+    try {
+      console.log('🔍 Taking debug screenshot...');
+      const image = await win.webContents.capturePage();
+      const desktopPath = path.join(require('os').homedir(), 'Desktop', 'window-a-capture.png');
+      fs.writeFileSync(desktopPath, image.toPNG());
+      console.log('🔍 Debug screenshot saved to:', desktopPath);
+    } catch (err) {
+      console.error('🔍 Debug screenshot failed:', err);
+    }
+  }, 5000);
 
   // --- Window control IPC handlers ---
   ipcMain.on('window-minimize', () => win.minimize());
