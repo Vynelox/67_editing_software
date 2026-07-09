@@ -19,17 +19,18 @@ app.whenReady().then(() => {
     },
   });
 
-  // --- Window B: Transparent Overlay ---
+  // --- Window B: Debug Window (will make transparent later) ---
+  // For now: visible, opaque, with frame to verify it works
   overlayWin = new BrowserWindow({
     width: 1280,
     height: 800,
-    x: win.getBounds().x,
-    y: win.getBounds().y,
-    frame: false,
-    transparent: true,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    show: false, // shown after it loads
+    x: win.getBounds().x + 50, // Offset slightly to see it
+    y: win.getBounds().y + 50,
+    frame: true, // Visible frame for debugging
+    transparent: false, // Opaque for debugging
+    alwaysOnTop: false, // Not always on top for debugging
+    skipTaskbar: false, // Show in taskbar for debugging
+    show: true, // Show immediately
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -38,17 +39,9 @@ app.whenReady().then(() => {
     },
   });
 
-  // Make overlay click-through so all interactions pass to main window
-  overlayWin.setIgnoreMouseEvents(true, { forward: true });
-
   // Load overlay HTML via Vite dev server
   overlayWin.loadURL('http://localhost:5173/overlay.html');
-
-  // Once overlay is loaded and ready, show it
-  overlayWin.webContents.on('did-finish-load', () => {
-    overlayWin.show();
-    console.log('🔧 Overlay window loaded and shown');
-  });
+  console.log('🔧 Overlay window created (debug mode - visible)');
 
   // --- Sync overlay position/size with main window ---
   // Also re-assert alwaysOnTop during move to prevent overlay falling behind main window
@@ -65,16 +58,8 @@ app.whenReady().then(() => {
 
   // --- Capture loop: capturePage() on main window, send pixels to overlay ---
   const startCaptureLoop = () => {
-    let isCapturing = false;
-
     const capture = () => {
       if (!win || !overlayWin || overlayWin.isDestroyed()) return;
-      if (isCapturing) {
-        requestAnimationFrame(capture);
-        return;
-      }
-
-      isCapturing = true;
 
       win.webContents.capturePage().then((image) => {
         const size = image.getSize();
@@ -86,12 +71,11 @@ app.whenReady().then(() => {
         // Send the raw pixel data to the overlay window
         overlayWin.webContents.send('frame', rawBuffer, size.width, size.height);
 
-        isCapturing = false;
-        requestAnimationFrame(capture);
+        // Schedule next capture using setTimeout (Node.js friendly)
+        setTimeout(capture, 16); // ~60 FPS
       }).catch((err) => {
         console.error('🔧 Capture error:', err);
-        isCapturing = false;
-        requestAnimationFrame(capture);
+        setTimeout(capture, 100); // slower retry on error
       });
     };
 
