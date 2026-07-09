@@ -60,6 +60,7 @@ export default function DraggableModal({
   const dragStartPos = useRef({ x: 0, y: 0 });
   const hasDraggedSignificantly = useRef(false);
   const draggedButtonRef = useRef<{ type: 'minimize' | 'close' | 'back'; action: () => void } | null>(null);
+  const buttonExecutedRef = useRef(false); // Track if button was executed via mouseup
   const isFirstRender = useRef(true);
   // Refs to store latest callbacks without triggering re-renders
   const onRestorePageStateRef = useRef(onRestorePageState);
@@ -229,12 +230,14 @@ export default function DraggableModal({
       }
     };
 
-    const handleMouseUp = () => {
-      // If we dragged a header button and the setting allows execution on drag, execute it
-      if (hasDraggedSignificantly.current && draggedButtonRef.current) {
+const handleMouseUp = () => {
+      // If we moused down on a header button and execute on drag is enabled, execute it
+      // This executes on mouseup regardless of where the mouse is or how far we dragged
+      if (draggedButtonRef.current) {
         const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true;
         if (shouldExecute) {
           draggedButtonRef.current.action();
+          buttonExecutedRef.current = true; // Mark as handled so onClick won't also fire
         }
       }
       setIsDragging(false);
@@ -290,7 +293,15 @@ export default function DraggableModal({
             {minimizable && (
              <button
                 className="icon-btn modal-minimize-btn"
-                onClick={() => { const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true; if (shouldExecute || !hasDraggedSignificantly.current) setIsMinimized(m => !m); }}
+                onClick={() => { 
+                  const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true; 
+                  // If execute on drag is enabled and we already executed via mouseup, skip this click
+                  if (shouldExecute && buttonExecutedRef.current) {
+                    buttonExecutedRef.current = false;
+                    return;
+                  }
+                  setIsMinimized(m => !m); 
+                }}
                 aria-label={isMinimized ? 'Restore' : 'Minimize'}
                 title={isMinimized ? 'Restore' : 'Minimize'}
                 style={{ width: 32, height: 32 }}
@@ -302,18 +313,21 @@ export default function DraggableModal({
             )}
             <button className="icon-btn" onClick={(e) => { 
                 const shouldExecute = (window as any).juicecut?.settings?.executeHeaderButtonsOnDrag ?? true; 
-                if (shouldExecute || !hasDraggedSignificantly.current) {
-                  // Save page state before closing
-                  if (persistenceKey && pageState !== undefined && onSavePageStateRef.current) {
-                    try {
-                      window.localStorage.setItem(`juicecut.modal.${persistenceKey}.pageState`, JSON.stringify(pageState));
-                      onSavePageStateRef.current(pageState);
-                    } catch (e) {
-                      console.warn(`Failed to save page state for ${persistenceKey}:`, e);
-                    }
-                  }
-                  onClose(); 
+                // If execute on drag is enabled and we already executed via mouseup, skip this click
+                if (shouldExecute && buttonExecutedRef.current) {
+                  buttonExecutedRef.current = false;
+                  return;
                 }
+                // Save page state before closing
+                if (persistenceKey && pageState !== undefined && onSavePageStateRef.current) {
+                  try {
+                    window.localStorage.setItem(`juicecut.modal.${persistenceKey}.pageState`, JSON.stringify(pageState));
+                    onSavePageStateRef.current(pageState);
+                  } catch (e) {
+                    console.warn(`Failed to save page state for ${persistenceKey}:`, e);
+                  }
+                }
+                onClose(); 
               }} aria-label="Close" style={{ width: 32, height: 32 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />

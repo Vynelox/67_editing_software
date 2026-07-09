@@ -59,7 +59,6 @@ function main() {
   canvas.style.width = '100%';
   canvas.style.height = '100%';
   canvas.style.display = 'block';
-  canvas.style.backgroundColor = 'magenta'; // Debug: magenta background
   root.appendChild(canvas);
 
   const gl = canvas.getContext('webgl2');
@@ -81,6 +80,7 @@ function main() {
     gl!.viewport(0, 0, canvas.width, canvas.height);
   }
   resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
   // Create shader program
   const program = createProgram(gl, VERTEX_SOURCE, FRAGMENT_SOURCE);
@@ -114,15 +114,13 @@ function main() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  
-  // Initialize with a red pixel so we can see something
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 0, 255]));
 
   let textureWidth = 1;
   let textureHeight = 1;
 
-  // Get uniform location
+  // Get uniform locations
   const uTextureLoc = gl.getUniformLocation(program, 'u_texture');
+  const uResolutionLoc = gl.getUniformLocation(program, 'u_resolution');
 
   // Listen for incoming frames from main process
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -145,27 +143,19 @@ function main() {
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, bufferArray);
 
-      // Clear and render
+      // Clear and render (texture upscales to fill screen)
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.useProgram(program);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.uniform1i(uTextureLoc, 0);
+      gl.uniform2f(uResolutionLoc, width, height);
       gl.bindVertexArray(vao);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     });
   } else {
-    console.error('Overlay: electronAPI.onFrameData not available - showing red texture');
-    // Show red texture to verify rendering works
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(program);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(uTextureLoc, 0);
-    gl.bindVertexArray(vao);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    console.error('Overlay: electronAPI.onFrameData not available');
   }
 }
 

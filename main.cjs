@@ -19,18 +19,17 @@ app.whenReady().then(() => {
     },
   });
 
-  // --- Window B: Debug Window (will make transparent later) ---
-  // For now: visible, opaque, with frame to verify it works
+  // --- Window B: Transparent overlay window ---
   overlayWin = new BrowserWindow({
     width: 1280,
     height: 800,
-    x: win.getBounds().x + 50, // Offset slightly to see it
-    y: win.getBounds().y + 50,
-    frame: true, // Visible frame for debugging
-    transparent: false, // Opaque for debugging
-    alwaysOnTop: false, // Not always on top for debugging
-    skipTaskbar: false, // Show in taskbar for debugging
-    show: true, // Show immediately
+    x: win.getBounds().x,
+    y: win.getBounds().y,
+    frame: false, // Frameless overlay
+    transparent: true, // Transparent background
+    alwaysOnTop: true, // Stay on top of other windows
+    skipTaskbar: true, // Hide from taskbar
+    show: false, // Show after ready
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -39,9 +38,11 @@ app.whenReady().then(() => {
     },
   });
 
+  // Make overlay click-through so all interactions pass to main window
+  overlayWin.setIgnoreMouseEvents(true, { forward: true });
+
   // Load overlay HTML via Vite dev server
   overlayWin.loadURL('http://localhost:5173/overlay.html');
-  console.log('🔧 Overlay window created (debug mode - visible)');
 
   // --- Sync overlay position/size with main window ---
   // Also re-assert alwaysOnTop during move to prevent overlay falling behind main window
@@ -56,25 +57,41 @@ app.whenReady().then(() => {
   win.on('move', syncBounds);
   win.on('resize', syncBounds);
 
-  // --- Capture loop: capturePage() on main window, send pixels to overlay ---
+  // --- Capture loop: optimized with downscaling to 0.5x ---
   const startCaptureLoop = () => {
+    const DOWNSCALE_FACTOR = 0.5;
+    let isCapturing = false;
+
     const capture = () => {
-      if (!win || !overlayWin || overlayWin.isDestroyed()) return;
+      if (!win || !overlayWin || overlayWin.isDestroyed() || isCapturing) {
+        setTimeout(capture, 16);
+        return;
+      }
+
+      isCapturing = true;
 
       win.webContents.capturePage().then((image) => {
-        const size = image.getSize();
-        const buffer = image.toBitmap(); // Raw RGBA pixels as Buffer
-        const rawBuffer = buffer.buffer
-          ? buffer.buffer
-          : buffer; // Get ArrayBuffer from Node Buffer
+        const bounds = win.getBounds();
+        const captureWidth = Math.floor(bounds.width * DOWNSCALE_FACTOR);
+        const captureHeight = Math.floor(bounds.height * DOWNSCALE_FACTOR);
 
-         // Send the raw pixel data to the overlay window
-         overlayWin.webContents.send('frame-data', buffer, size.width, size.height);
+        // Resize the image to reduce data size (Optimization 1)
+        const smallImage = image.resize({
+          width: captureWidth,
+          height: captureHeight,
+          quality: 'good'
+        });
 
-         // Schedule next capture at ~30-60 FPS using setTimeout
-        setTimeout(capture, 16); // ~60 FPS
+        const buffer = smallImage.toBitmap();
+
+        // Send the downscaled buffer (Optimization 2: smaller data = faster IPC)
+        overlayWin.webContents.send('frame-data', buffer, captureWidth, captureHeight);
+
+        isCapturing = false;
+        setTimeout(capture, 16); // ~60 FPS target
       }).catch((err) => {
         console.error('🔧 Capture error:', err);
+        isCapturing = false;
         setTimeout(capture, 100); // slower retry on error
       });
     };
@@ -82,9 +99,11 @@ app.whenReady().then(() => {
     capture();
   };
 
-  // Start capture loop after main window loads
+  // Start capture loop and show overlay after main window loads
   win.webContents.on('did-finish-load', () => {
     console.log('🔧 Main window loaded, starting capture loop');
+    overlayWin.show(); // Show frameless overlay
+    console.log('🔧 Overlay window shown (frameless, transparent, click-through)');
     startCaptureLoop();
   });
 
