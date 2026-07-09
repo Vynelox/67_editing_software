@@ -6,25 +6,8 @@
  * via IPC and renders it through a GLSL shader.
  */
 
-// Simple vertex shader that just passes through position and texCoord
-const VERTEX_SOURCE = `#version 300 es
-in vec2 a_position;
-in vec2 a_texCoord;
-out vec2 v_texCoord;
-void main() {
-  gl_Position = vec4(a_position, 0.0, 1.0);
-  v_texCoord = a_texCoord;
-}`;
-
-// Simple fragment shader - plain texture sampling
-const FRAGMENT_SOURCE = `#version 300 es
-precision highp float;
-in vec2 v_texCoord;
-out vec4 outColor;
-uniform sampler2D u_texture;
-void main() {
-  outColor = texture(u_texture, v_texCoord);
-}`;
+import VERTEX_SOURCE from './shaders/glow.vert?raw';
+import FRAGMENT_SOURCE from './shaders/glow.frag?raw';
 
 // Fullscreen quad vertices (position + texCoord) using TRIANGLE_STRIP
 const QUAD_VERTICES = new Float32Array([
@@ -147,7 +130,7 @@ function main() {
   if (api && typeof api.onFrameData === 'function') {
     console.log('Overlay: electronAPI.onFrameData registered');
     api.onFrameData((buffer: ArrayBuffer, width: number, height: number) => {
-      // console.log(`Overlay: received frame ${width}x${height}`);
+      const bufferArray = new Uint8Array(buffer);
       
       // Re-allocate texture if size changed
       if (width !== textureWidth || height !== textureHeight) {
@@ -160,7 +143,7 @@ function main() {
 
       // Upload pixel data to texture
       gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(buffer));
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, bufferArray);
 
       // Clear and render
       gl.clearColor(0, 0, 0, 0);
@@ -173,7 +156,7 @@ function main() {
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     });
   } else {
-    console.error('Overlay: electronAPI.onFrame not available - showing red texture');
+    console.error('Overlay: electronAPI.onFrameData not available - showing red texture');
     // Show red texture to verify rendering works
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
