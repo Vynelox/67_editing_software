@@ -68,10 +68,10 @@ app.whenReady().then(() => {
           ? buffer.buffer
           : buffer; // Get ArrayBuffer from Node Buffer
 
-        // Send the raw pixel data to the overlay window
-        overlayWin.webContents.send('frame', rawBuffer, size.width, size.height);
+         // Send the raw pixel data to the overlay window
+         overlayWin.webContents.send('frame-data', buffer, size.width, size.height);
 
-        // Schedule next capture using setTimeout (Node.js friendly)
+         // Schedule next capture at ~30-60 FPS using setTimeout
         setTimeout(capture, 16); // ~60 FPS
       }).catch((err) => {
         console.error('🔧 Capture error:', err);

@@ -7,7 +7,7 @@
  */
 
 // Simple vertex shader that just passes through position and texCoord
-const simpleVertSource = `#version 300 es
+const VERTEX_SOURCE = `#version 300 es
 in vec2 a_position;
 in vec2 a_texCoord;
 out vec2 v_texCoord;
@@ -17,7 +17,7 @@ void main() {
 }`;
 
 // Simple fragment shader - plain texture sampling
-const simpleFragSource = `#version 300 es
+const FRAGMENT_SOURCE = `#version 300 es
 precision highp float;
 in vec2 v_texCoord;
 out vec4 outColor;
@@ -100,7 +100,7 @@ function main() {
   resizeCanvas();
 
   // Create shader program
-  const program = createProgram(gl, simpleVertSource, simpleFragSource);
+  const program = createProgram(gl, VERTEX_SOURCE, FRAGMENT_SOURCE);
   if (!program) {
     console.error('Overlay: Failed to create shader program');
     return;
@@ -144,9 +144,9 @@ function main() {
   // Listen for incoming frames from main process
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const api = (window as any).electronAPI;
-  if (api && typeof api.onFrame === 'function') {
-    console.log('Overlay: electronAPI.onFrame registered');
-    api.onFrame((buffer: ArrayBuffer, width: number, height: number) => {
+  if (api && typeof api.onFrameData === 'function') {
+    console.log('Overlay: electronAPI.onFrameData registered');
+    api.onFrameData((buffer: ArrayBuffer, width: number, height: number) => {
       // console.log(`Overlay: received frame ${width}x${height}`);
       
       // Re-allocate texture if size changed
@@ -154,7 +154,6 @@ function main() {
         textureWidth = width;
         textureHeight = height;
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        const pixelStore = gl.pixelStorei.bind(gl);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       }
