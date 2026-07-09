@@ -6,9 +6,9 @@ out vec4 outColor;
 
 uniform sampler2D u_texture;
 uniform vec2 u_resolution;
+uniform float u_downscaleFactor;
 
-// Bloom parameters
-const float THRESHOLD = 0.5;      // Brightness threshold for bloom
+// Bloom parameters - adjusted for downscaled image
 const float STRENGTH = 1.5;       // Bloom intensity
 const float BLUR_RADIUS = 2.0;    // Blur spread
 
@@ -19,12 +19,12 @@ void main() {
   vec4 original = texture(u_texture, v_texCoord);
   
   // --- Bright pass: extract bright pixels ---
+  // Lower threshold = more bloom, but we already downscale so keep original threshold
   float brightness = dot(original.rgb, vec3(0.2126, 0.7152, 0.0722));
-  vec4 bright = brightness > THRESHOLD ? original : vec4(0.0);
+  float threshold = 0.5 / u_downscaleFactor; // Compensate for downscaled brightness
+  vec4 bright = brightness > threshold ? original : vec4(0.0);
   
   // --- Gaussian blur (9-tap) on the bright pass ---
-  // We blur by sampling in a cross pattern (horizontal + vertical)
-  // This approximates a 2D gaussian blur in a single pass
   vec4 blur = vec4(0.0);
   float totalWeight = 0.0;
   

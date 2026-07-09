@@ -8,6 +8,9 @@
 
 import VERTEX_SOURCE from './shaders/glow.vert?raw';
 import FRAGMENT_SOURCE from './shaders/glow.frag?raw';
+import config from '../config.json';
+
+const DOWNSCALE_FACTOR = config.DOWNSCALE_FACTOR
 
 // Fullscreen quad vertices (position + texCoord) using TRIANGLE_STRIP
 const QUAD_VERTICES = new Float32Array([
@@ -121,6 +124,7 @@ function main() {
   // Get uniform locations
   const uTextureLoc = gl.getUniformLocation(program, 'u_texture');
   const uResolutionLoc = gl.getUniformLocation(program, 'u_resolution');
+  const uDownscaleLoc = gl.getUniformLocation(program, 'u_downscaleFactor');
 
   // Listen for incoming frames from main process
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,6 +155,7 @@ function main() {
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.uniform1i(uTextureLoc, 0);
       gl.uniform2f(uResolutionLoc, width, height);
+      gl.uniform1f(uDownscaleLoc, DOWNSCALE_FACTOR);
       gl.bindVertexArray(vao);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     });

@@ -1,6 +1,17 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 
+// main.cjs
+const config = require('./config.json');
+const DOWNSCALE_FACTOR = config.DOWNSCALE_FACTOR;
+
+// Downscale factor for captured frames (adjust for performance vs quality)
+// Change this value to control the tradeoff:
+//   1.0 = Full resolution (best quality)
+//   0.5 = Half resolution
+//   0.25 = Quarter resolution
+// Note: Update src/config.ts to match this value
+
 let win = null;      // Window A: main app
 let overlayWin = null; // Window B: transparent overlay
 
@@ -57,9 +68,8 @@ app.whenReady().then(() => {
   win.on('move', syncBounds);
   win.on('resize', syncBounds);
 
-  // --- Capture loop: optimized with downscaling to 0.5x ---
+  // --- Capture loop: optimized with downscaling ---
   const startCaptureLoop = () => {
-    const DOWNSCALE_FACTOR = 0.5;
     let isCapturing = false;
 
     const capture = () => {
@@ -75,7 +85,7 @@ app.whenReady().then(() => {
         const captureWidth = Math.floor(bounds.width * DOWNSCALE_FACTOR);
         const captureHeight = Math.floor(bounds.height * DOWNSCALE_FACTOR);
 
-        // Resize the image to reduce data size (Optimization 1)
+        // Resize the image to reduce data size
         const smallImage = image.resize({
           width: captureWidth,
           height: captureHeight,
@@ -84,7 +94,7 @@ app.whenReady().then(() => {
 
         const buffer = smallImage.toBitmap();
 
-        // Send the downscaled buffer (Optimization 2: smaller data = faster IPC)
+        // Send the downscaled buffer
         overlayWin.webContents.send('frame-data', buffer, captureWidth, captureHeight);
 
         isCapturing = false;
