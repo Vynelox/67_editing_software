@@ -1,16 +1,7 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
-
-// main.cjs
 const config = require('./config.json');
 const DOWNSCALE_FACTOR = config.DOWNSCALE_FACTOR;
-
-// Downscale factor for captured frames (adjust for performance vs quality)
-// Change this value to control the tradeoff:
-//   1.0 = Full resolution (best quality)
-//   0.5 = Half resolution
-//   0.25 = Quarter resolution
-// Note: Update src/config.ts to match this value
 
 let win = null;      // Window A: main app
 let overlayWin = null; // Window B: transparent overlay
@@ -31,14 +22,15 @@ app.whenReady().then(() => {
   });
 
   // --- Window B: Transparent overlay window ---
+  // Using parent-child relationship for proper window layering
   overlayWin = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    parent: win, // Parent-child relationship handles positioning automatically
+    width: win.getBounds().width,
+    height: win.getBounds().height,
     x: win.getBounds().x,
     y: win.getBounds().y,
     frame: false, // Frameless overlay
     transparent: true, // Transparent background
-    alwaysOnTop: true, // Stay on top of other windows
     skipTaskbar: true, // Hide from taskbar
     show: false, // Show after ready
     webPreferences: {
@@ -56,19 +48,17 @@ app.whenReady().then(() => {
   overlayWin.loadURL('http://localhost:5173/overlay.html');
 
   // --- Sync overlay position/size with main window ---
-  // Also re-assert alwaysOnTop during move to prevent overlay falling behind main window
+  // Parent-child relationship handles this automatically, but we still need to ensure bounds sync
   const syncBounds = () => {
     if (!win || !overlayWin || overlayWin.isDestroyed()) return;
     const bounds = win.getBounds();
     overlayWin.setBounds(bounds);
-    // Re-assert alwaysOnTop with screen-saver level for stronger z-order
-    overlayWin.setAlwaysOnTop(true, 'screen-saver', -1);
   };
 
   win.on('move', syncBounds);
   win.on('resize', syncBounds);
 
-  // --- Capture loop: optimized with downscaling ---
+  // --- Capture loop ---
   const startCaptureLoop = () => {
     let isCapturing = false;
 
@@ -85,7 +75,7 @@ app.whenReady().then(() => {
         const captureWidth = Math.floor(bounds.width * DOWNSCALE_FACTOR);
         const captureHeight = Math.floor(bounds.height * DOWNSCALE_FACTOR);
 
-        // Resize the image to reduce data size
+        // Resize the image
         const smallImage = image.resize({
           width: captureWidth,
           height: captureHeight,
@@ -94,7 +84,7 @@ app.whenReady().then(() => {
 
         const buffer = smallImage.toBitmap();
 
-        // Send the downscaled buffer
+        // Send the buffer
         overlayWin.webContents.send('frame-data', buffer, captureWidth, captureHeight);
 
         isCapturing = false;
@@ -102,7 +92,7 @@ app.whenReady().then(() => {
       }).catch((err) => {
         console.error('🔧 Capture error:', err);
         isCapturing = false;
-        setTimeout(capture, 100); // slower retry on error
+        setTimeout(capture, 100);
       });
     };
 
@@ -112,12 +102,12 @@ app.whenReady().then(() => {
   // Start capture loop and show overlay after main window loads
   win.webContents.on('did-finish-load', () => {
     console.log('🔧 Main window loaded, starting capture loop');
-    overlayWin.show(); // Show frameless overlay
+    overlayWin.show();
     console.log('🔧 Overlay window shown (frameless, transparent, click-through)');
     startCaptureLoop();
   });
 
-  // DEBUG: export a single screenshot 5 seconds after load to verify capture works
+  // DEBUG: export a single screenshot 5 seconds after load
   const fs = require('fs');
   setTimeout(async () => {
     try {
