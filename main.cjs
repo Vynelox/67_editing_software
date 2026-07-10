@@ -2,6 +2,7 @@ const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const config = require('./config.json');
 const DOWNSCALE_FACTOR = config.DOWNSCALE_FACTOR;
+const SHADER_WINDOW = config.shader_window;
 
 let win = null;      // Window A: main app
 let overlayWin = null; // Window B: transparent overlay
@@ -21,91 +22,109 @@ app.whenReady().then(() => {
     },
   });
 
-  // --- Window B: Transparent overlay window ---
-  // Using parent-child relationship for proper window layering
-  overlayWin = new BrowserWindow({
-    parent: win, // Parent-child relationship handles positioning automatically
-    width: win.getBounds().width,
-    height: win.getBounds().height,
-    x: win.getBounds().x,
-    y: win.getBounds().y,
-    frame: false, // Frameless overlay
-    transparent: true, // Transparent background
-    skipTaskbar: true, // Hide from taskbar
-    show: false, // Show after ready
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: false,
-    },
-  });
+  // --- Window B: Transparent overlay window (conditional) ---
+  if (SHADER_WINDOW) {
+    overlayWin = new BrowserWindow({
+      width: win.getBounds().width,
+      height: win.getBounds().height,
+      x: win.getBounds().x,
+      y: win.getBounds().y,
+      frame: false, // Frameless overlay
+      transparent: true, // Transparent background
+      alwaysOnTop: true, // Stay on top of other windows
+      skipTaskbar: true, // Hide from taskbar
+      show: false, // Show after ready
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.cjs'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+      },
+    });
 
-  // Make overlay click-through so all interactions pass to main window
-  overlayWin.setIgnoreMouseEvents(true, { forward: true });
+    // Make overlay click-through so all interactions pass to main window
+    // This prevents overlay from intercepting drag events (fixes z-fighting)
+    overlayWin.setIgnoreMouseEvents(true, { forward: true });
 
-  // Load overlay HTML via Vite dev server
-  overlayWin.loadURL('http://localhost:5173/overlay.html');
+    // Smart alwaysOnTop: overlay stays on top only when main window is focused
+    win.on('focus', () => {
+      overlayWin.setAlwaysOnTop(true);
+    });
 
-  // --- Sync overlay position/size with main window ---
-  // Parent-child relationship handles this automatically, but we still need to ensure bounds sync
-  const syncBounds = () => {
-    if (!win || !overlayWin || overlayWin.isDestroyed()) return;
-    const bounds = win.getBounds();
-    overlayWin.setBounds(bounds);
-  };
+    win.on('blur', () => {
+      overlayWin.setAlwaysOnTop(false);
+    });
 
-  win.on('move', syncBounds);
-  win.on('resize', syncBounds);
-
-  // --- Capture loop ---
-  const startCaptureLoop = () => {
-    let isCapturing = false;
-
-    const capture = () => {
-      if (!win || !overlayWin || overlayWin.isDestroyed() || isCapturing) {
-        setTimeout(capture, 16);
-        return;
+    // Sync overlay position with main window
+    win.on('move', () => {
+      if (!overlayWin.isDestroyed()) {
+        overlayWin.setPosition(win.getBounds().x, win.getBounds().y);
       }
+    });
 
-      isCapturing = true;
+    win.on('resize', () => {
+      if (!overlayWin.isDestroyed()) {
+        overlayWin.setSize(win.getBounds().width, win.getBounds().height);
+      }
+    });
 
-      win.webContents.capturePage().then((image) => {
-        const bounds = win.getBounds();
-        const captureWidth = Math.floor(bounds.width * DOWNSCALE_FACTOR);
-        const captureHeight = Math.floor(bounds.height * DOWNSCALE_FACTOR);
+    // Load overlay HTML via Vite dev server
+    overlayWin.loadURL('http://localhost:5173/overlay.html');
 
-        // Resize the image
-        const smallImage = image.resize({
-          width: captureWidth,
-          height: captureHeight,
-          quality: 'good'
+    // --- Capture loop ---
+    const startCaptureLoop = () => {
+      let isCapturing = false;
+
+      const capture = () => {
+        if (!win || !overlayWin || overlayWin.isDestroyed() || isCapturing) {
+          setTimeout(capture, 16);
+          return;
+        }
+
+        isCapturing = true;
+
+        win.webContents.capturePage().then((image) => {
+          const bounds = win.getBounds();
+          const captureWidth = Math.floor(bounds.width * DOWNSCALE_FACTOR);
+          const captureHeight = Math.floor(bounds.height * DOWNSCALE_FACTOR);
+
+          // Resize the image
+          const smallImage = image.resize({
+            width: captureWidth,
+            height: captureHeight,
+            quality: 'good'
+          });
+
+          const buffer = smallImage.toBitmap();
+
+          // Send the buffer
+          overlayWin.webContents.send('frame-data', buffer, captureWidth, captureHeight);
+
+          isCapturing = false;
+          setTimeout(capture, 16); // ~60 FPS target
+        }).catch((err) => {
+          console.error('🔧 Capture error:', err);
+          isCapturing = false;
+          setTimeout(capture, 100);
         });
+      };
 
-        const buffer = smallImage.toBitmap();
-
-        // Send the buffer
-        overlayWin.webContents.send('frame-data', buffer, captureWidth, captureHeight);
-
-        isCapturing = false;
-        setTimeout(capture, 16); // ~60 FPS target
-      }).catch((err) => {
-        console.error('🔧 Capture error:', err);
-        isCapturing = false;
-        setTimeout(capture, 100);
-      });
+      capture();
     };
 
-    capture();
-  };
-
-  // Start capture loop and show overlay after main window loads
-  win.webContents.on('did-finish-load', () => {
-    console.log('🔧 Main window loaded, starting capture loop');
-    overlayWin.show();
-    console.log('🔧 Overlay window shown (frameless, transparent, click-through)');
-    startCaptureLoop();
-  });
+    // Start capture loop and show overlay after main window loads
+    win.webContents.on('did-finish-load', () => {
+      console.log('🔧 Main window loaded, starting capture loop');
+      overlayWin.show();
+      console.log('🔧 Overlay window shown (frameless, transparent, click-through)');
+      startCaptureLoop();
+    });
+  } else {
+    // No overlay - just load main URL
+    win.webContents.on('did-finish-load', () => {
+      console.log('🔧 Main window loaded (no shader overlay)');
+    });
+  }
 
   // DEBUG: export a single screenshot 5 seconds after load
   const fs = require('fs');

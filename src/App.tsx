@@ -364,10 +364,10 @@ function AppContent() {
 
   // Window controls (Electron only)
   const sendWindowCommand = useCallback((command: string) => {
-    try {
-      const { ipcRenderer } = (window as any).require('electron');
-      ipcRenderer.send(command);
-    } catch {}
+    const api = (window as any).electronAPI;
+    if (api?.send) {
+      api.send(command);
+    }
   }, []);
 
   // Styles back/close: goes back one level if inside a sub-page, otherwise closes

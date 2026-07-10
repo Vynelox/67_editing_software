@@ -8,9 +8,6 @@
 
 import VERTEX_SOURCE from './shaders/glow.vert?raw';
 import FRAGMENT_SOURCE from './shaders/glow.frag?raw';
-import config from '../config.json';
-
-const DOWNSCALE_FACTOR = config.DOWNSCALE_FACTOR
 
 // Fullscreen quad vertices (position + texCoord) using TRIANGLE_STRIP
 const QUAD_VERTICES = new Float32Array([
@@ -64,7 +61,12 @@ function main() {
   canvas.style.display = 'block';
   root.appendChild(canvas);
 
-  const gl = canvas.getContext('webgl2');
+  const gl = canvas.getContext('webgl2', {
+    alpha: true,
+    premultipliedAlpha: false,  // Disable alpha premultiplication
+    preserveDrawingBuffer: false,
+    antialias: false
+  });
   if (!gl) {
     console.error('Overlay: Failed to create WebGL2 context');
     return;
@@ -121,10 +123,8 @@ function main() {
   let textureWidth = 1;
   let textureHeight = 1;
 
-  // Get uniform locations
+  // Get uniform location
   const uTextureLoc = gl.getUniformLocation(program, 'u_texture');
-  const uResolutionLoc = gl.getUniformLocation(program, 'u_resolution');
-  const uDownscaleLoc = gl.getUniformLocation(program, 'u_downscaleFactor');
 
   // Listen for incoming frames from main process
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -145,6 +145,7 @@ function main() {
 
       // Upload pixel data to texture
       gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);  // Tell WebGL pixels are premultiplied
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, bufferArray);
 
       // Clear and render (texture upscales to fill screen)
@@ -154,8 +155,6 @@ function main() {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.uniform1i(uTextureLoc, 0);
-      gl.uniform2f(uResolutionLoc, width, height);
-      gl.uniform1f(uDownscaleLoc, DOWNSCALE_FACTOR);
       gl.bindVertexArray(vao);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     });

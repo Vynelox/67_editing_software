@@ -1,5 +1,6 @@
 {
     "comment": "Downscale factor - controls how much the captured image was reduced.",
     "comment_2": "This affects the shader bloom threshold calculation",
-    "DOWNSCALE_FACTOR": 1
+    "DOWNSCALE_FACTOR": 1,
+    "shader_window": false
 }
