@@ -4,6 +4,8 @@ const config = require('./config.json');
 const DOWNSCALE_FACTOR = config.DOWNSCALE_FACTOR;
 const SHADER_WINDOW = config.shader_window;
 const BASE_WINDOW_TRANSPARENCY = config.base_window_transparency;
+const SHADER_WINDOW_CLICKTHROUGH = config.shader_window_clickthrough;
+const SYNC_WINDOWS = config.sync_windows;
 
 let win = null;      // Window A: main app (invisible but interactive)
 let overlayWin = null; // Window B: shader overlay
@@ -34,7 +36,7 @@ app.whenReady().then(() => {
       y: 0,
       frame: false, // Frameless overlay
       transparent: true, // Transparent background
-      alwaysOnTop: false,  // Window A is on top (invisible but receives input)
+      alwaysOnTop: !SHADER_WINDOW_CLICKTHROUGH,  // On top when not click-through, below when click-through
       skipTaskbar: true, // Hide from taskbar
       show: true,  // Show immediately
       webPreferences: {
@@ -44,6 +46,56 @@ app.whenReady().then(() => {
         sandbox: false,
       },
     });
+
+    // Set click-through based on config
+    // When true: clicks pass through to Window A
+    // When false: clicks are captured by Window B
+    overlayWin.setIgnoreMouseEvents(SHADER_WINDOW_CLICKTHROUGH, { forward: !SHADER_WINDOW_CLICKTHROUGH });
+
+    // Sync windows position, size, maximize, and minimize state when enabled
+    if (SYNC_WINDOWS) {
+      // Sync position
+      win.on('move', () => {
+        if (!overlayWin.isDestroyed()) {
+          const [x, y] = win.getPosition();
+          overlayWin.setPosition(x, y);
+        }
+      });
+
+      // Sync size
+      win.on('resize', () => {
+        if (!overlayWin.isDestroyed()) {
+          const [width, height] = win.getSize();
+          overlayWin.setSize(width, height);
+        }
+      });
+
+      // Sync maximize state
+      win.on('maximize', () => {
+        if (!overlayWin.isDestroyed()) {
+          overlayWin.maximize();
+        }
+      });
+
+      win.on('unmaximize', () => {
+        if (!overlayWin.isDestroyed()) {
+          overlayWin.unmaximize();
+        }
+      });
+
+      // Sync minimize state
+      win.on('minimize', () => {
+        if (!overlayWin.isDestroyed()) {
+          overlayWin.minimize();
+        }
+      });
+
+      win.on('restore', () => {
+        if (!overlayWin.isDestroyed()) {
+          overlayWin.restore();
+        }
+      });
+    }
 
     // Load overlay HTML via Vite dev server
     overlayWin.loadURL('http://localhost:5173/overlay.html');
