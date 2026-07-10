@@ -3,16 +3,19 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const config = require('./config.json');
 const DOWNSCALE_FACTOR = config.DOWNSCALE_FACTOR;
 const SHADER_WINDOW = config.shader_window;
+const BASE_WINDOW_TRANSPARENCY = config.base_window_transparency;
 
-let win = null;      // Window A: main app
-let overlayWin = null; // Window B: transparent overlay
+let win = null;      // Window A: main app (invisible but interactive)
+let overlayWin = null; // Window B: shader overlay
 
 app.whenReady().then(() => {
-  // --- Window A: Main App ---
+  // --- Window A: Main App (Invisible but Interactive) ---
+  // opacity: 0 makes it invisible but still fully interactive
   win = new BrowserWindow({
     width: 1280,
     height: 800,
     frame: false,
+    opacity: SHADER_WINDOW ? BASE_WINDOW_TRANSPARENCY : 1,  // Use config value when shader window enabled, visible otherwise
     icon: path.join(__dirname, 'src/67_editing_software.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -22,50 +25,24 @@ app.whenReady().then(() => {
     },
   });
 
-  // --- Window B: Transparent overlay window (conditional) ---
+  // --- Window B: Shader Overlay Window (Conditional) ---
   if (SHADER_WINDOW) {
     overlayWin = new BrowserWindow({
-      width: win.getBounds().width,
-      height: win.getBounds().height,
-      x: win.getBounds().x,
-      y: win.getBounds().y,
+      width: 1280,
+      height: 800,
+      x: 0,  // Start at same position as Window A
+      y: 0,
       frame: false, // Frameless overlay
       transparent: true, // Transparent background
-      alwaysOnTop: true, // Stay on top of other windows
+      alwaysOnTop: false,  // Window A is on top (invisible but receives input)
       skipTaskbar: true, // Hide from taskbar
-      show: false, // Show after ready
+      show: true,  // Show immediately
       webPreferences: {
         preload: path.join(__dirname, 'preload.cjs'),
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
       },
-    });
-
-    // Make overlay click-through so all interactions pass to main window
-    // This prevents overlay from intercepting drag events (fixes z-fighting)
-    overlayWin.setIgnoreMouseEvents(true, { forward: true });
-
-    // Smart alwaysOnTop: overlay stays on top only when main window is focused
-    win.on('focus', () => {
-      overlayWin.setAlwaysOnTop(true);
-    });
-
-    win.on('blur', () => {
-      overlayWin.setAlwaysOnTop(false);
-    });
-
-    // Sync overlay position with main window
-    win.on('move', () => {
-      if (!overlayWin.isDestroyed()) {
-        overlayWin.setPosition(win.getBounds().x, win.getBounds().y);
-      }
-    });
-
-    win.on('resize', () => {
-      if (!overlayWin.isDestroyed()) {
-        overlayWin.setSize(win.getBounds().width, win.getBounds().height);
-      }
     });
 
     // Load overlay HTML via Vite dev server
@@ -112,15 +89,13 @@ app.whenReady().then(() => {
       capture();
     };
 
-    // Start capture loop and show overlay after main window loads
+    // Start capture loop after main window loads
     win.webContents.on('did-finish-load', () => {
-      console.log('🔧 Main window loaded, starting capture loop');
-      overlayWin.show();
-      console.log('🔧 Overlay window shown (frameless, transparent, click-through)');
+      console.log('🔧 Main window loaded (invisible but interactive)');
       startCaptureLoop();
     });
   } else {
-    // No overlay - just load main URL
+    // No overlay - window A is visible normally
     win.webContents.on('did-finish-load', () => {
       console.log('🔧 Main window loaded (no shader overlay)');
     });
