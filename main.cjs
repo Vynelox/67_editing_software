@@ -6,39 +6,45 @@ const SHADER_WINDOW = config.shader_window;
 const BASE_WINDOW_TRANSPARENCY = config.base_window_transparency;
 const SHADER_WINDOW_CLICKTHROUGH = config.shader_window_clickthrough;
 const SYNC_WINDOWS = config.sync_windows;
+const SHADER_WINDOW_SKIP_TASKBAR = config.shader_window_skip_taskbar;
+const BASE_WINDOW_SKIP_TASKBAR = config.base_window_skip_taskbar
 
-let win = null;      // Window A: main app (invisible but interactive)
-let overlayWin = null; // Window B: shader overlay
+let app_window = null;      // Window A: main app (invisible but interactive)
+let shader_window = null; // Window B: shader overlay
 
 app.whenReady().then(() => {
-  // --- Window A: Main App (Invisible but Interactive) ---
-  // opacity: 0 makes it invisible but still fully interactive
-  win = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    frame: false,
-    opacity: SHADER_WINDOW ? BASE_WINDOW_TRANSPARENCY : 1,  // Use config value when shader window enabled, visible otherwise
-    icon: path.join(__dirname, 'src/67_editing_software.ico'),
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: false,
-    },
-  });
-
   // --- Window B: Shader Overlay Window (Conditional) ---
+  // Create Window B first so it can be the parent
+  // Parent-child relationship ensures Window A (child) is always above Window B (parent)
   if (SHADER_WINDOW) {
-    overlayWin = new BrowserWindow({
+    shader_window = new BrowserWindow({
       width: 1280,
       height: 800,
       x: 0,  // Start at same position as Window A
       y: 0,
       frame: false, // Frameless overlay
       transparent: true, // Transparent background
-      alwaysOnTop: !SHADER_WINDOW_CLICKTHROUGH,  // On top when not click-through, below when click-through
-      skipTaskbar: true, // Hide from taskbar
+      skipTaskbar: SHADER_WINDOW_SKIP_TASKBAR, // Hide from taskbar
       show: true,  // Show immediately
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.cjs'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+      },
+    });
+
+    // --- Window A: Main App (Invisible but Interactive) ---
+    // opacity: 0 makes it invisible but still fully interactive
+    // parent: shader_window ensures Window A is always above Window B (child windows are above parents in Electron)
+    app_window = new BrowserWindow({
+      width: 1280,
+      height: 800,
+      frame: false,
+      skipTaskbar: false,
+      opacity: BASE_WINDOW_TRANSPARENCY,  // Use config value for transparency
+      parent: shader_window,  // Make Window A a child of Window B so it stays above
+      icon: path.join(__dirname, 'src/67_editing_software.ico'),
       webPreferences: {
         preload: path.join(__dirname, 'preload.cjs'),
         contextIsolation: true,
@@ -50,70 +56,83 @@ app.whenReady().then(() => {
     // Set click-through based on config
     // When true: clicks pass through to Window A
     // When false: clicks are captured by Window B
-    overlayWin.setIgnoreMouseEvents(SHADER_WINDOW_CLICKTHROUGH, { forward: !SHADER_WINDOW_CLICKTHROUGH });
+    shader_window.setIgnoreMouseEvents(SHADER_WINDOW_CLICKTHROUGH, { forward: !SHADER_WINDOW_CLICKTHROUGH });
+
+    // Ensure overlay is visible when main window is used
+    const ensureOverlayVisible = () => {
+      if (!shader_window.isDestroyed()) {
+        shader_window.show();
+        shader_window.setVisibleOnAllWorkspaces(true);
+      }
+    };
+
+    app_window.on('focus', ensureOverlayVisible);
+    app_window.on('show', ensureOverlayVisible);
+    app_window.on('restore', ensureOverlayVisible);
+    app_window.on('activate', ensureOverlayVisible);
 
     // Sync windows position, size, maximize, and minimize state when enabled
     if (SYNC_WINDOWS) {
       // Sync position
-      win.on('move', () => {
-        if (!overlayWin.isDestroyed()) {
-          const [x, y] = win.getPosition();
-          overlayWin.setPosition(x, y);
+      app_window.on('move', () => {
+        if (!shader_window.isDestroyed()) {
+          const [x, y] = app_window.getPosition();
+          shader_window.setPosition(x, y);
         }
       });
 
       // Sync size
-      win.on('resize', () => {
-        if (!overlayWin.isDestroyed()) {
-          const [width, height] = win.getSize();
-          overlayWin.setSize(width, height);
+      app_window.on('resize', () => {
+        if (!shader_window.isDestroyed()) {
+          const [width, height] = app_window.getSize();
+          shader_window.setSize(width, height);
         }
       });
 
       // Sync maximize state
-      win.on('maximize', () => {
-        if (!overlayWin.isDestroyed()) {
-          overlayWin.maximize();
+      app_window.on('maximize', () => {
+        if (!shader_window.isDestroyed()) {
+          shader_window.maximize();
         }
       });
 
-      win.on('unmaximize', () => {
-        if (!overlayWin.isDestroyed()) {
-          overlayWin.unmaximize();
+      app_window.on('unmaximize', () => {
+        if (!shader_window.isDestroyed()) {
+          shader_window.unmaximize();
         }
       });
 
       // Sync minimize state
-      win.on('minimize', () => {
-        if (!overlayWin.isDestroyed()) {
-          overlayWin.minimize();
+      app_window.on('minimize', () => {
+        if (!shader_window.isDestroyed()) {
+          shader_window.minimize();
         }
       });
 
-      win.on('restore', () => {
-        if (!overlayWin.isDestroyed()) {
-          overlayWin.restore();
+      app_window.on('restore', () => {
+        if (!shader_window.isDestroyed()) {
+          shader_window.restore();
         }
       });
     }
 
     // Load overlay HTML via Vite dev server
-    overlayWin.loadURL('http://localhost:5173/overlay.html');
+    shader_window.loadURL('http://localhost:5173/overlay.html');
 
     // --- Capture loop ---
     const startCaptureLoop = () => {
       let isCapturing = false;
 
       const capture = () => {
-        if (!win || !overlayWin || overlayWin.isDestroyed() || isCapturing) {
+        if (!app_window || !shader_window || shader_window.isDestroyed() || isCapturing) {
           setTimeout(capture, 16);
           return;
         }
 
         isCapturing = true;
 
-        win.webContents.capturePage().then((image) => {
-          const bounds = win.getBounds();
+        app_window.webContents.capturePage().then((image) => {
+          const bounds = app_window.getBounds();
           const captureWidth = Math.floor(bounds.width * DOWNSCALE_FACTOR);
           const captureHeight = Math.floor(bounds.height * DOWNSCALE_FACTOR);
 
@@ -127,7 +146,7 @@ app.whenReady().then(() => {
           const buffer = smallImage.toBitmap();
 
           // Send the buffer
-          overlayWin.webContents.send('frame-data', buffer, captureWidth, captureHeight);
+          shader_window.webContents.send('frame-data', buffer, captureWidth, captureHeight);
 
           isCapturing = false;
           setTimeout(capture, 16); // ~60 FPS target
@@ -142,13 +161,28 @@ app.whenReady().then(() => {
     };
 
     // Start capture loop after main window loads
-    win.webContents.on('did-finish-load', () => {
+    app_window.webContents.on('did-finish-load', () => {
       console.log('🔧 Main window loaded (invisible but interactive)');
       startCaptureLoop();
     });
   } else {
-    // No overlay - window A is visible normally
-    win.webContents.on('did-finish-load', () => {
+    // No overlay - Window A is the only window
+    app_window = new BrowserWindow({
+      width: 1280,
+      height: 800,
+      frame: false,
+      skipTaskbar: false,
+      opacity: 1,  // Visible when no overlay
+      icon: path.join(__dirname, 'src/67_editing_software.ico'),
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.cjs'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+      },
+    });
+
+    app_window.webContents.on('did-finish-load', () => {
       console.log('🔧 Main window loaded (no shader overlay)');
     });
   }
@@ -158,7 +192,7 @@ app.whenReady().then(() => {
   setTimeout(async () => {
     try {
       console.log('🔍 Taking debug screenshot...');
-      const image = await win.webContents.capturePage();
+      const image = await app_window.webContents.capturePage();
       const desktopPath = path.join(require('os').homedir(), 'Desktop', 'window-a-capture.png');
       fs.writeFileSync(desktopPath, image.toPNG());
       console.log('🔍 Debug screenshot saved to:', desktopPath);
@@ -168,23 +202,23 @@ app.whenReady().then(() => {
   }, 5000);
 
   // --- Window control IPC handlers ---
-  ipcMain.on('window-minimize', () => win.minimize());
+  ipcMain.on('window-minimize', () => app_window.minimize());
   ipcMain.on('window-maximize', () => {
-    if (win.isMaximized()) win.unmaximize();
-    else win.maximize();
+    if (app_window.isMaximized()) app_window.unmaximize();
+    else app_window.maximize();
   });
   ipcMain.on('window-close', () => {
-    if (overlayWin && !overlayWin.isDestroyed()) overlayWin.close();
-    win.close();
+    if (shader_window && !shader_window.isDestroyed()) shader_window.close();
+    app_window.close();
   });
 
-  win.loadURL('http://localhost:5173');
+  app_window.loadURL('http://localhost:5173');
 
   // Handle overlay close gracefully
-  overlayWin.on('closed', () => {
-    overlayWin = null;
+  shader_window.on('closed', () => {
+    shader_window = null;
   });
-  win.on('closed', () => {
-    win = null;
+  app_window.on('closed', () => {
+    app_window = null;
   });
 });
