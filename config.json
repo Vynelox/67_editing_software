@@ -1,11 +1,7 @@
 {
-    "comment": "Downscale factor - controls how much the captured image was reduced.",
-    "comment_2": "This affects the shader bloom threshold calculation",
     "DOWNSCALE_FACTOR": 1,
     "shader_window": true,
     "base_window_transparency": 0.5,
     "shader_window_clickthrough": false,
-    "sync_windows": true,
-    "shader_window_skip_taskbar": true,
-    "base_window_skip_taskbar": false
+    "sync_windows": true
 }

@@ -6,8 +6,6 @@ const SHADER_WINDOW = config.shader_window;
 const BASE_WINDOW_TRANSPARENCY = config.base_window_transparency;
 const SHADER_WINDOW_CLICKTHROUGH = config.shader_window_clickthrough;
 const SYNC_WINDOWS = config.sync_windows;
-const SHADER_WINDOW_SKIP_TASKBAR = config.shader_window_skip_taskbar;
-const BASE_WINDOW_SKIP_TASKBAR = config.base_window_skip_taskbar
 
 let app_window = null;      // Window A: main app (invisible but interactive)
 let shader_window = null; // Window B: shader overlay
@@ -24,7 +22,8 @@ app.whenReady().then(() => {
       y: 0,
       frame: false, // Frameless overlay
       transparent: true, // Transparent background
-      skipTaskbar: SHADER_WINDOW_SKIP_TASKBAR, // Hide from taskbar
+      skipTaskbar: false,  // Show in taskbar with custom icon for alt-tab
+      icon: path.join(__dirname, 'src/67_editing_software.ico'),
       show: true,  // Show immediately
       webPreferences: {
         preload: path.join(__dirname, 'preload.cjs'),
@@ -41,10 +40,9 @@ app.whenReady().then(() => {
       width: 1280,
       height: 800,
       frame: false,
-      skipTaskbar: false,
+      skipTaskbar: true,  // Hide from taskbar - parent (shader_window) is the taskbar entry
       opacity: BASE_WINDOW_TRANSPARENCY,  // Use config value for transparency
       parent: shader_window,  // Make Window A a child of Window B so it stays above
-      icon: path.join(__dirname, 'src/67_editing_software.ico'),
       webPreferences: {
         preload: path.join(__dirname, 'preload.cjs'),
         contextIsolation: true,
