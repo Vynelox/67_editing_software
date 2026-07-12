@@ -71,21 +71,24 @@ app.whenReady().then(() => {
 
     // Sync windows position, size, maximize, and minimize state when enabled
     if (SYNC_WINDOWS) {
-      // Sync position
-      app_window.on('move', () => {
-        if (!shader_window.isDestroyed()) {
-          const [x, y] = app_window.getPosition();
-          shader_window.setPosition(x, y);
-        }
-      });
+      let isSyncing = false;  // Prevent recursive syncing
 
-      // Sync size
-      app_window.on('resize', () => {
-        if (!shader_window.isDestroyed()) {
-          const [width, height] = app_window.getSize();
-          shader_window.setSize(width, height);
-        }
-      });
+      // Sync both position and size of shader window to app window
+      const sync_windows = () => {
+        if (isSyncing || shader_window.isDestroyed()) return;
+        isSyncing = true;
+        const [x, y] = app_window.getPosition();
+        const [width, height] = app_window.getSize();
+        shader_window.setPosition(x, y);
+        shader_window.setSize(width, height);
+        isSyncing = false;
+      };
+
+      // Sync on move (position + size)
+      app_window.on('move', sync_windows);
+
+      // Sync on resize (position + size)
+      app_window.on('resize', sync_windows);
 
       // Sync maximize state
       app_window.on('maximize', () => {
