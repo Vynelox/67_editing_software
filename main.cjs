@@ -115,6 +115,9 @@ app.whenReady().then(() => {
           shader_window.restore();
         }
       });
+
+      // Sync windows once at startup
+      sync_windows();
     }
 
     // Load overlay HTML via Vite dev server
