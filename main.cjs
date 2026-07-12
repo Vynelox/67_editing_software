@@ -194,20 +194,6 @@ app.whenReady().then(() => {
     });
   }
 
-  // DEBUG: export a single screenshot 5 seconds after load
-  const fs = require('fs');
-  setTimeout(async () => {
-    try {
-      console.log('🔍 Taking debug screenshot...');
-      const image = await app_window.webContents.capturePage();
-      const desktopPath = path.join(require('os').homedir(), 'Desktop', 'window-a-capture.png');
-      fs.writeFileSync(desktopPath, image.toPNG());
-      console.log('🔍 Debug screenshot saved to:', desktopPath);
-    } catch (err) {
-      console.error('🔍 Debug screenshot failed:', err);
-    }
-  }, 5000);
-
   // --- Window control IPC handlers ---
   ipcMain.on('window-minimize', () => app_window.minimize());
   ipcMain.on('window-maximize', () => {
