@@ -36,12 +36,13 @@ app.whenReady().then(() => {
     // --- Window A: Main App (Invisible but Interactive) ---
     // opacity: 0 makes it invisible but still fully interactive
     // parent: shader_window ensures Window A is always above Window B (child windows are above parents in Electron)
+    const appOpacity = BASE_WINDOW_TRANSPARENCY < 0.004 ? 0 : BASE_WINDOW_TRANSPARENCY;
     app_window = new BrowserWindow({
       width: 1280,
       height: 800,
       frame: false,
       skipTaskbar: true,  // Hide from taskbar - parent (shader_window) is the taskbar entry
-      opacity: BASE_WINDOW_TRANSPARENCY,  // Use config value for transparency
+      opacity: appOpacity,  // Use config value, clamped to avoid breakage
       parent: shader_window,  // Make Window A a child of Window B so it stays above
       webPreferences: {
         preload: path.join(__dirname, 'preload.cjs'),
@@ -54,7 +55,9 @@ app.whenReady().then(() => {
     // Set click-through based on config
     // When true: clicks pass through to Window A
     // When false: clicks are captured by Window B
-    shader_window.setIgnoreMouseEvents(SHADER_WINDOW_CLICKTHROUGH, { forward: !SHADER_WINDOW_CLICKTHROUGH });
+    // SPECIAL CASE: if app window is invisible (opacity 0), always forward clicks to it
+    const forwardClicks = appOpacity === 0 ? true : SHADER_WINDOW_CLICKTHROUGH;
+    shader_window.setIgnoreMouseEvents(forwardClicks, { forward: forwardClicks });
 
     // Ensure overlay is visible when main window is used
     const ensureOverlayVisible = () => {

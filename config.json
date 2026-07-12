@@ -1,7 +1,7 @@
 {
     "DOWNSCALE_FACTOR": 1,
     "shader_window": true,
-    "base_window_transparency": 0.5,
+    "base_window_transparency": 0.004,
     "shader_window_clickthrough": true,
     "sync_windows": true
 }
