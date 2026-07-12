@@ -6,8 +6,8 @@
  * via IPC and renders it through a GLSL shader.
  */
 
-import VERTEX_SOURCE from './shaders/glow.vert?raw';
-import FRAGMENT_SOURCE from './shaders/glow.frag?raw';
+import VERTEX_SOURCE from './shaders/main.vert?raw';
+import FRAGMENT_SOURCE from './shaders/main.frag?raw';
 
 // Fullscreen quad vertices (position + texCoord) using TRIANGLE_STRIP
 const QUAD_VERTICES = new Float32Array([
