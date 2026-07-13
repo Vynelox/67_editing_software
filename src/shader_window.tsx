@@ -54,6 +54,8 @@ function main() {
     return;
   }
 
+  
+
   // Create full-screen canvas
   const canvas = document.createElement('canvas');
   canvas.style.width = '100%';
@@ -74,6 +76,20 @@ function main() {
 
   console.log('Overlay: WebGL2 context created successfully');
 
+  
+
+  // Create shader program
+  const program = createProgram(gl, VERTEX_SOURCE, FRAGMENT_SOURCE);
+  if (!program) {
+    console.error('Overlay: Failed to create shader program');
+    return;
+  }
+  const uTextureLoc = gl.getUniformLocation(program, 'u_texture');
+  const uResolutionLoc = gl.getUniformLocation(program, 'u_resolution');
+  const uTimeLoc = gl.getUniformLocation(program, 'u_time');  // Elapsed time in miliseconds
+  console.log('Overlay: Shader program created successfully');
+
+
   // Set canvas pixel size to window size
   function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
@@ -83,18 +99,12 @@ function main() {
     canvas.height = Math.floor(h * dpr);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     gl!.viewport(0, 0, canvas.width, canvas.height);
+    gl!.useProgram(program);
+    gl!.uniform2f(uResolutionLoc, canvas.width, canvas.height);
   }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
 
-  // Create shader program
-  const program = createProgram(gl, VERTEX_SOURCE, FRAGMENT_SOURCE);
-  if (!program) {
-    console.error('Overlay: Failed to create shader program');
-    return;
-  }
-
-  console.log('Overlay: Shader program created successfully');
 
   // Create VAO and VBO
   const vao = gl.createVertexArray();
@@ -124,7 +134,9 @@ function main() {
   let textureHeight = 1;
 
   // Get uniform location
-  const uTextureLoc = gl.getUniformLocation(program, 'u_texture');
+  
+
+  
 
   // Listen for incoming frames from main process
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,6 +169,11 @@ function main() {
       gl.uniform1i(uTextureLoc, 0);
       gl.bindVertexArray(vao);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+      // Track start time for u_time
+      const time = performance.now() / 1000.0;  // Convert to seconds
+      gl.uniform1f(uTimeLoc, time);
+
     });
   } else {
     console.error('Overlay: electronAPI.onFrameData not available');
