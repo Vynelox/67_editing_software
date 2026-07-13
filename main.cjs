@@ -7,11 +7,13 @@ const BASE_WINDOW_TRANSPARENCY = config.base_window_transparency;
 const SHADER_WINDOW_CLICKTHROUGH = config.shader_window_clickthrough;
 const SYNC_WINDOWS = config.sync_windows;
 const ENSHITTIFY = config.enshittify;
+const SLIDESHOW = config.slideshow;
 
 let app_window = null;      // Window A: main app (invisible but interactive)
 let shader_window = null; // Window B: shader overlay
 
 app.whenReady().then(() => {
+  
   // --- Window B: Shader Overlay Window (Conditional) ---
   // Create Window B first so it can be the parent
   // Parent-child relationship ensures Window A (child) is always above Window B (parent)
@@ -33,7 +35,6 @@ app.whenReady().then(() => {
         sandbox: false,
       },
     });
-
     // --- Window A: Main App (Invisible but Interactive) ---
     // opacity: 0 makes it invisible but still fully interactive
     // parent: shader_window ensures Window A is always above Window B (child windows are above parents in Electron)
@@ -173,7 +174,13 @@ app.whenReady().then(() => {
           shader_window.webContents.send('frame-data', buffer, finalWidth, finalHeight); //w, h
 
           isCapturing = false;
-          setTimeout(capture, 0); // ~60 FPS target
+          if(SLIDESHOW){
+            setTimeout(capture, 100); // ~60 FPS target
+          }
+          else{
+            setTimeout(capture, 0); // ~60 FPS target
+          }
+
         }).catch((err) => {
           console.error('🔧 Capture error:', err);
           isCapturing = false;

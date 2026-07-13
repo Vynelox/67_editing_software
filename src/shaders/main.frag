@@ -9,5 +9,5 @@ uniform float u_time;
 uniform vec2 u_resolution;
 
 void main() {
-  outColor = texture(u_texture, v_texCoord).bgra;
+  outColor = vec4(texture(u_texture, v_texCoord).bgr, 1.0);
 }
