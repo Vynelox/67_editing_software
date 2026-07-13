@@ -18,3 +18,13 @@ the editor won't work if base\_window\_transparency is less than 0.004 in config
 
 when coding a shader, make sure to swap the blue and red channels in the output color. this is cuz webgl uses bgra and glsl uses rgba.
 
+overlay.tsx uses
+
+
+
+downscale\_factor won't downscale if enshittify is disabled
+
+enabling enshittify makes the whole image look shit
+
+even with no downscale
+

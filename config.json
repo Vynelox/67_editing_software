@@ -1,5 +1,6 @@
 {
     "DOWNSCALE_FACTOR": 1,
+    "enshittify": false,
     "shader_window": true,
     "base_window_transparency": 0.004,
     "shader_window_clickthrough": true,

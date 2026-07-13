@@ -65,9 +65,9 @@ function main() {
 
   const gl = canvas.getContext('webgl2', {
     alpha: true,
-    premultipliedAlpha: false,  // Disable alpha premultiplication
+    premultipliedAlpha: false,  // enable here to prevent desaturation
     preserveDrawingBuffer: false,
-    antialias: false
+    antialias: true
   });
   if (!gl) {
     console.error('Overlay: Failed to create WebGL2 context');
@@ -125,8 +125,8 @@ function main() {
   // Create texture for incoming frames
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); //use NEAREST instead of LINEAR for pencil-sharp pixels
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); //same here
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -157,7 +157,7 @@ function main() {
 
       // Upload pixel data to texture
       gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);  // Tell WebGL pixels are premultiplied
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);  // disable to prevent desaturation
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, bufferArray);
 
       // Clear and render (texture upscales to fill screen)

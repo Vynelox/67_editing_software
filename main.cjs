@@ -6,6 +6,7 @@ const SHADER_WINDOW = config.shader_window;
 const BASE_WINDOW_TRANSPARENCY = config.base_window_transparency;
 const SHADER_WINDOW_CLICKTHROUGH = config.shader_window_clickthrough;
 const SYNC_WINDOWS = config.sync_windows;
+const ENSHITTIFY = config.enshittify;
 
 let app_window = null;      // Window A: main app (invisible but interactive)
 let shader_window = null; // Window B: shader overlay
@@ -144,19 +145,35 @@ app.whenReady().then(() => {
           const captureHeight = Math.floor(bounds.height * DOWNSCALE_FACTOR);
 
           // Resize the image
-          const smallImage = image.resize({
+          //only do this if enshittify is true, because the following operation makes
+          //the whole image look shit:
+          let buffer; //use let instead of const otherwise the if statement will fuck you up
+          let finalWidth, finalHeight;
+          if (ENSHITTIFY){
+            const smallImage = image.resize({
             width: captureWidth,
             height: captureHeight,
             quality: 'good'
           });
+            buffer = smallImage.toBitmap();
+            finalWidth = image.getSize().width;
+            finalHeight = image.getSize().height;
+          }
+          else{
+            buffer = image.toBitmap();
+            // 👈 CRITICAL: Get the ACTUAL native dimensions of the captured image
+            finalWidth = image.getSize().width;
+            finalHeight = image.getSize().height;
+          }
+          
 
-          const buffer = smallImage.toBitmap();
+          
 
           // Send the buffer
-          shader_window.webContents.send('frame-data', buffer, captureWidth, captureHeight);
+          shader_window.webContents.send('frame-data', buffer, finalWidth, finalHeight); //w, h
 
           isCapturing = false;
-          setTimeout(capture, 16); // ~60 FPS target
+          setTimeout(capture, 0); // ~60 FPS target
         }).catch((err) => {
           console.error('🔧 Capture error:', err);
           isCapturing = false;
