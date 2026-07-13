@@ -128,13 +128,19 @@ app.whenReady().then(() => {
     // Load overlay HTML via Vite dev server
     shader_window.loadURL('http://localhost:5173/overlay.html');
 
+
     // --- Capture loop ---
     const startCaptureLoop = () => {
       let isCapturing = false;
+      
 
       const capture = () => {
-        if (!app_window || !shader_window || shader_window.isDestroyed() || isCapturing) {
-          setTimeout(capture, 16);
+        
+        // Track focus state
+        const AppFocused = require('electron').BrowserWindow.getFocusedWindow() !== null;
+        // PAUSE if not focused, or if window is destroyed
+        if (!app_window || !shader_window || shader_window.isDestroyed() || isCapturing || !AppFocused) {
+          setTimeout(capture, 200); //👈👈 delay in ms when NOT in focus 
           return;
         }
 
@@ -157,8 +163,8 @@ app.whenReady().then(() => {
             quality: 'good'
           });
             buffer = smallImage.toBitmap();
-            finalWidth = image.getSize().width;
-            finalHeight = image.getSize().height;
+            finalWidth = captureWidth;
+            finalHeight = captureHeight;
           }
           else{
             buffer = image.toBitmap();
@@ -175,10 +181,10 @@ app.whenReady().then(() => {
 
           isCapturing = false;
           if(SLIDESHOW){
-            setTimeout(capture, 100); // ~60 FPS target
+            setTimeout(capture, 100); // dogshit slideshoww
           }
           else{
-            setTimeout(capture, 0); // ~60 FPS target
+            setTimeout(capture, 0); //🧈🧈 zero delay, butter smooooooooo...
           }
 
         }).catch((err) => {
