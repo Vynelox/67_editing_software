@@ -39,7 +39,7 @@ app.whenReady().then(() => {
     // opacity: 0 makes it invisible but still fully interactive
     // parent: shader_window ensures Window A is always above Window B (child windows are above parents in Electron)
     const appOpacity = BASE_WINDOW_TRANSPARENCY < 0.004 ? 0 : BASE_WINDOW_TRANSPARENCY;
-    app_window = new BrowserWindow({
+    app_window = new BrowserWindow({//BASE WINDOW
       width: 1280,
       height: 800,
       frame: false,
