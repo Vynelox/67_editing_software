@@ -1,6 +1,11 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const config = require('./config.json');
+
+// Disable Windows 11 OS-level rounded corners on frameless windows
+if (process.platform === 'win32') {
+  app.commandLine.appendSwitch('disable-features', 'Windows11RoundedCorners');
+}
 const DOWNSCALE_FACTOR = config.DOWNSCALE_FACTOR;
 const SHADER_WINDOW = config.shader_window;
 const BASE_WINDOW_TRANSPARENCY = config.base_window_transparency;
@@ -126,8 +131,7 @@ app.whenReady().then(() => {
     }
 
     // Load overlay HTML via Vite dev server
-    shader_window.loadURL('http://localhost:5173/overlay.html');
-
+    shader_window.loadURL('http://localhost:5173/shader_window.html');
 
     // --- Capture loop ---
     const startCaptureLoop = () => {

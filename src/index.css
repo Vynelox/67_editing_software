@@ -55,6 +55,7 @@ html, body, #root {
   font-size: 13px;
   background: var(--bg-base);
   color: var(--text-primary);
+  border-radius: var(--electron-window-border-radius);
   transition:
     background var(--theme-transition-duration) var(--theme-transition-timing),
     color var(--theme-transition-duration) var(--theme-transition-timing);
