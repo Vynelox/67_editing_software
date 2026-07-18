@@ -1,6 +1,7 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const config = require('./config.json');
+app.disableHardwareAcceleration();
 
 // Disable Windows 11 OS-level rounded corners on frameless windows
 if (process.platform === 'win32') {
@@ -184,8 +185,11 @@ app.whenReady().then(() => {
         }
 
         isCapturing = true;
+        const loopStart = performance.now(); //⌛⌛⌚⌚ FIRST TIMESTAMP
 
         app_window.webContents.capturePage().then((image) => {
+          const t1 = performance.now(); //⌛⌛⌚⌚
+
           const bounds = app_window.getBounds();
           const captureWidth = Math.floor(bounds.width * DOWNSCALE_FACTOR);
           const captureHeight = Math.floor(bounds.height * DOWNSCALE_FACTOR);
@@ -215,15 +219,24 @@ app.whenReady().then(() => {
 
           
 
+          const t2 = performance.now(); //⌛⌛⌚⌚
+
           // Send the buffer
-          shader_window.webContents.send('frame-data', buffer, finalWidth, finalHeight); //w, h
+          shader_window.webContents.send('frame-data', buffer, finalWidth, finalHeight);
+          
+          const t3 = performance.now(); //⌛⌛⌚⌚
+          const loopEnd = performance.now(); //⌛⌛⌚⌚ LAST TIMESTAMP
+
+          // 📊 LOG THE EXACT TIMING
+          console.log(`[PERF] Total: ${(loopEnd - loopStart).toFixed(1)}ms | toJPEG: ${(t2 - t1).toFixed(1)}ms | IPC Send: ${(t3 - t2).toFixed(1)}ms | capturePage: ${(t1-loopStart).toFixed(1)}ms`);
+
 
           isCapturing = false;
           if(SLIDESHOW){
             setTimeout(capture, 100); // dogshit slideshoww
           }
           else{
-            setTimeout(capture, 0); //🧈🧈 zero delay, butter smooooooooo...
+            setTimeout(capture, 1); //🧈🧈 zero delay, butter smooooooooo...
           }
 
         }).catch((err) => {
