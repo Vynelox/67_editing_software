@@ -13,6 +13,7 @@ const SHADER_WINDOW_CLICKTHROUGH = config.shader_window_clickthrough;
 const SYNC_WINDOWS = config.sync_windows;
 const ENSHITTIFY = config.enshittify;
 const SLIDESHOW = config.slideshow;
+const COMPRESS_QUALITY = config.IPC_compression_quality;
 
 let app_window = null;      // Window A: main app (invisible but interactive)
 let shader_window = null; // Window B: shader overlay
@@ -30,6 +31,8 @@ app.whenReady().then(() => {
       y: 0,
       frame: false, // Frameless overlay
       transparent: true, // Transparent background
+      backgroundColor: '#00000000', // Explicitly transparent black background
+      hasShadow: false, // Remove shadow to avoid extra DWM compositor work
       skipTaskbar: false,  // Show in taskbar with custom icon for alt-tab
       icon: path.join(__dirname, 'src/67_editing_software.ico'),
       show: true,  // Show immediately
@@ -68,8 +71,8 @@ app.whenReady().then(() => {
 
     // Ensure overlay is visible when main window is used
     const ensureOverlayVisible = () => {
-      if (!shader_window.isDestroyed()) {
-        shader_window.show();
+      if (!shader_window.isDestroyed() && !shader_window.isVisible()) {
+        shader_window.showInactive();
         shader_window.setVisibleOnAllWorkspaces(true);
       }
     };
@@ -81,23 +84,54 @@ app.whenReady().then(() => {
 
     // Sync windows position, size, maximize, and minimize state when enabled
     if (SYNC_WINDOWS) {
-      let isSyncing = false;  // Prevent recursive syncing
+      let isSyncing = false;
+      let hadParent = true;
 
-      // Sync both position and size of shader window to app window
       const sync_windows = () => {
         if (isSyncing || shader_window.isDestroyed()) return;
         isSyncing = true;
-        const [x, y] = app_window.getPosition();
-        const [width, height] = app_window.getSize();
-        shader_window.setPosition(x, y);
-        shader_window.setSize(width, height);
+        const bounds = app_window.getBounds();
+        shader_window.setBounds(bounds, false);
         isSyncing = false;
       };
 
-      // Sync on move (position + size)
-      app_window.on('move', sync_windows);
+      // Detach parent during drag to prevent DWM clipping artifacts
+      app_window.on('will-move', () => {
+        if (!shader_window.isDestroyed() && hadParent) {
+          shader_window.setParentWindow(null);
+          shader_window.setAlwaysOnTop(true, 'screen-saver', 1);
+          hadParent = false;
+        }
+      });
 
-      // Sync on resize (position + size)
+      app_window.on('moved', () => {
+        if (!shader_window.isDestroyed()) {
+          sync_windows();
+          shader_window.setAlwaysOnTop(false);
+          shader_window.setParentWindow(app_window);
+          hadParent = true;
+        }
+      });
+
+      app_window.on('will-resize', () => {
+        if (!shader_window.isDestroyed() && hadParent) {
+          shader_window.setParentWindow(null);
+          shader_window.setAlwaysOnTop(true, 'screen-saver', 1);
+          hadParent = false;
+        }
+      });
+
+      app_window.on('resized', () => {
+        if (!shader_window.isDestroyed()) {
+          sync_windows();
+          shader_window.setAlwaysOnTop(false);
+          shader_window.setParentWindow(app_window);
+          hadParent = true;
+        }
+      });
+
+      // Normal sync for non-drag operations
+      app_window.on('move', sync_windows);
       app_window.on('resize', sync_windows);
 
       // Sync maximize state
@@ -123,6 +157,7 @@ app.whenReady().then(() => {
       app_window.on('restore', () => {
         if (!shader_window.isDestroyed()) {
           shader_window.restore();
+          shader_window.showInactive();
         }
       });
 
@@ -171,7 +206,7 @@ app.whenReady().then(() => {
             finalHeight = captureHeight;
           }
           else{
-            buffer = image.toBitmap();
+            buffer = image.toJPEG(COMPRESS_QUALITY); //old: uses buffer = image.toBitmap, but bitmap produces raw pixels, jpeg compresses tf out of it
             // 👈 CRITICAL: Get the ACTUAL native dimensions of the captured image
             finalWidth = image.getSize().width;
             finalHeight = image.getSize().height;

@@ -143,9 +143,17 @@ function main() {
   const api = (window as any).electronAPI;
   if (api && typeof api.onFrameData === 'function') {
     console.log('Overlay: electronAPI.onFrameData registered');
-    api.onFrameData((buffer: ArrayBuffer, width: number, height: number) => {
-      const bufferArray = new Uint8Array(buffer);
+
+
+    api.onFrameData(async (buffer: ArrayBuffer, width: number, height: number) => {
+      //const bufferArray = new Uint8Array(buffer); //old buffer, uses bullshit (can't read compressed jpegs)
       
+      // 1. Convert the ArrayBuffer to a JPEG Blob
+      const blob = new Blob([buffer], { type: 'image/jpeg' });
+      
+      // 2. Hardware-accelerated decode to an ImageBitmap
+      const bitmap = await createImageBitmap(blob);
+
       // Re-allocate texture if size changed
       if (width !== textureWidth || height !== textureHeight) {
         textureWidth = width;
@@ -158,7 +166,9 @@ function main() {
       // Upload pixel data to texture
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);  // disable to prevent desaturation
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, bufferArray);
+
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+      bitmap.close();
 
       // Clear and render (texture upscales to fill screen)
       gl.clearColor(0, 0, 0, 0);
