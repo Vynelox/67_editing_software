@@ -2,7 +2,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-
 console.log('🔧 Preload script loaded');
 
 // 1. Read config.json safely
@@ -37,8 +36,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-
-// 3. Expose IPC for window controls
+// 3. Expose IPC for window controls AND WebCodecs video pipeline
 contextBridge.exposeInMainWorld('electronAPI', {
   send: (channel, data) => {
     ipcRenderer.send(channel, data);
@@ -48,4 +46,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(buffer, width, height);
     });
   },
+  // WebCodecs pipeline: receive structured video payloads from main process
+  onVideoChunk: function (callback) {
+    ipcRenderer.on('video-chunk', function (_event, payload) {
+      callback(payload);
+    });
+  },
+  // Get the window source ID for silent capture
+  getWindowSourceId: () => ipcRenderer.invoke('get-window-source-id'),
+  // Send structured video payloads to main process
+  sendVideoChunk: (payload) => ipcRenderer.send('send-video-chunk', payload),
 });

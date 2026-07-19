@@ -63,6 +63,9 @@ function main() {
   canvas.style.display = 'block';
   root.appendChild(canvas);
 
+  // 🔥 Fallback background to prove the window is alive
+  canvas.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+
   const gl = canvas.getContext('webgl2', {
     alpha: true,
     premultipliedAlpha: false,  // enable here to prevent desaturation
@@ -125,8 +128,8 @@ function main() {
   // Create texture for incoming frames
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); //use NEAREST instead of LINEAR for pencil-sharp pixels
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); //same here
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); //use NEAREST instead of LINEAR for pencil-sharp pixels
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); //same here
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -138,55 +141,100 @@ function main() {
 
   
 
-  // Listen for incoming frames from main process
+  // Listen for incoming encoded video chunks from main process
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const api = (window as any).electronAPI;
-  if (api && typeof api.onFrameData === 'function') {
-    console.log('Overlay: electronAPI.onFrameData registered');
+  if (api) {
+    console.log('Overlay: electronAPI registered for video-chunk pipeline');
 
+    let decoder: VideoDecoder | null = null;
+    let pendingChunks: EncodedVideoChunk[] = [];
+    let decoderReady = false;
 
-    api.onFrameData(async (buffer: ArrayBuffer, width: number, height: number) => {
-      //const bufferArray = new Uint8Array(buffer); //old buffer, uses bullshit (can't read compressed jpegs)
-      
-      // 1. Convert the ArrayBuffer to a JPEG Blob
-      const blob = new Blob([buffer], { type: 'image/jpeg' });
-      
-      // 2. Hardware-accelerated decode to an ImageBitmap
-      const bitmap = await createImageBitmap(blob);
+    const initDecoder = () => {
+      if (decoderReady) return;
+      decoderReady = true;
 
-      // Re-allocate texture if size changed
-      if (width !== textureWidth || height !== textureHeight) {
-        textureWidth = width;
-        textureHeight = height;
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      decoder = new VideoDecoder({
+        output: (frame: VideoFrame) => {
+          try {
+            // Re-allocate texture if size changed
+            if (frame.displayWidth !== textureWidth || frame.displayHeight !== textureHeight) {
+              textureWidth = frame.displayWidth;
+              textureHeight = frame.displayHeight;
+              gl.bindTexture(gl.TEXTURE_2D, texture);
+              gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, textureWidth, textureHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+            }
+
+            // Upload directly from VideoFrame to WebGL texture (GPU-to-GPU, zero-copy)
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, frame);
+
+            // Clear and render
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.useProgram(program);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(uTextureLoc, 0);
+            gl.bindVertexArray(vao);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            const time = performance.now() / 1000.0;
+            gl.uniform1f(uTimeLoc, time);
+          } catch (e) {
+            console.error('Overlay decoder output error:', e);
+          } finally {
+            frame.close();
+          }
+        },
+        error: (e) => {
+          console.error('Overlay VideoDecoder error:', e);
+        },
+      });
+
+      decoder.configure({
+        codec: 'vp8',
+        optimizeForLatency: true,
+      });
+
+      // Flush any pending chunks that arrived before decoder was ready
+      for (const chunk of pendingChunks) {
+        try {
+          decoder!.decode(chunk);
+        } catch (e) {
+          console.error('Overlay decode pending chunk error:', e);
+        }
       }
+      pendingChunks = [];
+    };
 
-      // Upload pixel data to texture
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);  // disable to prevent desaturation
+    api.onVideoChunk((payload: { buffer: ArrayBuffer; type: string; timestamp: number }) => {
+      try {
+        const encoded = new EncodedVideoChunk({
+          type: payload.type === 'key' ? 'key' : 'delta',
+          timestamp: payload.timestamp,
+          data: payload.buffer,
+        });
 
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
-      bitmap.close();
+        if (!decoderReady) {
+          pendingChunks.push(encoded);
+          initDecoder();
+          return;
+        }
 
-      // Clear and render (texture upscales to fill screen)
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.useProgram(program);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.uniform1i(uTextureLoc, 0);
-      gl.bindVertexArray(vao);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-      // Track start time for u_time
-      const time = performance.now() / 1000.0;  // Convert to seconds
-      gl.uniform1f(uTimeLoc, time);
-
+        if (decoder && decoder.state === 'configured') {
+          decoder.decode(encoded);
+        }
+      } catch (e) {
+        console.error('Overlay onVideoChunk error:', e);
+      }
     });
+
   } else {
-    console.error('Overlay: electronAPI.onFrameData not available');
+    console.error('Overlay: electronAPI not available');
   }
 }
 

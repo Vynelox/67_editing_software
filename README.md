@@ -8,6 +8,8 @@ to run as an actual app/window: do: npm install --save-dev electron
 
 then do npx electron main.cjs in cmd
 
+you also need webcodecs so do npm install -D @types/dom-webcodecs
+
 
 
 # **IMPORTANT**

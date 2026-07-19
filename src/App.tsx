@@ -1,5 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import MediaPool from './components/MediaPool';
+
+// Web APIs not yet in TypeScript standard library
+declare class MediaStreamTrackProcessor {
+  readonly track: MediaStreamTrack;
+  readonly readable: ReadableStream<VideoFrame>;
+  constructor(options: { track: MediaStreamTrack });
+}
 import Viewer from './components/Viewer';
 import Timeline from './components/Timeline';
 import RollDialog from './components/RollDialog';
@@ -368,6 +375,150 @@ function AppContent() {
     if (api?.send) {
       api.send(command);
     }
+  }, []);
+
+  // WebCodecs GPU encoder state
+  const encoderRef = useRef<VideoEncoder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const trackRef = useRef<MediaStreamTrack | null>(null);
+  const processorRef = useRef<MediaStreamTrackProcessor | null>(null);
+  const sourceIdRef = useRef<string | null>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader<VideoFrame> | null>(null);
+  const frameCountRef = useRef(0);
+  const KEYFRAME_INTERVAL = 60; // Force keyframe every N frames
+  const lastEncodeTimeRef = useRef(0);
+  const FRAME_INTERVAL_MS = 1000 / 60; // Cap at 60fps
+
+  useEffect(() => {
+    let active = true;
+    const api = (window as any).electronAPI;
+
+    async function setupEncoder() {
+      // Only run encoder if shader window is enabled
+      try {
+        const cfg = await fetch('/config.json').then(r => r.json()).catch(() => null);
+        if (!cfg?.shader_window) {
+          console.log('Shader window disabled, skipping encoder setup');
+          return;
+        }
+      } catch {}
+
+      try {
+        const sourceId = await api.getWindowSourceId();
+        if (!active || !sourceId) {
+          console.error('🚨 CRITICAL: Failed to acquire window source ID. Pipeline aborted silently.');
+          return;
+        }
+        console.log('✅ SUCCESS: Pipeline started with source ID:', sourceId);
+        sourceIdRef.current = sourceId;
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: sourceId,
+              minFrameRate: 60,
+              maxFrameRate: 60,
+              minWidth: 1280,
+              maxWidth: 1280,
+              minHeight: 800,
+              maxHeight: 800,
+            },
+          } as any,
+        });
+        if (!active) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        const track = stream.getVideoTracks()[0];
+        trackRef.current = track;
+        const processor = new MediaStreamTrackProcessor({ track });
+        processorRef.current = processor;
+        console.log('WebCodecs: MediaStreamTrackProcessor created');
+
+        const reader = processor.readable.getReader();
+        readerRef.current = reader;
+        const encoder = new VideoEncoder({
+          output: (chunk, metadata) => {
+            try {
+              const decoded = new Uint8Array(chunk.byteLength);
+              chunk.copyTo(decoded);
+              const payload = {
+                buffer: decoded.buffer,
+                type: chunk.type === 'key' ? 'key' : 'delta',
+                timestamp: chunk.timestamp,
+              };
+              api.sendVideoChunk(payload);
+            } catch (e) {
+              console.error('Encoder output error:', e);
+            }
+          },
+          error: (e) => console.error('VideoEncoder error:', e),
+        });
+        encoderRef.current = encoder;
+
+        encoder.configure({
+          codec: 'vp8',
+          width: 1280,
+          height: 800,
+          bitrate: 8_000_000,
+          framerate: 60,
+          hardwareAcceleration: 'prefer-hardware',
+          latencyMode: 'realtime',
+        });
+
+        let stopped = false;
+        async function readLoop() {
+          while (!stopped && active) {
+            try {
+              const { value, done } = await reader.read();
+              if (done || !value || !active) break;
+              const frame = value as VideoFrame;
+
+              // Frame pacing: cap at 60fps to avoid flooding IPC
+              const now = performance.now();
+              const elapsed = now - lastEncodeTimeRef.current;
+              if (elapsed < FRAME_INTERVAL_MS) {
+                frame.close();
+                // Yield properly to prevent tight spin loop
+                await new Promise(resolve => setTimeout(resolve, FRAME_INTERVAL_MS - elapsed));
+                continue;
+              }
+
+              if (!stopped && active) {
+                const count = frameCountRef.current++;
+                const forceKeyframe = count > 0 && count % KEYFRAME_INTERVAL === 0;
+                encoder.encode(frame, { keyFrame: forceKeyframe });
+                lastEncodeTimeRef.current = now;
+              }
+              frame.close();
+            } catch (e) {
+              if (active) console.error('readLoop error:', e);
+              break;
+            }
+          }
+        }
+        readLoop();
+      } catch (e) {
+        console.error('setupEncoder error:', e);
+      }
+    }
+
+    setupEncoder();
+
+    return () => {
+      active = false;
+      try {
+        readerRef.current?.cancel();
+      } catch {}
+      if (encoderRef.current && encoderRef.current.state !== 'closed') {
+        try { encoderRef.current.close(); } catch {}
+      }
+      if (processorRef.current && 'readable' in processorRef.current) {
+        (processorRef.current as any).readable?.getReader()?.cancel();
+      }
+      processorRef.current?.track?.stop();
+      streamRef.current?.getTracks().forEach(t => t.stop());
+    };
   }, []);
 
   // Styles back/close: goes back one level if inside a sub-page, otherwise closes
