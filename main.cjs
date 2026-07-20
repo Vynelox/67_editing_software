@@ -1,5 +1,5 @@
 const path = require('path');
-const { app, BrowserWindow, ipcMain, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const config = require('./config.json');
 
 /*
@@ -90,9 +90,10 @@ app.whenReady().then(async () => {
     shader_window.setIgnoreMouseEvents(SHADER_WINDOW_CLICKTHROUGH, { forward: SHADER_WINDOW_CLICKTHROUGH });
 
     const ensureOverlayVisible = () => {
+      //if the shader window exists and the shader window is minimized
       if (!shader_window.isDestroyed() && !shader_window.isVisible()) {
-        shader_window.showInactive();
-        shader_window.setVisibleOnAllWorkspaces(true);
+        shader_window.showInactive(); //changes it from minimized to unminimized
+        shader_window.setVisibleOnAllWorkspaces(true); //
       }
     };
 
@@ -172,12 +173,15 @@ app.whenReady().then(async () => {
     shader_window.loadURL('http://localhost:5173/shader_window.html');
 
     // IPC handlers for WebCodecs video pipeline - route structured payloads as-is
+    //the function that runs whenever something tries to get the window id for the application window.
+    // IPC handler to get the window source ID
+    // This is the ONLY thing main.cjs does for streaming now
     ipcMain.handle('get-window-source-id', () => {
       if (app_window && app_window.webContents) {
         try {
           // Try with argument first (per Electron docs)
           const id = app_window.webContents.getMediaSourceId(app_window.webContents);
-          console.log('✅ getMediaSourceId(arg) succeeded:', id);
+          console.log('✅ getMediaSourceId(WITH arg: app_window.webContents) succeeded:', id);
           return id;
         } catch (e) {
           console.warn('⚠️ getMediaSourceId(arg) failed:', e.message);
@@ -196,115 +200,21 @@ app.whenReady().then(async () => {
       return null;
     });
     
-    ipcMain.handle('get-window-bounds', () => {
-      if (app_window && !app_window.isDestroyed()) {
-        const bounds = app_window.getBounds();
-        console.log('Window bounds:', bounds);
-        return bounds;
-      }
-      return null;
-    });
-    
-    ipcMain.handle('create-window-stream', async () => {
-      if (!app_window || app_window.isDestroyed()) {
-        console.error('🚨 Window not available for stream creation');
-        return null;
-      }
-      
-      try {
-        // Give DWM time to stabilize before enumerating sources (this avoids the deadlock)
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        const sources = await desktopCapturer.getSources({
-          types: ['window'],
-          thumbnailSize: { width: 0, height: 0 }, // Don't fetch thumbnails to save time
-        });
-        
-        // Find the source that matches our app_window
-        // The source ID from getMediaSourceId() is base64, but desktopCapturer uses 'window:PID:ID' format
-        // We need to find the window that matches our app_window's bounds
-        const targetBounds = app_window.getBounds();
-        console.log('Target window bounds:', targetBounds);
-        console.log('Available sources:', sources.map(s => ({ id: s.id, name: s.name })));
-        
-        // Try to find by matching the window ID pattern
-        // getMediaSourceId returns base64 encoding of window ID, but desktopCapturer uses 'window:PID:ID'
-        // The source ID might be in the format 'window:1234' where 1234 is the window ID
-        
-        // Try to extract potential matches by looking for window IDs in the sources
-        const matchingSource = sources.find(s => {
-          // Check if source id contains our target window's bounds information
-          // This is a heuristic - we'll match the window that has similar dimensions
-          return false; // Placeholder - we need to match by other means
-        });
-        
-        // Since the ID formats are incompatible, let's try to match by finding the window
-        // that has the same title or is the first window source
-        
-        // Fallback: Use the first window source that matches our dimensions
-        const windowSources = sources.filter(s => s.id.startsWith('window:'));
-        if (windowSources.length === 0) {
-          console.error('🚨 No window sources found');
-          return null;
+    // Send the source ID to shader_window as soon as it's ready
+    // shader_window.tsx will handle getting the stream directly
+    ipcMain.on('shader-window-ready', (event) => {
+      if (app_window && app_window.webContents) {
+        try {
+          const id = app_window.webContents.getMediaSourceId(app_window.webContents);
+          console.log('📤 Sending window source ID to shader_window:', id);
+          event.sender.send('window-source-id', id);
+        } catch (e) {
+          console.error('🚨 Failed to get source ID for shader_window:', e.message);
         }
-        
-        // Try to find a match by checking the window title
-        const targetTitle = app_window.getTitle();
-        console.log('Target window title:', targetTitle);
-        
-        const matched = windowSources.find(s => {
-          // Match by title or by size
-          if (s.name && s.name.includes(targetTitle)) {
-            console.log('✅ Matched by title:', s.name);
-            return true;
-          }
-          // Fallback: if only one window source, use it
-          if (windowSources.length === 1) {
-            console.log('✅ Using only window source:', s.id);
-            return true;
-          }
-          return false;
-        });
-        
-        if (matched) {
-          console.log('✅ Found matching window source:', matched.id);
-          console.log('🔧 Creating stream from source...');
-          const stream = await desktopCapturer.getSources({
-            types: ['window'],
-            thumbnailSize: { width: 0, height: 0 },
-          });
-          console.log('🔧 Stream created, finding target track...');
-          const matchedTrack = stream.find(s => s.id === matched.id);
-          if (matchedTrack) {
-            console.log('✅ Found matched track');
-            return matchedTrack;
-          }
-        }
-        
-        // Last resort: use the first window source
-        console.log('⚠️ No match found, using first window source as fallback:', windowSources[0].id);
-        console.log('🔧 Creating stream from fallback source...');
-        const stream = await desktopCapturer.getSources({
-          types: ['window'],
-          thumbnailSize: { width: 0, height: 0 },
-        });
-        const fallbackTrack = stream.find(s => s.id === windowSources[0].id);
-        if (fallbackTrack) {
-          console.log('✅ Found fallback track');
-          return fallbackTrack;
-        }
-      } catch (e) {
-        console.error('🚨 Failed to create window stream:', e.message);
-        return null;
       }
     });
     
-    ipcMain.on('send-video-chunk', (_event, payload) => {
-      console.log('🌉 Main Process: Received chunk, forwarding to shader_window');
-      if (shader_window && !shader_window.isDestroyed()) {
-        shader_window.webContents.send('video-chunk', payload);
-      }
-    });
+
   } else {
     app_window = new BrowserWindow({
       width: 1280,
