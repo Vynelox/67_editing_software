@@ -409,28 +409,23 @@ function AppContent() {
           console.error('🚨 CRITICAL: Failed to acquire window source ID. Pipeline aborted silently.');
           return;
         }
-        console.log('✅ SUCCESS: Pipeline started with source ID:', sourceId);
+        console.log('📡 Step 1: Got Source ID:', sourceId);
+        console.log('📡 Step 1b: Source ID length:', sourceId.length);
+        console.log('📡 Step 1c: Source ID type:', typeof sourceId);
         sourceIdRef.current = sourceId;
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: sourceId,
-              minFrameRate: 60,
-              maxFrameRate: 60,
-              minWidth: 1280,
-              maxWidth: 1280,
-              minHeight: 800,
-              maxHeight: 800,
-            },
-          } as any,
-        });
-        if (!active) { stream.getTracks().forEach(t => t.stop()); return; }
-        streamRef.current = stream;
-        const track = stream.getVideoTracks()[0];
-        trackRef.current = track;
+        // Use createWindowStream from preload which uses desktopCapturer
+        console.log('📡 Step 1d: Creating window stream from desktopCapturer...');
+        const track = await api.createWindowStream();
+        if (!track || !active) {
+          console.error('🚨 Failed to create window stream or context became inactive');
+          return;
+        }
+        console.log('📡 Step 1e: Window stream track created');
+        
+        // Create a stream from the track
+        const stream = new MediaStream([track]);
+        console.log('📡 Step 2: MediaStream acquired, tracks:', stream.getVideoTracks().length);
         const processor = new MediaStreamTrackProcessor({ track });
         processorRef.current = processor;
         console.log('WebCodecs: MediaStreamTrackProcessor created');
@@ -442,12 +437,14 @@ function AppContent() {
             try {
               const decoded = new Uint8Array(chunk.byteLength);
               chunk.copyTo(decoded);
+              console.log('📡 Step 4: Encoded frame, type:', chunk.type);
               const payload = {
                 buffer: decoded.buffer,
                 type: chunk.type === 'key' ? 'key' : 'delta',
                 timestamp: chunk.timestamp,
               };
               api.sendVideoChunk(payload);
+              console.log('📡 Step 5: Sent chunk to main process');
             } catch (e) {
               console.error('Encoder output error:', e);
             }
@@ -458,13 +455,18 @@ function AppContent() {
 
         encoder.configure({
           codec: 'vp8',
-          width: 1280,
-          height: 800,
+          width: bounds.width,
+          height: bounds.height,
           bitrate: 8_000_000,
           framerate: 60,
           hardwareAcceleration: 'prefer-hardware',
           latencyMode: 'realtime',
         });
+        console.log('📡 Step 3: VideoEncoder configured');
+
+        // Ensure encoder is fully configured before starting
+        await encoder.flush();
+        console.log('📡 Step 3b: VideoEncoder ready');
 
         let stopped = false;
         async function readLoop() {
@@ -473,6 +475,7 @@ function AppContent() {
               const { value, done } = await reader.read();
               if (done || !value || !active) break;
               const frame = value as VideoFrame;
+              console.log('📡 Step 3c: Got frame from processor, size:', frame.displayWidth, 'x', frame.displayHeight);
 
               // Frame pacing: cap at 60fps to avoid flooding IPC
               const now = performance.now();
@@ -487,6 +490,7 @@ function AppContent() {
               if (!stopped && active) {
                 const count = frameCountRef.current++;
                 const forceKeyframe = count > 0 && count % KEYFRAME_INTERVAL === 0;
+                console.log('📡 Step 4: Encoding frame, keyFrame:', forceKeyframe);
                 encoder.encode(frame, { keyFrame: forceKeyframe });
                 lastEncodeTimeRef.current = now;
               }

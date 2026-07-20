@@ -184,6 +184,7 @@ function main() {
 
             const time = performance.now() / 1000.0;
             gl.uniform1f(uTimeLoc, time);
+            console.log('📥 Step 7: Decoder outputted VideoFrame, uploading to WebGL');
           } catch (e) {
             console.error('Overlay decoder output error:', e);
           } finally {
@@ -212,6 +213,7 @@ function main() {
     };
 
     api.onVideoChunk((payload: { buffer: ArrayBuffer; type: string; timestamp: number }) => {
+      console.log('📥 Step 6: Received chunk in shader_window, type:', payload.type);
       try {
         const encoded = new EncodedVideoChunk({
           type: payload.type === 'key' ? 'key' : 'delta',
